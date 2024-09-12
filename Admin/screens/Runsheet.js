@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 // Removed Picker import since it is commented out
 
 const Runsheet = ({ userData, pickupPersons }) => {
@@ -22,7 +16,7 @@ const Runsheet = ({ userData, pickupPersons }) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}  showsVerticalScrollIndicator={false}>
+    <View>
       {userData.length === 0 ? (
         <View style={styles.noPickups}>
           <Text style={styles.noPickupsText}>No pickups available</Text>
@@ -61,8 +55,7 @@ const Runsheet = ({ userData, pickupPersons }) => {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>AWB No:</Text>
-              <Text style={styles.value}
-              >{user.AWB_NUMBER || "N/A"}</Text>
+              <Text style={styles.value}>{user.AWB_NUMBER || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Consignee:</Text>
@@ -70,19 +63,19 @@ const Runsheet = ({ userData, pickupPersons }) => {
             </View>
             {/* Uncomment the Picker if needed */}
             {/* <View style={styles.infoRow}>
-              <Text style={styles.label}>Pickup Person:</Text>
-              <Picker
-                selectedValue={user.PickUpPersonName || ""}
-                style={styles.picker}
-                onValueChange={(value) =>
-                  handleAssignmentChange(user.AWB_NUMBER, value, 3)
-                }
-              >
-                {pickupPersons.map((person, index) => (
-                  <Picker.Item key={index} label={person} value={person} />
-                ))}
-              </Picker>
-            </View> */}
+      <Text style={styles.label}>Pickup Person:</Text>
+      <Picker
+        selectedValue={user.PickUpPersonName || ""}
+        style={styles.picker}
+        onValueChange={(value) =>
+          handleAssignmentChange(user.AWB_NUMBER, value, 3)
+        }
+      >
+        {pickupPersons.map((person, index) => (
+          <Picker.Item key={index} label={person} value={person} />
+        ))}
+      </Picker>
+    </View> */}
             <View style={styles.infoRow}>
               <Text style={styles.label}>ok:</Text>
               <Text style={styles.value}>{user.DESTINATION || "N/A"}</Text>
@@ -113,16 +106,11 @@ const Runsheet = ({ userData, pickupPersons }) => {
           </TouchableOpacity>
         ))
       )}
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginTop: 50,
-    paddingBottom: 150,
-    padding: 16,
-  },
   noPickups: {
     alignItems: "center",
     padding: 16,

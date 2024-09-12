@@ -1,9 +1,16 @@
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Image,
+  ScrollView,
+} from "react-native";
 import axios from "axios";
 import apiURLs from "../../utility/googlescreen/apiURLs";
 import { useEffect, useState } from "react";
 import Runsheet from "./Runsheet";
-
+import Incomingmanifest from "../screens/IncomingManifest";
 export default function Admin() {
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState([]);
@@ -13,6 +20,7 @@ export default function Admin() {
   const API_URL = apiURLs.sheetDB;
   const sheetyDB_API_URL = apiURLs.sheety;
   const pickupPersons = ["Unassigned", "anish", "sathish"];
+  const [currentTab, setcurrentTab] = useState("RUN SHEET");
 
   // Fetch assignments from Google Sheets
   const fetchAssignments = async () => {
@@ -73,18 +81,35 @@ export default function Admin() {
 
   // Filter data based on STATUS "RUN SHEET"
   const currentItems = userData.filter((user) => user.STATUS === "RUN SHEET");
+  const incomingmanifest = userData.filter(
+    (user) => user.STATUS === "INCOMING MANIFEST"
+  );
 
   console.log(currentItems);
 
   return (
     <View style={styles.container}>
-    
+      <View style={styles.nav}>
+        <Text>Pickup</Text>
+        <Text>wareH</Text>
+        <Text>Payment?</Text>
+        <Text>PaymentD</Text>
+      </View>
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : error ? (
         <Text style={styles.errorText}>{error}</Text>
       ) : (
-        <Runsheet userData={currentItems} pickupPersons={pickupPersons} />
+        <ScrollView
+          contentContainerStyle={styles.container}
+          showsVerticalScrollIndicator={false}
+        >
+          {currentTab == "RUN SHEET" ? (
+            <Incomingmanifest userData={incomingmanifest} />
+          ) : (
+            <Runsheet userData={currentItems} pickupPersons={pickupPersons} />
+          )}
+        </ScrollView>
       )}
     </View>
   );
@@ -93,30 +118,32 @@ export default function Admin() {
 // Styles for the component
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    paddingTop: 0,
     padding: 16,
     backgroundColor: "#fff",
+    paddingTop: 50,
+    paddingBottom: 50,
   },
+
   errorText: {
     color: "red",
     textAlign: "center",
     marginTop: 10,
   },
 
-  // nav: {
-  //   backgroundColor: "white",
-  //   position: "absolute",
-  //   height: 80,
-  //   display: "flex",
-  //   flexDirection: "row",
-  //   justifyContent: "space-between",
-  //   alignItems: "center",
-  //   bottom: 0,
-  //   zIndex: 10,
-  //   borderBottomLeftRadius: 0,
-  //   borderBottomRightRadius: 0,
-  //   left: 0,
-  //   right: 0,
-  // },
-
+  nav: {
+    backgroundColor: "white",
+    position: "absolute",
+    height: 80,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    bottom: 0,
+    zIndex: 10,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    left: 0,
+    right: 0,
+  },
 });
