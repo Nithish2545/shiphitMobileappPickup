@@ -7,12 +7,10 @@ import {
   TouchableOpacity, // Use TouchableOpacity for clickable items
 } from "react-native";
 import axios from "axios";
-import apiURLs from "../../utility/googlescreen/apiURLs";
 import { useEffect, useState } from "react";
 import Runsheet from "./Runsheet";
-import Incomingmanifest from "../screens/IncomingManifest";
-import PaymentPending from "./PaymentPending";
-import PaymentDone from "./PaymentDone";
+import apiURLs from "../../utility/googlescreen/apiURLs"
+import PickupCompleted from "./PickupCompleted";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -21,7 +19,6 @@ export default function Admin() {
   const [userRole, setUserRole] = useState(null);
   const [assignments, setAssignments] = useState({});
   const API_URL = apiURLs.sheetDB;
-  const pickupPersons = ["Unassigned", "anish", "sathish"];
   const [currentTab, setcurrentTab] = useState("RUN SHEET");
 
   // Fetch assignments from Google Sheets
@@ -82,15 +79,9 @@ export default function Admin() {
   }, [userRole]);
 
   // Filter data based on STATUS
-  const currentItems = userData.filter((user) => user.STATUS === "RUN SHEET");
+  const currentItems = userData.filter((user) => user.STATUS === "RUN SHEET" && user.PickUpPersonName === "sathish");
   const incomingManifestItems = userData.filter(
-    (user) => user.STATUS === "INCOMING MANIFEST"
-  );
-  const paymentPending = userData.filter(
-    (user) => user.STATUS === "PAYMENT PENDING"
-  );
-  const paymentDone = userData.filter(
-    (user) => user.STATUS === "PAYMENT DONE"
+    (user) => user.STATUS === "INCOMING MANIFEST" && user.PickUpPersonName  ===  "sathish"
   );
   // Tab switching logic
   const handleTabChange = (tab) => {
@@ -121,30 +112,7 @@ export default function Admin() {
             WareH
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleTabChange("PAYMENT PENDING")}>
-          <Text
-            style={
-              currentTab === "PAYMENT PENDING"
-                ? styles.highlight
-                : styles.navText
-            }
-          >
-            Payment?
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleTabChange("PAYMENT DONE")}>
-          <Text
-            style={
-              currentTab === "PAYMENT DONE"
-                ? styles.highlight
-                : styles.navText
-            }
-          >
-            PaymentD
-          </Text>
-        </TouchableOpacity>
       </View>
-
       {/* Loading and Error Handling */}
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
@@ -159,11 +127,7 @@ export default function Admin() {
           {currentTab === "RUN SHEET" ? (
             <Runsheet userData={currentItems} />
           ) : currentTab === "INCOMING MANIFEST" ? (
-            <Incomingmanifest userData={incomingManifestItems} />
-          ) : currentTab === "PAYMENT PENDING" ? (
-            <PaymentPending userData={paymentPending} />
-          ) : currentTab === "PAYMENT DONE" ? (
-            <PaymentDone userData={paymentDone} />
+            <PickupCompleted userData={incomingManifestItems} />
           ) : null}
         </ScrollView>
       )}

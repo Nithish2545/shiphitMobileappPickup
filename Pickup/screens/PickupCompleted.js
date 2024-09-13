@@ -1,17 +1,14 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+// Removed Picker import since it is commented out
 
-const Runsheet = ({ userData}) => {
+const PickupCompleted = ({ userData, pickupPersons }) => {
   const handleCardPress = (awbNumber) => {
     // Handle card press action
   };
-
+  console.log(userData);
   const handleOpenMap = (latitude, longitude) => {
     // Handle map opening action
-  };
-
-  const handleAssignmentChange = (awbNumber, value, index) => {
-    // Handle assignment change
   };
 
   return (
@@ -53,7 +50,7 @@ const Runsheet = ({ userData}) => {
               </View>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>AWB No:</Text>
+              <Text style={styles.label}>pending No:</Text>
               <Text style={styles.value}>{user.AWB_NUMBER || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
@@ -61,7 +58,7 @@ const Runsheet = ({ userData}) => {
               <Text style={styles.value}>{user.NAME || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Country:</Text>
+              <Text style={styles.label}>Country</Text>
               <Text style={styles.value}>{user.DESTINATION || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
@@ -72,12 +69,10 @@ const Runsheet = ({ userData}) => {
               <Text style={styles.label}>Phone number:</Text>
               <Text style={styles.value}>{user.PHONENUMBER || "N/A"}</Text>
             </View>
-
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup DateTime:</Text>
               <Text style={styles.value}>{user.PICKUP_DATETIME || "N/A"}</Text>
             </View>
-
             <View style={styles.infoRow}>
               <Text style={styles.label}>Coordinates:</Text>
               <TouchableOpacity
@@ -109,9 +104,9 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     shadowColor: "#000000",
-    shadowOpacity: 0.2, // Increased shadow opacity for better depth
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.4, // Increased shadow opacity for better depth
+    shadowRadius: 1,
+    elevation: 2,
   },
   statusContainer: {
     marginBottom: 12,
@@ -174,4 +169,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Runsheet;
+export default PickupCompleted;

@@ -77,7 +77,7 @@ const Runsheet = ({ userData, pickupPersons }) => {
       </Picker>
     </View> */}
             <View style={styles.infoRow}>
-              <Text style={styles.label}>ok:</Text>
+              <Text style={styles.label}>Country</Text>
               <Text style={styles.value}>{user.DESTINATION || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
@@ -125,9 +125,9 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     shadowColor: "#000000",
-    shadowOpacity: 0.2, // Increased shadow opacity for better depth
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.4, // Increased shadow opacity for better depth
+    shadowRadius: 1,
+    elevation: 2,
   },
   statusContainer: {
     marginBottom: 12,

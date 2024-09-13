@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -11,12 +11,17 @@ import {
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useForm, Controller } from "react-hook-form";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
 
 const SignIn = ({ navigation }) => {
   const auth = FIREBASE_AUTH;
 
   // Initialize useForm from react-hook-form
-  const { control, handleSubmit, formState: { errors } } = useForm();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
 
   // Handle SignIn action
   const handleSignIn = async (data) => {
@@ -25,8 +30,19 @@ const SignIn = ({ navigation }) => {
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log(response);
+
+      // Check if the email is 'deepak@gmail.com' to assign the role
+      let userData = {
+        name: response.user.displayName || "User", // You can fetch the user's display name or set a default
+        email: response.user.email,
+        role: email === "deepak@gmail.com" ? "admin" : "pickup", // Assign role based on email
+      };
+
+      // Store the user data in AsyncStorage
+      await AsyncStorage.setItem("userData", JSON.stringify(userData));
+
       Alert.alert("Success", "Logged in successfully!");
-      navigation.navigate("Admin");
+      
     } catch (error) {
       console.log(error);
       Alert.alert("Error", "Invalid credentials. Please try again.");
@@ -40,30 +56,29 @@ const SignIn = ({ navigation }) => {
       <View style={styles.form}>
         {/* Email Input */}
         <View style={styles.inputContainer}>
-
-        <Controller
-          control={control}
-          name="email"
-          rules={{
-            required: "Email is required",
-            pattern: {
-              value: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
-              message: "Enter a valid email address",
-            },
-          }}
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              keyboardType="email-address"
-              value={value}
-              onChangeText={onChange}
-              placeholderTextColor="#9CA3AF"
-            />
-          )}
-        />
-        {/* Error message for email */}
-        <Text style={styles.errorText}>{errors.email?.message || " "}</Text>
+          <Controller
+            control={control}
+            name="email"
+            rules={{
+              required: "Email is required",
+              pattern: {
+                value: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
+                message: "Enter a valid email address",
+              },
+            }}
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                keyboardType="email-address"
+                value={value}
+                onChangeText={onChange}
+                placeholderTextColor="#9CA3AF"
+              />
+            )}
+          />
+          {/* Error message for email */}
+          <Text style={styles.errorText}>{errors.email?.message || " "}</Text>
         </View>
 
         {/* Password Input */}
@@ -92,13 +107,18 @@ const SignIn = ({ navigation }) => {
         <Text style={styles.errorText}>{errors.password?.message || " "}</Text>
 
         {/* Sign In Button */}
-        <TouchableOpacity style={styles.button} onPress={handleSubmit(handleSignIn)}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleSubmit(handleSignIn)}
+        >
           <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.footer}>
         <TouchableOpacity
-          onPress={() => Alert.alert("Forgot Password", "Forgot Password pressed")}
+          onPress={() =>
+            Alert.alert("Forgot Password", "Forgot Password pressed")
+          }
         >
           <Text style={styles.forgotPassword}>Forgot your password?</Text>
         </TouchableOpacity>
@@ -166,12 +186,11 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: "red",
-    // marginBottom: 16,
-    // minHeight: 20, // Fixed height for error text
+    minHeight: 20, // Fixed height for error text
   },
-  inputContainer :{
-    marginBottom:20
-  }
+  inputContainer: {
+    marginBottom: 20,
+  },
 });
 
 export default SignIn;

@@ -15,6 +15,9 @@
       "supportsTablet": true
     },
     "android": {
+      "android": {
+        "permissions": ["READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
