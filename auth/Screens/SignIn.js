@@ -33,11 +33,22 @@ const SignIn = ({ navigation }) => {
 
       // Check if the email is 'deepak@gmail.com' to assign the role
       let userData = {
-        name: response.user.displayName || "User", // You can fetch the user's display name or set a default
+        name: (() => {
+          switch (response.user.email) {
+            case "deepak@gmail.com":
+              return "deepak";
+            case "sathish@gmail.com":
+              return "sathish";
+            case "anish@gmail.com":
+              return "anish";
+            default:
+              return response.user.email;
+          }
+        })(),
         email: response.user.email,
-        role: email === "deepak@gmail.com" ? "admin" : "pickup", // Assign role based on email
+        role: response.user.email === "deepak@gmail.com" ? "admin" : "pickup", // Assign role based on email
       };
-
+      
       // Store the user data in AsyncStorage
       await AsyncStorage.setItem("userData", JSON.stringify(userData));
 

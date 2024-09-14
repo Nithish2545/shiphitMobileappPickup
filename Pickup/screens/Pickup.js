@@ -9,8 +9,11 @@ import {
 import axios from "axios";
 import { useEffect, useState } from "react";
 import Runsheet from "./Runsheet";
-import apiURLs from "../../utility/googlescreen/apiURLs"
+import apiURLs from "../../utility/googlescreen/apiURLs";
 import PickupCompleted from "./PickupCompleted";
+import RunCircleOutlinedIcon from "@mui/icons-material/RunCircleOutlined";
+import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -18,15 +21,41 @@ export default function Admin() {
   const [error, setError] = useState("");
   const [userRole, setUserRole] = useState(null);
   const [assignments, setAssignments] = useState({});
+  const [userName , setuserName] = useState("")
   const API_URL = apiURLs.sheetDB;
   const [currentTab, setcurrentTab] = useState("RUN SHEET");
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const getData = async (key) => {
+          const value = await AsyncStorage.getItem(key);
+          return value ? JSON.parse(value) : null; // Parse if the value exists
+        };
+
+        const local_S_userData = await getData("userData");
+        
+        setuserName(local_S_userData.name)
+
+        if (local_S_userData) {
+          console.log(local_S_userData); // Check the data
+        } else {
+          console.log("No data found for key 'userData'");
+        }
+      } catch (e) {
+        console.error("Failed to load data from AsyncStorage", e);
+      }
+    };
+
+    fetchData(); // Call the async function inside useEffect
+  }, []);
 
   // Fetch assignments from Google Sheets
   const fetchAssignments = async () => {
     try {
       const result = await axios.get(API_URL);
-      const assignmentsData = result.data.reduce((acc, item) => {
-        acc[item.AWB_NUMBER] = item.PickUpPersonName; // Adjust based on your sheet structure
+      console.log(result.data.sheet1);
+      const assignmentsData = result.data.sheet1.reduce((acc, item) => {
+        acc[item.awbNumber] = item.pickUpPersonName; // Adjust based on your sheet structure
         return acc;
       }, {});
       setAssignments(assignmentsData);
@@ -57,7 +86,9 @@ export default function Admin() {
       setLoading(true);
       try {
         const result = await axios.get(API_URL);
-        setUserData(result.data);
+        setUserData(result.data.sheet1);
+        console.log(result.data.sheet1);
+        console.log("testing");
         await fetchAssignments(); // Fetch assignments after user data is loaded
       } catch (error) {
         if (error.response) {
@@ -77,12 +108,16 @@ export default function Admin() {
     };
     fetchData();
   }, [userRole]);
-
   // Filter data based on STATUS
-  const currentItems = userData.filter((user) => user.STATUS === "RUN SHEET" && user.PickUpPersonName === "sathish");
-  const incomingManifestItems = userData.filter(
-    (user) => user.STATUS === "INCOMING MANIFEST" && user.PickUpPersonName  ===  "sathish"
+  console.log(userData);
+  const currentItems = userData.filter(
+    (user) => user.status === "RUN SHEET" && user.pickUpPersonName === userName
   );
+  const incomingManifestItems = userData.filter(
+    (user) =>
+      user.status === "INCOMING MANIFEST" && user.pickUpPersonName === userName
+  );
+  console.log(currentItems);
   // Tab switching logic
   const handleTabChange = (tab) => {
     setcurrentTab(tab);
@@ -98,8 +133,9 @@ export default function Admin() {
               currentTab === "RUN SHEET" ? styles.highlight : styles.navText
             }
           >
-            Pickup
+            Runsheet
           </Text>
+          {/* <RunCircleOutlinedIcon/> */}
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleTabChange("INCOMING MANIFEST")}>
           <Text
@@ -109,7 +145,7 @@ export default function Admin() {
                 : styles.navText
             }
           >
-            WareH
+            Completed
           </Text>
         </TouchableOpacity>
       </View>

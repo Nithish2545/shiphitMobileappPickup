@@ -15,7 +15,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "../../FirebaseConfig";
 import apiURLs from "../../utility/googlescreen/apiURLs";
 import * as ImagePicker from "expo-image-picker";
-import Ionicons from "react-native-vector-icons/Ionicons"; // Import vector icons
+// import Ionicons from "react-native-vector-icons/Ionicons"; // Import vector icons
 import { TouchableOpacity } from "react-native-web";
 
 const API_URL = apiURLs.sheety;
@@ -61,6 +61,7 @@ const PickupDetails = () => {
     const storageRef = ref(storage, `${awbnumber}/${folder}/${file.fileName}`);
     await uploadBytes(storageRef, blob);
     const url = await getDownloadURL(storageRef);
+    console.log(url)
     return url;
   };
 
@@ -165,7 +166,7 @@ const PickupDetails = () => {
         },
       });
 
-      navigation.navigate("Home");
+      navigation.navigate("Pickup");
     } catch (error) {
       handleError(error);
     } finally {
@@ -219,9 +220,9 @@ const PickupDetails = () => {
   return (
     <View>
       <ScrollView contentContainerStyle={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-          <Text>Back</Text>
-        </TouchableOpacity>
+        <View>
+          <Text style={styles.backButton} onPress={handleGoBack}>Back</Text>
+        </View>
         {details ? (
           <View>
             <Text style={styles.title}>Pickup Details</Text>
@@ -243,7 +244,7 @@ const PickupDetails = () => {
             </View>
             <View style={styles.detailContainer}>
               <Text style={styles.label}>Phone Number:</Text>
-              <Text style={styles.text}>{details.phoneNumber}</Text>
+              <Text style={styles.text}>{details.phonenumber}</Text>
             </View>
             <View style={styles.detailContainer}>
               <Text style={styles.label}>Pickup DateTime:</Text>
@@ -373,9 +374,10 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
     backgroundColor: "#F5F5F5",
   },
-  // backButton: {
-  //   marginBottom: 16,
-  // },
+  backButton: {
+    marginBottom: 16,
+    fontSize:20,
+  },
   center: {
     flex: 1,
     justifyContent: "center",

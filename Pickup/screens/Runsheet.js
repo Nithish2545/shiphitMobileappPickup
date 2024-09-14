@@ -7,6 +7,7 @@ const Runsheet = ({ userData }) => {
   const navigation = useNavigation(); // Use useNavigation hook to access navigation
 
   const handleCardPress = (awbNumber) => {
+    console.log(awbNumber)
     // Navigate to PickupDetails screen with AWB number as a parameter
     navigation.navigate("PickupDetails", { awbnumber:awbNumber });
   };
@@ -26,7 +27,7 @@ const Runsheet = ({ userData }) => {
           <TouchableOpacity
             key={index}
             style={styles.card}
-            onPress={() => handleCardPress(user.AWB_NUMBER)}
+            onPress={() => handleCardPress(user.awbNumber)}
           >
             <View style={styles.statusContainer}>
               <View
@@ -49,39 +50,39 @@ const Runsheet = ({ userData }) => {
                       : styles.textDefault,
                   ]}
                 >
-                  {user.STATUS}
+                  RUN SHEET
                 </Text>
               </View>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pending No:</Text>
-              <Text style={styles.value}>{user.AWB_NUMBER || "N/A"}</Text>
+              <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Consignee:</Text>
-              <Text style={styles.value}>{user.NAME || "N/A"}</Text>
+              <Text style={styles.value}>{user.name || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Country:</Text>
-              <Text style={styles.value}>{user.DESTINATION || "N/A"}</Text>
+              <Text style={styles.value}>{user.destination || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Weight APX:</Text>
-              <Text style={styles.value}>{user.WEIGHTAPX || "N/A"}</Text>
+              <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.PHONENUMBER || "N/A"}</Text>
+              <Text style={styles.value}>{user.phonenumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup DateTime:</Text>
-              <Text style={styles.value}>{user.PICKUP_DATETIME || "N/A"}</Text>
+              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Coordinates:</Text>
               <TouchableOpacity
                 style={styles.mapButton}
-                onPress={() => handleOpenMap(user.LATITUDE, user.LONGITUDE)}
+                onPress={() => handleOpenMap(user.latitude, user.longitude                )}
               >
                 <Text style={styles.mapButtonText}>View on Map</Text>
               </TouchableOpacity>
