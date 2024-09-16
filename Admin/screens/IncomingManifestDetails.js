@@ -5,8 +5,6 @@ import axios from "axios";
 import { FontAwesome } from '@expo/vector-icons';
 import apiURLs from "../../utility/googlescreen/apiURLs";
 
-
-
 function IncomingManifestDetails() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -48,12 +46,12 @@ const updateRowByID = async (rowId, updatedFields) => {
 
     const data = await response.json();
     console.log(data);
+    
     console.log("Row updated successfully");
   } catch (error) {
     console.error("Error updating row:", error);
   }
 };
-
 
   const [user, setUser] = useState(null);
   const [actualWeight, setActualWeight] = useState("");
@@ -153,6 +151,7 @@ console.log(user?.id)
         <TouchableOpacity onPress={handleSubmit} style={styles.button}>
           <Text style={styles.buttonText}>Submit</Text>
         </TouchableOpacity>
+
       </View>
     </View>
   );

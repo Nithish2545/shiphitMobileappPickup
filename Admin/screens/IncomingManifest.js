@@ -56,7 +56,7 @@ const Runsheet = ({ userData}) => {
                       : styles.textDefault,
                   ]}
                 >
-                  Incoming Manifest
+                  WAREHOUSE
                 </Text>
               </View>
             </View>

@@ -3,8 +3,10 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 // Removed Picker import since it is commented out
 
 const PaymentDone = ({ userData, pickupPersons }) => {
+  
   const handleCardPress = (awbNumber) => {
     // Handle card press action
+    navigation.navigate("VendorDetails", { awbnumber:awbNumber });
   };
 
   const handleOpenMap = (latitude, longitude) => {
@@ -49,7 +51,7 @@ const PaymentDone = ({ userData, pickupPersons }) => {
                       : styles.textDefault,
                   ]}
                 >
-                  Payment done
+                  PAYMENT DONE
                 </Text>
               </View>
             </View>

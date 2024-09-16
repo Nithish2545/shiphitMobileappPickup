@@ -49,7 +49,7 @@ const PaymentPending = ({ userData, pickupPersons }) => {
                       : styles.textDefault,
                   ]}
                 >
-                  Payment Pending
+                  PAYMENT PENDING
                 </Text>
               </View>
             </View>

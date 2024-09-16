@@ -13,6 +13,7 @@ import Pickup from "./Pickup/screens/Pickup";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import PickupDetails from "./Pickup/screens/PickupDetails ";
 import Testing from "./Pickup/screens/Testing";
+import VendorDetails from "./Admin/screens/VendorDetails";
 
 export default function App() {
   
@@ -66,6 +67,7 @@ export default function App() {
             />
             <Stack.Screen name="PaymentPending" component={PaymentPending} />
             <Stack.Screen name="PaymentDone" component={PaymentDone} />
+            <Stack.Screen name="VendorDetails" component={VendorDetails} />
           </>
         ) : currentUser === "pickup" ? (
           // If the logged-in user is a pickup person, show Pickup screens
