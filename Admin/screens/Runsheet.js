@@ -1,18 +1,56 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-// Removed Picker import since it is commented out
+import { Picker } from "@react-native-picker/picker"; // Ensure you are using the correct Picker library
+import apiURLs from "../../utility/googlescreen/apiURLs";
 
-const Runsheet = ({ userData, pickupPersons }) => {
+const Runsheet = ({ userData: initialData, pickupPersons }) => {
+  const [userData, setUserData] = useState(initialData); 
+  const API_URL = apiURLs.sheety;
+
   const handleCardPress = (awbNumber) => {
     // Handle card press action
   };
 
   const handleOpenMap = (latitude, longitude) => {
-    // Handle map opening action
+    const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
+    window.open(url, "_blank");
   };
 
-  const handleAssignmentChange = (awbNumber, value, index) => {
-    // Handle assignment change
+  const handleAssignmentChange = async (awbNumber, value, index) => {
+    try {
+      const response = await fetch(`${API_URL}/${index}`, {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sheet1: {
+            pickUpPersonName: value,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to update the row. Status: ${response.status}. Error: ${errorText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("Row updated successfully");
+
+      setUserData((prevData) =>
+        prevData.map((user) =>
+          user.awbNumber === awbNumber
+            ? { ...user, pickUpPersonName: value }
+            : user
+        )
+      );
+    } catch (error) {
+      console.error("Error updating row:", error);
+    }
   };
 
   return (
@@ -23,18 +61,14 @@ const Runsheet = ({ userData, pickupPersons }) => {
         </View>
       ) : (
         userData.map((user, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.card}
-            onPress={() => handleCardPress(user.AWB_NUMBER)}
-          >
+        <View>
             <View style={styles.statusContainer}>
               <View
                 style={[
                   styles.statusBadge,
-                  user.STATUS === "PENDING"
+                  user.status === "PENDING"
                     ? styles.statusPending
-                    : user.STATUS === "COMPLETED"
+                    : user.status === "COMPLETED"
                     ? styles.statusCompleted
                     : styles.statusDefault,
                 ]}
@@ -42,73 +76,78 @@ const Runsheet = ({ userData, pickupPersons }) => {
                 <Text
                   style={[
                     styles.statusText,
-                    user.STATUS === "PENDING"
+                    user.status === "PENDING"
                       ? styles.textPending
-                      : user.STATUS === "COMPLETED"
+                      : user.status === "COMPLETED"
                       ? styles.textCompleted
                       : styles.textDefault,
                   ]}
                 >
-                  {user.STATUS}
+                  RUN SHEET
                 </Text>
               </View>
             </View>
+
+            {/* Wrap all text inside <Text> */}
             <View style={styles.infoRow}>
               <Text style={styles.label}>AWB No:</Text>
-              <Text style={styles.value}>{user.AWB_NUMBER || "N/A"}</Text>
+              <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Consignee:</Text>
-              <Text style={styles.value}>{user.NAME || "N/A"}</Text>
+              <Text style={styles.value}>{user.name || "N/A"}</Text>
             </View>
-            {/* Uncomment the Picker if needed */}
-            {/* <View style={styles.infoRow}>
-      <Text style={styles.label}>Pickup Person:</Text>
-      <Picker
-        selectedValue={user.PickUpPersonName || ""}
-        style={styles.picker}
-        onValueChange={(value) =>
-          handleAssignmentChange(user.AWB_NUMBER, value, 3)
-        }
-      >
-        {pickupPersons.map((person, index) => (
-          <Picker.Item key={index} label={person} value={person} />
-        ))}
-      </Picker>
-    </View> */}
+
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Pickup Person:</Text>
+              <Picker
+                selectedValue={user.pickUpPersonName || ""}
+                style={styles.picker}
+                enabled={false}
+                onValueChange={(value) =>
+                  handleAssignmentChange(user.awbNumber, value, user.id)
+                }
+              >
+                {pickupPersons.map((person, index) => (
+                  <Picker.Item key={index} label={person} value={person} />
+                ))}
+              </Picker>
+            </View>
+
             <View style={styles.infoRow}>
               <Text style={styles.label}>Country</Text>
-              <Text style={styles.value}>{user.DESTINATION || "N/A"}</Text>
+              <Text style={styles.value}>{user.destination || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Weight APX:</Text>
-              <Text style={styles.value}>{user.WEIGHTAPX || "N/A"}</Text>
+              <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.PHONENUMBER || "N/A"}</Text>
+              <Text style={styles.value}>{user.phonenumber || "N/A"}</Text>
             </View>
-
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup DateTime:</Text>
-              <Text style={styles.value}>{user.PICKUP_DATETIME || "N/A"}</Text>
+              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
             </View>
-
             <View style={styles.infoRow}>
               <Text style={styles.label}>Coordinates:</Text>
               <TouchableOpacity
                 style={styles.mapButton}
-                onPress={() => handleOpenMap(user.LATITUDE, user.LONGITUDE)}
+                onPress={() => handleOpenMap(user.latitude, user.longitude)}
               >
                 <Text style={styles.mapButtonText}>View on Map</Text>
               </TouchableOpacity>
             </View>
-          </TouchableOpacity>
+            </View>
         ))
       )}
     </View>
   );
 };
+
+
+
 
 const styles = StyleSheet.create({
   noPickups: {

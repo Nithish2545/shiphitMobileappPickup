@@ -28,7 +28,7 @@ export default function Admin() {
   const fetchAssignments = async () => {
     try {
       const result = await axios.get(API_URL);
-      const assignmentsData = result.data.reduce((acc, item) => {
+      const assignmentsData = result.data.sheet1.reduce((acc, item) => {
         acc[item.AWB_NUMBER] = item.PickUpPersonName; // Adjust based on your sheet structure
         return acc;
       }, {});
@@ -60,7 +60,7 @@ export default function Admin() {
       setLoading(true);
       try {
         const result = await axios.get(API_URL);
-        setUserData(result.data);
+        setUserData(result.data.sheet1);
         await fetchAssignments(); // Fetch assignments after user data is loaded
       } catch (error) {
         if (error.response) {
@@ -82,15 +82,16 @@ export default function Admin() {
   }, [userRole]);
 
   // Filter data based on STATUS
-  const currentItems = userData.filter((user) => user.STATUS === "RUN SHEET");
+  const currentItems = userData.filter((user) => user.status === "RUN SHEET");
+ console.log(currentItems)
   const incomingManifestItems = userData.filter(
-    (user) => user.STATUS === "INCOMING MANIFEST"
+    (user) => user.status === "INCOMING MANIFEST"
   );
   const paymentPending = userData.filter(
-    (user) => user.STATUS === "PAYMENT PENDING"
+    (user) => user.status === "PAYMENT PENDING"
   );
   const paymentDone = userData.filter(
-    (user) => user.STATUS === "PAYMENT DONE"
+    (user) => user.status === "PAYMENT DONE"
   );
   // Tab switching logic
   const handleTabChange = (tab) => {
@@ -157,7 +158,7 @@ export default function Admin() {
         >
           {/* Conditionally Render Components Based on Current Tab */}
           {currentTab === "RUN SHEET" ? (
-            <Runsheet userData={currentItems} />
+            <Runsheet userData={currentItems} pickupPersons={pickupPersons} />
           ) : currentTab === "INCOMING MANIFEST" ? (
             <Incomingmanifest userData={incomingManifestItems} />
           ) : currentTab === "PAYMENT PENDING" ? (

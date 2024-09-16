@@ -16,7 +16,6 @@ import { storage } from "../../FirebaseConfig";
 import apiURLs from "../../utility/googlescreen/apiURLs";
 import * as ImagePicker from "expo-image-picker";
 // import Ionicons from "react-native-vector-icons/Ionicons"; // Import vector icons
-import { TouchableOpacity } from "react-native-web";
 
 const API_URL = apiURLs.sheety;
 

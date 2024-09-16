@@ -48,7 +48,6 @@ export default function App() {
   if (currentUser === null) {
     return null; // Or a loading spinner, etc.
   }
-
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>

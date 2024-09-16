@@ -3,17 +3,16 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 const Runsheet = ({ userData }) => {
-  
   const navigation = useNavigation(); // Use useNavigation hook to access navigation
 
   const handleCardPress = (awbNumber) => {
-    console.log(awbNumber)
+    console.log(awbNumber);
     // Navigate to PickupDetails screen with AWB number as a parameter
-    navigation.navigate("PickupDetails", { awbnumber:awbNumber });
+    navigation.navigate("PickupDetails", { awbnumber: awbNumber });
   };
 
   const handleOpenMap = (latitude, longitude) => {
-    // Handle map opening action
+    const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
   };
 
   return (
@@ -82,7 +81,7 @@ const Runsheet = ({ userData }) => {
               <Text style={styles.label}>Coordinates:</Text>
               <TouchableOpacity
                 style={styles.mapButton}
-                onPress={() => handleOpenMap(user.latitude, user.longitude                )}
+                onPress={() => handleOpenMap(user.latitude, user.longitude)}
               >
                 <Text style={styles.mapButtonText}>View on Map</Text>
               </TouchableOpacity>

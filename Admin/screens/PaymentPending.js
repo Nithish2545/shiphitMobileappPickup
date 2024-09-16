@@ -26,15 +26,15 @@ const PaymentPending = ({ userData, pickupPersons }) => {
           <TouchableOpacity
             key={index}
             style={styles.card}
-            onPress={() => handleCardPress(user.AWB_NUMBER)}
+            onPress={() => handleCardPress(user.awbNumber)}
           >
             <View style={styles.statusContainer}>
               <View
                 style={[
                   styles.statusBadge,
-                  user.STATUS === "PENDING"
+                  user.status === "PENDING"
                     ? styles.statusPending
-                    : user.STATUS === "COMPLETED"
+                    : user.status === "COMPLETED"
                     ? styles.statusCompleted
                     : styles.statusDefault,
                 ]}
@@ -42,66 +42,41 @@ const PaymentPending = ({ userData, pickupPersons }) => {
                 <Text
                   style={[
                     styles.statusText,
-                    user.STATUS === "PENDING"
+                    user.status === "PENDING"
                       ? styles.textPending
-                      : user.STATUS === "COMPLETED"
+                      : user.status === "COMPLETED"
                       ? styles.textCompleted
                       : styles.textDefault,
                   ]}
                 >
-                  {user.STATUS}
+                  Payment Pending
                 </Text>
               </View>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>pending No:</Text>
-              <Text style={styles.value}>{user.AWB_NUMBER || "N/A"}</Text>
+              <Text style={styles.label}>AwbNumber No:</Text>
+              <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Consignee:</Text>
-              <Text style={styles.value}>{user.NAME || "N/A"}</Text>
+              <Text style={styles.value}>{user.name || "N/A"}</Text>
             </View>
-            {/* Uncomment the Picker if needed */}
-            {/* <View style={styles.infoRow}>
-      <Text style={styles.label}>Pickup Person:</Text>
-      <Picker
-        selectedValue={user.PickUpPersonName || ""}
-        style={styles.picker}
-        onValueChange={(value) =>
-          handleAssignmentChange(user.AWB_NUMBER, value, 3)
-        }
-      >
-        {pickupPersons.map((person, index) => (
-          <Picker.Item key={index} label={person} value={person} />
-        ))}
-      </Picker>
-    </View> */}
             <View style={styles.infoRow}>
               <Text style={styles.label}>Country</Text>
-              <Text style={styles.value}>{user.DESTINATION || "N/A"}</Text>
+              <Text style={styles.value}>{user.destination || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Weight APX:</Text>
-              <Text style={styles.value}>{user.WEIGHTAPX || "N/A"}</Text>
+              <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.PHONENUMBER || "N/A"}</Text>
+              <Text style={styles.value}>{user.phonenumber || "N/A"}</Text>
             </View>
 
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup DateTime:</Text>
-              <Text style={styles.value}>{user.PICKUP_DATETIME || "N/A"}</Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Coordinates:</Text>
-              <TouchableOpacity
-                style={styles.mapButton}
-                onPress={() => handleOpenMap(user.LATITUDE, user.LONGITUDE)}
-              >
-                <Text style={styles.mapButtonText}>View on Map</Text>
-              </TouchableOpacity>
+              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
             </View>
           </TouchableOpacity>
         ))
