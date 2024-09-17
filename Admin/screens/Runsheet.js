@@ -146,9 +146,6 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
   );
 };
 
-
-
-
 const styles = StyleSheet.create({
   noPickups: {
     alignItems: "center",
