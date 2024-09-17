@@ -13,6 +13,12 @@ import Runsheet from "./Runsheet";
 import Incomingmanifest from "../screens/IncomingManifest";
 import PaymentPending from "./PaymentPending";
 import PaymentDone from "./PaymentDone";
+import ShipmentConnected from "./ShipmentConnected";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import EvilIcons from "@expo/vector-icons/EvilIcons";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -83,17 +89,19 @@ export default function Admin() {
 
   // Filter data based on STATUS
   const currentItems = userData.filter((user) => user.status === "RUN SHEET");
- console.log(currentItems)
+  console.log(currentItems);
   const incomingManifestItems = userData.filter(
     (user) => user.status === "INCOMING MANIFEST"
   );
   const paymentPending = userData.filter(
     (user) => user.status === "PAYMENT PENDING"
   );
-  const paymentDone = userData.filter(
-    (user) => user.status === "PAYMENT DONE"
+  const paymentDone = userData.filter((user) => user.status === "PAYMENT DONE");
+  const shipmentconnected = userData.filter(
+    (user) => user.status === "SHIPMENT CONNECTED"
   );
   // Tab switching logic
+
   const handleTabChange = (tab) => {
     setcurrentTab(tab);
   };
@@ -103,50 +111,59 @@ export default function Admin() {
       {/* Navigation Tabs */}
       <View style={styles.nav}>
         <TouchableOpacity onPress={() => handleTabChange("RUN SHEET")}>
-          <Text
-            style={
-              currentTab === "RUN SHEET" ? styles.highlight : styles.navText
-            }
-          >
-            Pickup
+          <Text>
+            <FontAwesome5
+              name="running"
+              size={32}
+              color={currentTab === "RUN SHEET" ? "#8647D3" : "#A985D4"}
+            />
           </Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleTabChange("INCOMING MANIFEST")}>
-          <Text
-            style={
-              currentTab === "INCOMING MANIFEST"
-                ? styles.highlight
-                : styles.navText
-            }
-          >
-            WareH
+          <Text>
+            <MaterialCommunityIcons
+              name="warehouse"
+              size={32}
+              color={currentTab === "INCOMING MANIFEST" ? "#8647D3" : "#A985D4"}
+            />
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity onPress={() => handleTabChange("PAYMENT PENDING")}>
-          <Text
-            style={
-              currentTab === "PAYMENT PENDING"
-                ? styles.highlight
-                : styles.navText
-            }
-          >
-            Payment?
+          <Text>
+            <MaterialIcons
+              name="pending-actions"
+              size={32}
+              color={currentTab === "PAYMENT PENDING" ? "#8647D3" : "#A985D4"}
+            />
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity onPress={() => handleTabChange("PAYMENT DONE")}>
-          <Text
-            style={
-              currentTab === "PAYMENT DONE"
-                ? styles.highlight
-                : styles.navText
-            }
-          >
-            PaymentD
+          <Text>
+            <Ionicons
+              name="checkmark-done-circle"
+              size={32}
+              color={currentTab === "PAYMENT DONE" ? "#8647D3" : "#A985D4"}
+            />
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => handleTabChange("SHIPMENT CONNECTED")}>
+          <Text>
+            <MaterialIcons
+              name="flight"
+              size={32}
+              color={
+                currentTab === "SHIPMENT CONNECTED" ? "#8647D3" : "#A985D4"
+              }
+            />
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Loading and Error Handling */}
+
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : error ? (
@@ -165,6 +182,8 @@ export default function Admin() {
             <PaymentPending userData={paymentPending} />
           ) : currentTab === "PAYMENT DONE" ? (
             <PaymentDone userData={paymentDone} />
+          ) : currentTab === "SHIPMENT CONNECTED" ? (
+            <ShipmentConnected userData={shipmentconnected} />
           ) : null}
         </ScrollView>
       )}
@@ -205,11 +224,11 @@ const styles = StyleSheet.create({
     right: 0,
   },
   navText: {
-    color: "black",
+    color: "#A985D4",
     fontSize: 16,
   },
   highlight: {
-    color: "red", // Highlight color for active tab
+    color: "#8647D3", // Highlight color for active tab
     fontWeight: "bold",
     fontSize: 16,
   },

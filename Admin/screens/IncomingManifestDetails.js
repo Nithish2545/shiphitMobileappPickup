@@ -5,8 +5,6 @@ import axios from "axios";
 import { FontAwesome } from '@expo/vector-icons';
 import apiURLs from "../../utility/googlescreen/apiURLs";
 
-
-
 function IncomingManifestDetails() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -48,12 +46,12 @@ const updateRowByID = async (rowId, updatedFields) => {
 
     const data = await response.json();
     console.log(data);
+    
     console.log("Row updated successfully");
   } catch (error) {
     console.error("Error updating row:", error);
   }
 };
-
 
   const [user, setUser] = useState(null);
   const [actualWeight, setActualWeight] = useState("");
@@ -107,7 +105,7 @@ console.log(user?.id)
 
         <View style={styles.info}>
           <Text style={styles.label}>Name:</Text>
-          <Text style={styles.value}>{user.name}</Text>
+          <Text style={styles.value}>{user.consignorname}</Text>
         </View>
 
         <View style={styles.infoRow}>
@@ -153,6 +151,7 @@ console.log(user?.id)
         <TouchableOpacity onPress={handleSubmit} style={styles.button}>
           <Text style={styles.buttonText}>Submit</Text>
         </TouchableOpacity>
+
       </View>
     </View>
   );
@@ -166,15 +165,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   card: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-    width: "90%",
+    borderWidth: 1,          // Adds border width
+    borderColor: '#D1D5DB', // Sets the color of the border
+    borderRadius: 10,        // Adds rounded corners to the border
+    padding: 10,  
   },
   title: {
     fontSize: 24,

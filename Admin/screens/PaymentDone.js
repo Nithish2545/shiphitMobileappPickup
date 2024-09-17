@@ -1,10 +1,14 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 // Removed Picker import since it is commented out
 
 const PaymentDone = ({ userData, pickupPersons }) => {
+  const navigation = useNavigation();
+  
   const handleCardPress = (awbNumber) => {
     // Handle card press action
+    navigation.navigate("VendorDetails", { awbnumber:awbNumber });
   };
 
   const handleOpenMap = (latitude, longitude) => {
@@ -14,7 +18,7 @@ const PaymentDone = ({ userData, pickupPersons }) => {
   const handleAssignmentChange = (awbNumber, value, index) => {
     // Handle assignment change
   };
-
+console.log(userData)
   return (
     <View>
       {userData.length === 0 ? (
@@ -26,7 +30,7 @@ const PaymentDone = ({ userData, pickupPersons }) => {
           <TouchableOpacity
             key={index}
             style={styles.card}
-            onPress={() => handleCardPress(user.AWB_NUMBER)}
+            onPress={() => handleCardPress(user.awbNumber)}
           >
             <View style={styles.statusContainer}>
               <View
@@ -49,7 +53,7 @@ const PaymentDone = ({ userData, pickupPersons }) => {
                       : styles.textDefault,
                   ]}
                 >
-                  Payment done
+                  PAYMENT DONE
                 </Text>
               </View>
             </View>
@@ -58,8 +62,8 @@ const PaymentDone = ({ userData, pickupPersons }) => {
               <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Consignee:</Text>
-              <Text style={styles.value}>{user.name || "N/A"}</Text>
+              <Text style={styles.label}>Consignor:</Text>
+              <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Country</Text>
@@ -71,7 +75,7 @@ const PaymentDone = ({ userData, pickupPersons }) => {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.phonenumber || "N/A"}</Text>
+              <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup DateTime:</Text>
@@ -94,14 +98,10 @@ const styles = StyleSheet.create({
     fontSize: 16, // Added font size for better readability
   },
   card: {
-    backgroundColor: "#FFFFFF", // Updated color for a cleaner look
-    borderRadius: 10, // Adjusted border radius for modern look
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000000",
-    shadowOpacity: 0.4, // Increased shadow opacity for better depth
-    shadowRadius: 1,
-    elevation: 2,
+    borderWidth: 1,          // Adds border width
+    borderColor: '#D1D5DB', // Sets the color of the border
+    borderRadius: 10,        // Adds rounded corners to the border
+    padding: 10,  
   },
   statusContainer: {
     marginBottom: 12,

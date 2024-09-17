@@ -1,57 +1,18 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Picker } from "@react-native-picker/picker"; // Ensure you are using the correct Picker library
-import apiURLs from "../../utility/googlescreen/apiURLs";
-import { Linking } from 'react-native';
+// Removed Picker import since it is commented out
 
-const Runsheet = ({ userData: initialData, pickupPersons }) => {
-  const [userData, setUserData] = useState(initialData); 
-  const API_URL = apiURLs.sheety;
-
+const ShipmentConnected = ({ userData}) => {
   const handleCardPress = (awbNumber) => {
     // Handle card press action
   };
 
   const handleOpenMap = (latitude, longitude) => {
-    const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-    Linking.openURL(url).catch(err => console.error("Failed to open URL:", err));
+    // Handle map opening action
   };
 
-  const handleAssignmentChange = async (awbNumber, value, index) => {
-    try {
-      const response = await fetch(`${API_URL}/${index}`, {
-        method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sheet1: {
-            pickUpPersonName: value,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Failed to update the row. Status: ${response.status}. Error: ${errorText}`
-        );
-      }
-
-      const data = await response.json();
-      console.log("Row updated successfully");
-
-      setUserData((prevData) =>
-        prevData.map((user) =>
-          user.awbNumber === awbNumber
-            ? { ...user, pickUpPersonName: value }
-            : user
-        )
-      );
-    } catch (error) {
-      console.error("Error updating row:", error);
-    }
+  const handleAssignmentChange = (awbNumber, value, index) => {
+    // Handle assignment change
   };
 
   return (
@@ -62,7 +23,11 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
         </View>
       ) : (
         userData.map((user, index) => (
-        <View style={styles.card}>
+          <TouchableOpacity
+            key={index}
+            style={styles.card}
+            onPress={() => handleCardPress(user.awbNumber)}
+          >
             <View style={styles.statusContainer}>
               <View
                 style={[
@@ -84,42 +49,22 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
                       : styles.textDefault,
                   ]}
                 >
-                  RUN SHEET
+                  SHIPMENT CONNECTED
                 </Text>
               </View>
             </View>
-
-            {/* Wrap all text inside <Text> */}
             <View style={styles.infoRow}>
-              <Text style={styles.label}>AWB No:</Text>
+              <Text style={styles.label}>AwbNumber No:</Text>
               <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Consignor:</Text>
               <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
             </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Pickup Person:</Text>
-              <Picker
-                selectedValue={user.pickUpPersonName || ""}
-                style={styles.picker}
-                enabled={user.pickUpPersonName == "Unassign" || user.pickUpPersonName ==""  ? true : false}
-                onValueChange={(value) =>
-                  handleAssignmentChange(user.awbNumber, value, user.id)
-                }
-              >
-                {pickupPersons.map((person, index) => (
-                  <Picker.Item key={index} label={person} value={person} />
-                ))}
-              </Picker>
-            </View>
-
             <View style={styles.infoRow}>
               <Text style={styles.label}>Country</Text>
               <Text style={styles.value}>{user.destination || "N/A"}</Text>
             </View>
-            
             <View style={styles.infoRow}>
               <Text style={styles.label}>Weight APX:</Text>
               <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
@@ -128,20 +73,12 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
               <Text style={styles.label}>Phone number:</Text>
               <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
             </View>
+
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup DateTime:</Text>
               <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Coordinates:</Text>
-              <TouchableOpacity
-                style={styles.mapButton}
-                onPress={() => handleOpenMap(user.latitude, user.longitude)}
-              >
-                <Text style={styles.mapButtonText}>View on Map</Text>
-              </TouchableOpacity>
-            </View>
-            </View>
+          </TouchableOpacity>
         ))
       )}
     </View>
@@ -165,7 +102,6 @@ const styles = StyleSheet.create({
   },
   statusContainer: {
     marginBottom: 12,
-    
   },
   statusBadge: {
     paddingVertical: 6,
@@ -225,4 +161,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Runsheet;
+export default ShipmentConnected;

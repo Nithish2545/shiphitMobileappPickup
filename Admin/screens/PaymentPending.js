@@ -49,7 +49,7 @@ const PaymentPending = ({ userData, pickupPersons }) => {
                       : styles.textDefault,
                   ]}
                 >
-                  Payment Pending
+                  PAYMENT PENDING
                 </Text>
               </View>
             </View>
@@ -58,8 +58,8 @@ const PaymentPending = ({ userData, pickupPersons }) => {
               <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Consignee:</Text>
-              <Text style={styles.value}>{user.name || "N/A"}</Text>
+              <Text style={styles.label}>Consignor:</Text>
+              <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Country</Text>
@@ -71,7 +71,7 @@ const PaymentPending = ({ userData, pickupPersons }) => {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.phonenumber || "N/A"}</Text>
+              <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
             </View>
 
             <View style={styles.infoRow}>
@@ -95,14 +95,10 @@ const styles = StyleSheet.create({
     fontSize: 16, // Added font size for better readability
   },
   card: {
-    backgroundColor: "#FFFFFF", // Updated color for a cleaner look
-    borderRadius: 10, // Adjusted border radius for modern look
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000000",
-    shadowOpacity: 0.4, // Increased shadow opacity for better depth
-    shadowRadius: 1,
-    elevation: 2,
+    borderWidth: 1,          // Adds border width
+    borderColor: '#D1D5DB', // Sets the color of the border
+    borderRadius: 10,        // Adds rounded corners to the border
+    padding: 10,  
   },
   statusContainer: {
     marginBottom: 12,

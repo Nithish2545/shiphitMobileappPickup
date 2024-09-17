@@ -56,7 +56,7 @@ const Runsheet = ({ userData}) => {
                       : styles.textDefault,
                   ]}
                 >
-                  Incoming Manifest
+                  WAREHOUSE
                 </Text>
               </View>
             </View>
@@ -67,8 +67,8 @@ const Runsheet = ({ userData}) => {
             </View>
 
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Consignee:</Text>
-              <Text style={styles.value}>{user.name || "N/A"}</Text>
+              <Text style={styles.label}>Consignor:</Text>
+              <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
             </View>
 
             <View style={styles.infoRow}>
@@ -83,7 +83,7 @@ const Runsheet = ({ userData}) => {
 
             <View style={styles.infoRow}>
               <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.phonenumber || "N/A"}</Text>
+              <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
             </View>
 
             <View style={styles.infoRow}>
@@ -108,14 +108,10 @@ const styles = StyleSheet.create({
     fontSize: 16, // Added font size for better readability
   },
   card: {
-    backgroundColor: "#FFFFFF", // Updated color for a cleaner look
-    borderRadius: 10, // Adjusted border radius for modern look
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000000",
-    shadowOpacity: 0.2, // Increased shadow opacity for better depth
-    shadowRadius: 8,
-    elevation: 5,
+    borderWidth: 1,          // Adds border width
+    borderColor: '#D1D5DB', // Sets the color of the border
+    borderRadius: 10,        // Adds rounded corners to the border
+    padding: 10,  
   },
   statusContainer: {
     marginBottom: 12,
