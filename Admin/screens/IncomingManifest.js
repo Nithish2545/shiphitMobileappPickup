@@ -15,6 +15,7 @@ const Runsheet = ({ userData}) => {
 
   const handleOpenMap = (latitude, longitude) => {
     // Handle map opening action
+    // Handle map opening action
     
   };
 
