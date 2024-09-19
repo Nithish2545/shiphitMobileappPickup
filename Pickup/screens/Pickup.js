@@ -172,6 +172,7 @@ export default function Admin() {
 }
 
 // Styles for the component
+// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
