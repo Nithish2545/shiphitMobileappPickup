@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"; // Import 
 
 const SignIn = ({ navigation }) => {
   const auth = FIREBASE_AUTH;
-
+  const [Autherror, setAuthError] = useState("");
   // Initialize useForm from react-hook-form
   const {
     control,
@@ -48,14 +48,20 @@ const SignIn = ({ navigation }) => {
         email: response.user.email,
         role: response.user.email === "deepak@gmail.com" ? "admin" : "pickup", // Assign role based on email
       };
-      
+
       // Store the user data in AsyncStorage
       await AsyncStorage.setItem("userData", JSON.stringify(userData));
 
       Alert.alert("Success", "Logged in successfully!");
-      
     } catch (error) {
-      console.log(error);
+      console.log(error.code);
+
+      if (error.code == "auth/invalid-credential") {
+        setAuthError("Invalid email or password. Please try again.");
+      } else {
+        setAuthError("Something went wrong. Please try again.");
+      }
+
       Alert.alert("Error", "Invalid credentials. Please try again.");
     }
   };
@@ -116,6 +122,8 @@ const SignIn = ({ navigation }) => {
         />
         {/* Error message for password */}
         <Text style={styles.errorText}>{errors.password?.message || " "}</Text>
+
+        {Autherror && <Text style={styles.autherror}>{Autherror}</Text>}
 
         {/* Sign In Button */}
         <TouchableOpacity
@@ -202,6 +210,14 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: 20,
   },
+  autherror :{
+    color :"red",
+    paddingTop:10,
+    paddingBottom:10,
+    display:"flex",
+    alignItems:"center",
+    justifyContent:"center"
+  }
 });
 
 export default SignIn;

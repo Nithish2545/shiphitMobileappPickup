@@ -104,7 +104,7 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
               <Picker
                 selectedValue={user.pickUpPersonName || ""}
                 style={styles.picker}
-                enabled={user.pickUpPersonName == "Unassign" || user.pickUpPersonName ==""  ? true : false}
+                enabled={user.pickUpPersonName == "Unassigned" || user.pickUpPersonName ==""  ? true : false}
                 onValueChange={(value) =>
                   handleAssignmentChange(user.awbNumber, value, user.id)
                 }

@@ -12,11 +12,10 @@ import { useEffect, useState } from "react";
 import Pickup from "./Pickup/screens/Pickup";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import PickupDetails from "./Pickup/screens/PickupDetails ";
-import Testing from "./Pickup/screens/Testing";
 import VendorDetails from "./Admin/screens/VendorDetails";
 
 export default function App() {
-  
+
   const Stack = createStackNavigator();
   const auth = FIREBASE_AUTH;
   const [currentUser, setcurrentUser] = useState(null); // Change to null initially
@@ -74,8 +73,8 @@ export default function App() {
         <>
           <Stack.Screen name="Pickup" component={Pickup} />
           <Stack.Screen name="PickupDetails" component={PickupDetails} />
-          </> 
-        ) : 
+          </>
+        ) :
         // <Stack.Screen name="Testing" component={Testing} />
         null
         }

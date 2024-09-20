@@ -1,11 +1,11 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, browserLocalPersistence, browserSessionPersistence } from "firebase/auth"; // Web-specific imports
+import { initializeAuth, getReactNativePersistence } from "firebase/auth"; // React Native-specific imports
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getStorage } from "firebase/storage";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { Platform } from 'react-native'; // Import Platform to detect mobile/web
 
-// Your web app's Firebase configuration
+// Your Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCXT0P7ORMI7WFf0yU6anrqRlnGywLDwRE",
   authDomain: "shiphitmobileapppickup.firebaseapp.com",
@@ -17,6 +17,28 @@ const firebaseConfig = {
 
 // Initialize Firebase
 export const FIREBASE_APP = initializeApp(firebaseConfig);
-export const FIREBASE_AUTH = getAuth(FIREBASE_APP);
 
+// Conditionally initialize Firebase Auth based on the platform
+export let FIREBASE_AUTH;
+
+if (Platform.OS === 'web') {
+  // Web-based Firebase Auth with browser persistence
+  FIREBASE_AUTH = getAuth(FIREBASE_APP);
+
+  // Optionally, set the persistence to localStorage or sessionStorage
+  FIREBASE_AUTH.setPersistence(browserLocalPersistence)  // You can also use browserSessionPersistence here
+    .then(() => {
+      console.log("Web auth persistence set to local storage");
+    })
+    .catch((error) => {
+      console.error("Error setting auth persistence on web: ", error);
+    });
+} else {
+  // React Native-based Firebase Auth with AsyncStorage persistence
+  FIREBASE_AUTH = initializeAuth(FIREBASE_APP, {
+    persistence: getReactNativePersistence(AsyncStorage)
+  });
+}
+
+// Initialize Firebase Storage
 export const storage = getStorage(FIREBASE_APP);

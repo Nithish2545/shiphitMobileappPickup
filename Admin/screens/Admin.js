@@ -19,6 +19,8 @@ import EvilIcons from "@expo/vector-icons/EvilIcons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { signOut } from "firebase/auth";
+import { FIREBASE_AUTH } from "../../FirebaseConfig";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,20 @@ export default function Admin() {
   const API_URL = apiURLs.sheetDB;
   const pickupPersons = ["Unassigned", "anish", "sathish"];
   const [currentTab, setcurrentTab] = useState("RUN SHEET");
-
+  const handleSignOut = () => {
+    if (FIREBASE_AUTH) {
+      signOut(FIREBASE_AUTH) // Pass the Firebase auth instance to signOut
+        .then(() => {
+          console.log("Sign-out successful.");
+          // You can navigate to the login screen or reset the state here
+        })
+        .catch((error) => {
+          console.error("Error signing out:", error);
+        });
+    } else {
+      console.error("Firebase Auth is not initialized.");
+    }
+  };
   // Fetch assignments from Google Sheets
   const fetchAssignments = async () => {
     try {
@@ -51,7 +66,7 @@ export default function Admin() {
         const token = localStorage.getItem("authToken");
         if (token) {
           const user = JSON.parse(token);
-          setUserRole(user.role);
+          // setUserRole(user.role);
         }
       } catch (error) {
         console.error("Error fetching user role:", error);
@@ -109,6 +124,9 @@ export default function Admin() {
   return (
     <View style={styles.container}>
       {/* Navigation Tabs */}
+      <View style={styles.signout}>
+      <Text style={{padding:5 , backgroundColor:"red" , color:"white", fontWeight:700 , alignSelf:"flex-start"}} onPress={handleSignOut}>Sign out</Text>
+      </View>
       <View style={styles.nav}>
         <TouchableOpacity onPress={() => handleTabChange("RUN SHEET")}>
           <Text>
@@ -193,6 +211,10 @@ export default function Admin() {
 
 // Styles for the component
 const styles = StyleSheet.create({
+  signout:{
+marginBottom:30,
+display:"flex", 
+  },
   container: {
     flex: 1,
     paddingTop: 0,
