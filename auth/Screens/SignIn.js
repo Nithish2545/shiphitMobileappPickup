@@ -16,6 +16,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage"; // Import 
 const SignIn = ({ navigation }) => {
   const auth = FIREBASE_AUTH;
   const [Autherror, setAuthError] = useState("");
+  const [loading, setLoading] = useState(false); // Add loading state
+
   // Initialize useForm from react-hook-form
   const {
     control,
@@ -26,6 +28,7 @@ const SignIn = ({ navigation }) => {
   // Handle SignIn action
   const handleSignIn = async (data) => {
     const { email, password } = data;
+    setLoading(true); // Set loading to true when starting sign-in
 
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
@@ -51,18 +54,16 @@ const SignIn = ({ navigation }) => {
 
       // Store the user data in AsyncStorage
       await AsyncStorage.setItem("userData", JSON.stringify(userData));
-
-      Alert.alert("Success", "Logged in successfully!");
+      setLoading(false); // Stop loading after successful sign-in
     } catch (error) {
       console.log(error.code);
+      setLoading(false); // Stop loading after error
 
-      if (error.code == "auth/invalid-credential") {
+      if (error.code === "auth/invalid-credential") {
         setAuthError("Invalid email or password. Please try again.");
       } else {
         setAuthError("Something went wrong. Please try again.");
       }
-
-      Alert.alert("Error", "Invalid credentials. Please try again.");
     }
   };
 
@@ -127,12 +128,24 @@ const SignIn = ({ navigation }) => {
 
         {/* Sign In Button */}
         <TouchableOpacity
-          style={styles.button}
+          style={[styles.button]} // Update button style when loading
           onPress={handleSubmit(handleSignIn)}
+          disabled={loading} // Disable the button when loading
         >
-          <Text style={styles.buttonText}>Sign In</Text>
+          <View style={styles.buttonContent}>
+            <Text style={styles.buttonText}>Sign In</Text>
+            {/* {loading && (
+              <LottieView
+                source={require("../../assets/loading.json")} // Replace with your Lottie file path
+                autoPlay
+                loop
+                style={styles.lottie}
+              />
+            )} */}
+          </View>
         </TouchableOpacity>
       </View>
+
       <View style={styles.footer}>
         <TouchableOpacity
           onPress={() =>
@@ -188,10 +201,34 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginTop: 16,
   },
+  buttonLoading: {
+    color: "White",
+  },
   buttonText: {
     color: "#FFFFFF",
     fontWeight: "700",
     fontSize: 18,
+    position: "relative",
+  },
+  buttonContent: {
+    flexDirection: "row", // Aligns Sign In text and Lottie horizontally
+    justifyContent: "center", // Centers content horizontally
+    alignItems: "center", // Aligns items vertically within the button
+  },
+  buttonTextLoading: {
+    color: "white", // Darker text when loading
+    fontWeight: "700",
+    fontSize: 18,
+    marginRight: 10, // Add space before the loader
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  lottie: {
+    width: 30,
+    height: 30,
+    marginLeft: 10, // Adds spacing between text and Lottie
   },
   footer: {
     marginTop: 15,
@@ -210,14 +247,14 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: 20,
   },
-  autherror :{
-    color :"red",
-    paddingTop:10,
-    paddingBottom:10,
-    display:"flex",
-    alignItems:"center",
-    justifyContent:"center"
-  }
+  autherror: {
+    color: "red",
+    paddingTop: 10,
+    paddingBottom: 10,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
 
 export default SignIn;

@@ -1,11 +1,4 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  ScrollView,
-  TouchableOpacity, // Use TouchableOpacity for clickable items
-} from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity } from "react-native";
 import axios from "axios";
 import apiURLs from "../../utility/googlescreen/apiURLs";
 import { useEffect, useState } from "react";
@@ -21,6 +14,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { signOut } from "firebase/auth";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -31,26 +25,22 @@ export default function Admin() {
   const API_URL = apiURLs.sheetDB;
   const pickupPersons = ["Unassigned", "anish", "sathish"];
   const [currentTab, setcurrentTab] = useState("RUN SHEET");
+
   const handleSignOut = () => {
-    if (FIREBASE_AUTH) {
-      signOut(FIREBASE_AUTH) // Pass the Firebase auth instance to signOut
-        .then(() => {
-          console.log("Sign-out successful.");
-          // You can navigate to the login screen or reset the state here
-        })
-        .catch((error) => {
-          console.error("Error signing out:", error);
-        });
-    } else {
-      console.error("Firebase Auth is not initialized.");
-    }
+    signOut(FIREBASE_AUTH)
+      .then(() => {
+        console.log("Sign-out successful.");
+      })
+      .catch((error) => {
+        console.error("Error signing out:", error);
+      });
   };
-  // Fetch assignments from Google Sheets
+
   const fetchAssignments = async () => {
     try {
       const result = await axios.get(API_URL);
       const assignmentsData = result.data.sheet1.reduce((acc, item) => {
-        acc[item.AWB_NUMBER] = item.PickUpPersonName; // Adjust based on your sheet structure
+        acc[item.AWB_NUMBER] = item.PickUpPersonName;
         return acc;
       }, {});
       setAssignments(assignmentsData);
@@ -59,36 +49,33 @@ export default function Admin() {
     }
   };
 
-  // Fetch user role from local storage
+  // Fetch user role using AsyncStorage
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
-        const token = localStorage.getItem("authToken");
+        const token = await AsyncStorage.getItem("authToken");
         if (token) {
           const user = JSON.parse(token);
-          // setUserRole(user.role);
+          setUserRole(user.role); // Correctly set the user role
         }
       } catch (error) {
-        console.error("Error fetching user role:", error);
+        console.error("Error fetching user role from AsyncStorage", error);
       }
     };
     fetchUserRole();
   }, []);
 
-  // Fetch data and assignments
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const result = await axios.get(API_URL);
         setUserData(result.data.sheet1);
-        await fetchAssignments(); // Fetch assignments after user data is loaded
+        await fetchAssignments();
       } catch (error) {
         if (error.response) {
           setError(
-            `Error ${error.response.status}: ${
-              error.response.data.message || error.message
-            }`
+            `Error ${error.response.status}: ${error.response.data.message || error.message}`
           );
         } else if (error.request) {
           setError("Network error. Please check your connection.");
@@ -104,18 +91,14 @@ export default function Admin() {
 
   // Filter data based on STATUS
   const currentItems = userData.filter((user) => user.status === "RUN SHEET");
-  console.log(currentItems);
   const incomingManifestItems = userData.filter(
     (user) => user.status === "INCOMING MANIFEST"
   );
-  const paymentPending = userData.filter(
-    (user) => user.status === "PAYMENT PENDING"
-  );
+  const paymentPending = userData.filter((user) => user.status === "PAYMENT PENDING");
   const paymentDone = userData.filter((user) => user.status === "PAYMENT DONE");
   const shipmentconnected = userData.filter(
     (user) => user.status === "SHIPMENT CONNECTED"
   );
-  // Tab switching logic
 
   const handleTabChange = (tab) => {
     setcurrentTab(tab);
@@ -123,9 +106,19 @@ export default function Admin() {
 
   return (
     <View style={styles.container}>
-      {/* Navigation Tabs */}
       <View style={styles.signout}>
-      <Text style={{padding:5 , backgroundColor:"red" , color:"white", fontWeight:700 , alignSelf:"flex-start"}} onPress={handleSignOut}>Sign out</Text>
+        <Text
+          style={{
+            padding: 5,
+            backgroundColor: "red",
+            color: "white",
+            fontWeight: 700,
+            alignSelf: "flex-start",
+          }}
+          onPress={handleSignOut}
+        >
+          Sign out
+        </Text>
       </View>
       <View style={styles.nav}>
         <TouchableOpacity onPress={() => handleTabChange("RUN SHEET")}>
@@ -146,7 +139,6 @@ export default function Admin() {
             />
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity onPress={() => handleTabChange("PAYMENT PENDING")}>
           <Text>
             <MaterialIcons
@@ -156,7 +148,6 @@ export default function Admin() {
             />
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity onPress={() => handleTabChange("PAYMENT DONE")}>
           <Text>
             <Ionicons
@@ -166,21 +157,16 @@ export default function Admin() {
             />
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity onPress={() => handleTabChange("SHIPMENT CONNECTED")}>
           <Text>
             <MaterialIcons
               name="flight"
               size={32}
-              color={
-                currentTab === "SHIPMENT CONNECTED" ? "#8647D3" : "#A985D4"
-              }
+              color={currentTab === "SHIPMENT CONNECTED" ? "#8647D3" : "#A985D4"}
             />
           </Text>
         </TouchableOpacity>
       </View>
-
-      {/* Loading and Error Handling */}
 
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
@@ -191,7 +177,6 @@ export default function Admin() {
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
-          {/* Conditionally Render Components Based on Current Tab */}
           {currentTab === "RUN SHEET" ? (
             <Runsheet userData={currentItems} pickupPersons={pickupPersons} />
           ) : currentTab === "INCOMING MANIFEST" ? (
@@ -209,11 +194,10 @@ export default function Admin() {
   );
 }
 
-// Styles for the component
 const styles = StyleSheet.create({
-  signout:{
-marginBottom:30,
-display:"flex", 
+  signout: {
+    marginBottom: 30,
+    display: "flex",
   },
   container: {
     flex: 1,
@@ -225,7 +209,7 @@ display:"flex",
     position: "relative",
   },
   scrollContainer: {
-    paddingBottom: 100, // Ensure scrollable content doesn't overlap with nav
+    paddingBottom: 100,
   },
   errorText: {
     color: "red",
@@ -250,7 +234,7 @@ display:"flex",
     fontSize: 16,
   },
   highlight: {
-    color: "#8647D3", // Highlight color for active tab
+    color: "#8647D3",
     fontWeight: "bold",
     fontSize: 16,
   },

@@ -10,51 +10,49 @@ import PaymentPending from "./Admin/screens/PaymentPending";
 import { FIREBASE_AUTH } from "./FirebaseConfig";
 import { useEffect, useState } from "react";
 import Pickup from "./Pickup/screens/Pickup";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import PickupDetails from "./Pickup/screens/PickupDetails ";
+import PickupDetails from  "./Pickup/screens/PickupDetails";
 import VendorDetails from "./Admin/screens/VendorDetails";
 
 export default function App() {
 
   const Stack = createStackNavigator();
   const auth = FIREBASE_AUTH;
-  const [currentUser, setcurrentUser] = useState(null); // Change to null initially
+  const [currentUserRole, setCurrentUserRole] = useState(null); // Change to null initially
 
   useEffect(() => {
     // Setting up the auth state listener
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        try {
-          const userData = await AsyncStorage.getItem("userData");
-          if (userData) {
-            const parsedUserData = JSON.parse(userData);
-            setcurrentUser(parsedUserData.role); // Set role as currentUser
-          } else {
-            setcurrentUser(""); // Fallback in case userData is not found
-          }
-        } catch (error) {
-          console.error("Error fetching user data from AsyncStorage:", error);
+        const userEmail = user.email;
+        console.log("User email:", userEmail); // Debug log for email
+
+        // Check if the email is 'deepak@gmail.com' and set role accordingly
+        if (userEmail === "deepak@gmail.com") {
+          setCurrentUserRole("admin");
+        } else {
+          setCurrentUserRole("pickup");
         }
       } else {
-        setcurrentUser(""); // Clear current user if not authenticated
+        setCurrentUserRole(""); // Clear the user role if not authenticated
       }
     });
 
     // Cleanup the listener on unmount
     return () => unsubscribe();
-  }, []);
+  }, [auth]);
 
   // Show a loading state while checking auth
-  if (currentUser === null) {
+  if (currentUserRole === null) {
     return null; // Or a loading spinner, etc.
   }
+
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {currentUser === "" ? (
+        {currentUserRole === "" ? (
           // If no user is logged in, show SignIn screen
           <Stack.Screen name="SignIn" component={SignIn} />
-        ) : currentUser === "admin" ? (
+        ) : currentUserRole === "admin" ? (
           // If the logged-in user is admin, show Admin screens
           <>
             <Stack.Screen name="Admin" component={Admin} />
@@ -68,15 +66,13 @@ export default function App() {
             <Stack.Screen name="PaymentDone" component={PaymentDone} />
             <Stack.Screen name="VendorDetails" component={VendorDetails} />
           </>
-        ) : currentUser === "pickup" ? (
+        ) : currentUserRole === "pickup" ? (
           // If the logged-in user is a pickup person, show Pickup screens
-        <>
-          <Stack.Screen name="Pickup" component={Pickup} />
-          <Stack.Screen name="PickupDetails" component={PickupDetails} />
+          <>
+            <Stack.Screen name="Pickup" component={Pickup} />
+            <Stack.Screen name="PickupDetails" component={PickupDetails} />
           </>
-        ) :
-        // <Stack.Screen name="Testing" component={Testing} />
-        null
+        ) : null
         }
       </Stack.Navigator>
     </NavigationContainer>

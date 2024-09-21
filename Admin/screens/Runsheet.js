@@ -8,10 +8,6 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
   const [userData, setUserData] = useState(initialData); 
   const API_URL = apiURLs.sheety;
 
-  const handleCardPress = (awbNumber) => {
-    // Handle card press action
-  };
-
   const handleOpenMap = (latitude, longitude) => {
     const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
     Linking.openURL(url).catch(err => console.error("Failed to open URL:", err));
@@ -55,14 +51,14 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
   };
 
   return (
-    <View>
+    <View >
       {userData.length === 0 ? (
         <View style={styles.noPickups}>
           <Text style={styles.noPickupsText}>No pickups available</Text>
         </View>
       ) : (
         userData.map((user, index) => (
-        <View style={styles.card}>
+        <View style={styles.card} key={index}>
             <View style={styles.statusContainer}>
               <View
                 style={[
@@ -162,6 +158,7 @@ const styles = StyleSheet.create({
     borderColor: '#D1D5DB', // Sets the color of the border
     borderRadius: 10,        // Adds rounded corners to the border
     padding: 10,  
+    marginBottom:30
   },
   statusContainer: {
     marginBottom: 12,
