@@ -55,7 +55,7 @@ const PickupCompleted = ({ userData, pickupPersons }) => {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Consignee:</Text>
-              <Text style={styles.value}>{user.name || "N/A"}</Text>
+              <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Country</Text>
@@ -67,7 +67,7 @@ const PickupCompleted = ({ userData, pickupPersons }) => {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.phonenumber || "N/A"}</Text>
+              <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup DateTime:</Text>

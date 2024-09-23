@@ -27,7 +27,7 @@ export default function App() {
         console.log("User email:", userEmail); // Debug log for email
 
         // Check if the email is 'deepak@gmail.com' and set role accordingly
-        if (userEmail === "deepak@gmail.com") {
+        if (userEmail === "dhanush@gmail.com") {
           setCurrentUserRole("admin");
         } else {
           setCurrentUserRole("pickup");
@@ -45,6 +45,8 @@ export default function App() {
   if (currentUserRole === null) {
     return null; // Or a loading spinner, etc.
   }
+
+  console.log(currentUserRole)
 
   return (
     <NavigationContainer>

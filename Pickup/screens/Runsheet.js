@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 const Runsheet = ({ userData }) => {
@@ -13,6 +13,8 @@ const Runsheet = ({ userData }) => {
 
   const handleOpenMap = (latitude, longitude) => {
     const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
+    Linking.openURL(url).catch(err => console.error("Failed to open URL:", err));
+  
   };
 
   return (
@@ -54,12 +56,12 @@ const Runsheet = ({ userData }) => {
               </View>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Pending No:</Text>
+              <Text style={styles.label}>AWB Number:</Text>
               <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Consignee:</Text>
-              <Text style={styles.value}>{user.name || "N/A"}</Text>
+              <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Country:</Text>
@@ -71,7 +73,7 @@ const Runsheet = ({ userData }) => {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.phonenumber || "N/A"}</Text>
+              <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup DateTime:</Text>

@@ -7,62 +7,65 @@ import {
   StyleSheet,
   Alert,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useForm, Controller } from "react-hook-form";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SignIn = ({ navigation }) => {
   const auth = FIREBASE_AUTH;
   const [Autherror, setAuthError] = useState("");
-  const [loading, setLoading] = useState(false); // Add loading state
+  const [loading, setLoading] = useState(false);
 
-  // Initialize useForm from react-hook-form
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
+  const { control, handleSubmit, formState: { errors } } = useForm();
 
-  // Handle SignIn action
   const handleSignIn = async (data) => {
     const { email, password } = data;
-    setLoading(true); // Set loading to true when starting sign-in
+    setLoading(true);
+    setAuthError("");  // Clear previous error
 
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log(response);
 
-      // Check if the email is 'deepak@gmail.com' to assign the role
       let userData = {
         name: (() => {
           switch (response.user.email) {
-            case "deepak@gmail.com":
-              return "deepak";
+            case "dhanush@gmail.com":
+              return "dhanush";
             case "sathish@gmail.com":
               return "sathish";
-            case "anish@gmail.com":
-              return "anish";
+            case "sangeetha@gmail.com":
+              return "sangeetha";
             default:
               return response.user.email;
           }
         })(),
         email: response.user.email,
-        role: response.user.email === "deepak@gmail.com" ? "admin" : "pickup", // Assign role based on email
+        role: response.user.email === "dhanush@gmail.com" ? "admin" : "pickup",
       };
 
-      // Store the user data in AsyncStorage
       await AsyncStorage.setItem("userData", JSON.stringify(userData));
-      setLoading(false); // Stop loading after successful sign-in
+      setLoading(false);
     } catch (error) {
       console.log(error.code);
-      setLoading(false); // Stop loading after error
+      setLoading(false);
 
-      if (error.code === "auth/invalid-credential") {
-        setAuthError("Invalid email or password. Please try again.");
-      } else {
-        setAuthError("Something went wrong. Please try again.");
+      // Map Firebase errors to custom messages
+      switch (error.code) {
+        case "auth/invalid-email":
+          setAuthError("Invalid email address.");
+          break;
+        case "auth/wrong-password":
+          setAuthError("Incorrect password.");
+          break;
+        case "auth/user-not-found":
+          setAuthError("No user found with this email.");
+          break;
+        default:
+          setAuthError("Something went wrong. Please try again.");
       }
     }
   };
@@ -72,7 +75,6 @@ const SignIn = ({ navigation }) => {
       <Image source={require("../.././assets/logo.png")} style={styles.logo} />
       <Text style={styles.title}>Sign In</Text>
       <View style={styles.form}>
-        {/* Email Input */}
         <View style={styles.inputContainer}>
           <Controller
             control={control}
@@ -95,11 +97,9 @@ const SignIn = ({ navigation }) => {
               />
             )}
           />
-          {/* Error message for email */}
           <Text style={styles.errorText}>{errors.email?.message || " "}</Text>
         </View>
 
-        {/* Password Input */}
         <Controller
           control={control}
           name="password"
@@ -121,27 +121,21 @@ const SignIn = ({ navigation }) => {
             />
           )}
         />
-        {/* Error message for password */}
         <Text style={styles.errorText}>{errors.password?.message || " "}</Text>
 
         {Autherror && <Text style={styles.autherror}>{Autherror}</Text>}
 
-        {/* Sign In Button */}
         <TouchableOpacity
-          style={[styles.button]} // Update button style when loading
+          style={[styles.button, loading && styles.buttonDisabled]}
           onPress={handleSubmit(handleSignIn)}
-          disabled={loading} // Disable the button when loading
+          disabled={loading}
         >
           <View style={styles.buttonContent}>
-            <Text style={styles.buttonText}>Sign In</Text>
-            {/* {loading && (
-              <LottieView
-                source={require("../../assets/loading.json")} // Replace with your Lottie file path
-                autoPlay
-                loop
-                style={styles.lottie}
-              />
-            )} */}
+            {loading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>Sign In</Text>
+            )}
           </View>
         </TouchableOpacity>
       </View>
@@ -201,34 +195,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginTop: 16,
   },
-  buttonLoading: {
-    color: "White",
+  buttonDisabled: {
+    backgroundColor: "#9CA3AF", // lighter shade when disabled
+  },
+  buttonContent: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   buttonText: {
     color: "#FFFFFF",
     fontWeight: "700",
     fontSize: 18,
-    position: "relative",
-  },
-  buttonContent: {
-    flexDirection: "row", // Aligns Sign In text and Lottie horizontally
-    justifyContent: "center", // Centers content horizontally
-    alignItems: "center", // Aligns items vertically within the button
-  },
-  buttonTextLoading: {
-    color: "white", // Darker text when loading
-    fontWeight: "700",
-    fontSize: 18,
-    marginRight: 10, // Add space before the loader
-  },
-  loadingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  lottie: {
-    width: 30,
-    height: 30,
-    marginLeft: 10, // Adds spacing between text and Lottie
   },
   footer: {
     marginTop: 15,
@@ -242,7 +220,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: "red",
-    minHeight: 20, // Fixed height for error text
+    minHeight: 20,
   },
   inputContainer: {
     marginBottom: 20,
@@ -251,9 +229,6 @@ const styles = StyleSheet.create({
     color: "red",
     paddingTop: 10,
     paddingBottom: 10,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
   },
 });
 
