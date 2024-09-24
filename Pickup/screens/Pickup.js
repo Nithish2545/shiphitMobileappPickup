@@ -116,9 +116,8 @@ export default function Admin() {
   };
 
   useEffect(() => {
-fetchData()
-
-  }, [])
+    fetchData();
+  }, []);
 
   // Refresh Handler
   const onRefresh = async () => {
@@ -127,8 +126,8 @@ fetchData()
     setRefreshing(false); // Stop refreshing
   };
 
-  // Filter data based on 
-  console.log(userData)
+  // Filter data based on
+  console.log(userData);
   const currentItems = userData.filter(
     (user) => user.status === "RUN SHEET" && user.pickUpPersonName === userName
   );
@@ -146,11 +145,20 @@ fetchData()
       <View style={styles.signout}>
         <Text
           style={{
-            padding: 5,
-            backgroundColor: "red",
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            backgroundColor: "#8647D3", // The primary purple color
             color: "white",
-            fontWeight: 700,
-            alignSelf: "flex-start",
+            fontWeight: "bold",
+            borderRadius: 8, // Rounded corners
+            textAlign: "center",
+            borderWidth: 2,
+            borderColor: "#5A2E91", // Darker purple for the border
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            elevation: 5, // Elevation for Android shadow
           }}
           onPress={handleSignOut}
         >
@@ -202,17 +210,26 @@ fetchData()
 }
 
 const styles = StyleSheet.create({
+  signout: {
+    display: "flex",
+    padding: 10,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    height: 70,
+    borderBottomWidth: 1, // Adds the bottom border
+    borderBottomColor: "lightgrey", // Use a color for the border (you can adjust it as needed)
+  },
   container: {
     flex: 1,
     paddingTop: 0,
-    padding: 16,
     backgroundColor: "#fff",
     paddingTop: 50,
     paddingBottom: 50,
     position: "relative",
   },
   scrollContainer: {
-    paddingBottom: 100,
+    padding:10,
   },
   errorText: {
     color: "red",

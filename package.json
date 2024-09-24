@@ -28,7 +28,7 @@
     "expo-notifications": "~0.28.17",
     "expo-status-bar": "~1.12.1",
     "firebase": "^10.13.2",
-    "lottie-react-native": "^6.7.0",
+    "lottie-react-native": "6.7.0",
     "native-notify": "^4.0.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
