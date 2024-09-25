@@ -1,4 +1,12 @@
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+} from "react-native";
 import axios from "axios";
 import apiURLs from "../../utility/googlescreen/apiURLs";
 import { useEffect, useState } from "react";
@@ -70,16 +78,38 @@ export default function Admin() {
     fetchUserRole();
   }, []);
 
+  const parsePickupDateTime = (dateTimeString) => {
+    const [datePart, timePart] = dateTimeString.split("&"); // Split date and time
+    const [year, month, day] = datePart.split("-"); // Get year, month, day
+    const [hour, minute] = timePart.split(" ")[0].split(":"); // Get hour and minute
+
+    // Convert hour to 24-hour format if it's PM
+    const isPM = timePart.includes("PM") && hour !== "12";
+    const adjustedHour = isPM ? parseInt(hour, 10) + 12 : hour;
+    const date = new Date(year, month - 1, day, adjustedHour, minute || 0); // Create Date object
+    return date;
+  };
+
   const fetchData = async () => {
     setLoading(true);
+
     try {
       const result = await axios.get(API_URL);
-      setUserData(result.data.sheet1);
+      const sortedData = result.data.sheet1.sort((a, b) => {
+        const dateTimeA = parsePickupDateTime(a.pickupDatetime);
+        const dateTimeB = parsePickupDateTime(b.pickupDatetime);
+        return dateTimeA - dateTimeB; // Sort by date and time
+      });
+      setUserData(sortedData);
+      console.log(sortedData);
+      parsePickupDateTime;
       await fetchAssignments(); // Fetch assignments
     } catch (error) {
       if (error.response) {
         setError(
-          `Error ${error.response.status}: ${error.response.data.message || error.message}`
+          `Error ${error.response.status}: ${
+            error.response.data.message || error.message
+          }`
         );
       } else if (error.request) {
         setError("Network error. Please check your connection.");
@@ -100,7 +130,9 @@ export default function Admin() {
   const incomingManifestItems = userData.filter(
     (user) => user.status === "INCOMING MANIFEST"
   );
-  const paymentPending = userData.filter((user) => user.status === "PAYMENT PENDING");
+  const paymentPending = userData.filter(
+    (user) => user.status === "PAYMENT PENDING"
+  );
   const paymentDone = userData.filter((user) => user.status === "PAYMENT DONE");
   const shipmentconnected = userData.filter(
     (user) => user.status === "SHIPMENT CONNECTED"
@@ -115,11 +147,20 @@ export default function Admin() {
       <View style={styles.signout}>
         <Text
           style={{
-            padding: 5,
-            backgroundColor: "red",
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            backgroundColor: "#8647D3", // The primary purple color
             color: "white",
-            fontWeight: "700",
-            alignSelf: "flex-start",
+            fontWeight: "bold",
+            borderRadius: 8, // Rounded corners
+            textAlign: "center",
+            borderWidth: 2,
+            borderColor: "#5A2E91", // Darker purple for the border
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            elevation: 5, // Elevation for Android shadow
           }}
           onPress={handleSignOut}
         >
@@ -195,20 +236,27 @@ export default function Admin() {
 
 const styles = StyleSheet.create({
   signout: {
-    marginBottom: 30,
     display: "flex",
+    padding: 10,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    height: 70,
+
+    borderBottomWidth: 1, // Adds the bottom border
+    borderBottomColor: "lightgrey",
   },
   container: {
     flex: 1,
     paddingTop: 0,
-    padding: 16,
     backgroundColor: "#fff",
     paddingTop: 50,
     paddingBottom: 50,
     position: "relative",
   },
   scrollContainer: {
-    paddingBottom: 100,
+    paddingBottom: 50,
+    padding: 16,
   },
   errorText: {
     color: "red",

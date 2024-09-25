@@ -11,6 +11,7 @@ const Runsheet = ({ userData }) => {
     navigation.navigate("PickupDetails", { awbnumber: awbNumber });
   };
 
+
   const handleOpenMap = (latitude, longitude) => {
     const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
     Linking.openURL(url).catch(err => console.error("Failed to open URL:", err));

@@ -15,6 +15,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "../../FirebaseConfig";
 import apiURLs from "../../utility/googlescreen/apiURLs";
 import * as ImagePicker from "expo-image-picker";
+import { TouchableOpacity } from "react-native";
 // import Ionicons from "react-native-vector-icons/Ionicons"; // Import vector icons
 
 const API_URL = apiURLs.sheety;
@@ -60,7 +61,7 @@ const PickupDetails = () => {
     const storageRef = ref(storage, `${awbnumber}/${folder}/${file.fileName}`);
     await uploadBytes(storageRef, blob);
     const url = await getDownloadURL(storageRef);
-    console.log(url)
+    console.log(url);
     return url;
   };
 
@@ -220,7 +221,9 @@ const PickupDetails = () => {
     <View>
       <ScrollView contentContainerStyle={styles.container}>
         <View>
-          <Text style={styles.backButton} onPress={handleGoBack}>Back</Text>
+          <Text style={styles.backButton} onPress={handleGoBack}>
+            Back
+          </Text>
         </View>
         {details ? (
           <View>
@@ -258,6 +261,7 @@ const PickupDetails = () => {
 
             <View style={styles.formContainer}>
               <Text style={styles.subtitle}>Update Details</Text>
+              <Text style={styles.weighttext}>Pickup weight</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Enter Pickup Weight"
@@ -265,14 +269,17 @@ const PickupDetails = () => {
                 onChangeText={setPickupWeight}
                 keyboardType="numeric"
               />
+              <Text style={styles.weighttext}>No. of boxes</Text>
               <View style={styles.quantityContainer}>
-                <Button
-                  title="-"
-                  onPress={() =>
-                    setNumberOfPackages(Math.max(1, numberOfPackages - 1))
-                  }
-                  color="#8447D6"
-                />
+                <TouchableOpacity
+                  style={styles.increDecre}
+                  onPress={() => {
+                    setNumberOfPackages(numberOfPackages - 1);
+                  }}
+                >
+                  <Text style={styles.buttonText}>-</Text>
+                </TouchableOpacity>
+
                 <TextInput
                   style={styles.quantityInput}
                   value={numberOfPackages.toString()}
@@ -281,11 +288,12 @@ const PickupDetails = () => {
                   }
                   keyboardType="numeric"
                 />
-                <Button
-                  title="+"
+                <TouchableOpacity
+                  style={styles.increDecre}
                   onPress={() => setNumberOfPackages(numberOfPackages + 1)}
-                  color="#8447D6"
-                />
+                >
+                  <Text style={styles.buttonText}>+</Text>
+                </TouchableOpacity>
               </View>
 
               <FileInput
@@ -366,6 +374,26 @@ const FileInput = ({ label, files, onAddFiles, onRemoveFile }) => (
 );
 
 const styles = StyleSheet.create({
+  increDecre: {
+    paddingLeft: 15,
+    paddingRight: 15,
+    paddingTop: 4,
+    paddingBottom: 4,
+    backgroundColor: "#8447D6",
+    borderRadius: 5, // Optional: Add border radius for a rounded button
+    alignItems: "center", // Center the text inside the button
+  },
+  buttonText: {
+    color: "#FFFFFF", // White text color
+    fontSize: 30, // Font size for the text
+  },
+  weighttext: {
+    color: "#8447D6",
+    fontSize: 18,
+    marginBottom: 10,
+    marginTop: 10,
+    fontWeight: "700",
+  },
   container: {
     flexGrow: 1,
     padding: 16,
@@ -375,7 +403,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginBottom: 16,
-    fontSize:20,
+    fontSize: 20,
   },
   center: {
     flex: 1,
@@ -437,6 +465,7 @@ const styles = StyleSheet.create({
     padding: 8,
     marginHorizontal: 8,
     width: 60,
+    fontSize: 16,
     textAlign: "center",
   },
   fileContainer: {
