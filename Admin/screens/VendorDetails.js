@@ -13,7 +13,6 @@ import { FontAwesome } from "@expo/vector-icons";
 import apiURLs from "../../utility/googlescreen/apiURLs";
 
 function VendorDetails() {
-
   const route = useRoute();
   const navigation = useNavigation();
   const { awbnumber } = route.params;
@@ -54,9 +53,7 @@ function VendorDetails() {
       }
 
       const data = await response.json();
-      console.log(data);
-
-      console.log("Row updated successfully");
+      console.log("Row updated successfully", data);
     } catch (error) {
       console.error("Error updating row:", error);
     }
@@ -66,6 +63,7 @@ function VendorDetails() {
   const [vendorAwbnumber, setVendorAwbnumber] = useState("");
   const [actualNumPackages, setActualNumPackages] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false); // New state for submit loading
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -81,10 +79,9 @@ function VendorDetails() {
     fetchUserData();
   }, [awbnumber]);
 
-  console.log(user?.id);
-
   const handleSubmit = async () => {
     if (user && user.id) {
+      setIsSubmitting(true); // Start loading
       const details = {
         vendorAwbnumber: vendorAwbnumber,
         status: "SHIPMENT CONNECTED",
@@ -93,6 +90,7 @@ function VendorDetails() {
       await updateRowByID(user.id, details);
 
       setVendorAwbnumber("");
+      setIsSubmitting(false); // Stop loading
 
       navigation.navigate("Admin");
     } else {
@@ -101,7 +99,6 @@ function VendorDetails() {
   };
 
   if (loading)
-
     return (
       <ActivityIndicator size="large" color="#6B21A8" style={styles.loading} />
     );
@@ -153,14 +150,22 @@ function VendorDetails() {
           <TextInput
             value={vendorAwbnumber}
             onChangeText={setVendorAwbnumber}
-            placeholder="Enter  Vendor AWB number"
+            placeholder="Enter Vendor AWB number"
             keyboardType="numeric"
             style={styles.input}
           />
         </View>
 
-        <TouchableOpacity onPress={handleSubmit} style={styles.button}>
-          <Text style={styles.buttonText}>Submit</Text>
+        <TouchableOpacity
+          onPress={handleSubmit}
+          style={styles.button}
+          disabled={isSubmitting} // Disable button when submitting
+        >
+          {isSubmitting ? (
+            <ActivityIndicator size="small" color="#fff" /> // Loading spinner inside button
+          ) : (
+            <Text style={styles.buttonText}>Submit</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -175,10 +180,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   card: {
-    borderWidth: 1,          // Adds border width
-    borderColor: '#D1D5DB', // Sets the color of the border
-    borderRadius: 10,        // Adds rounded corners to the border
-    padding: 10,  
+    width: "90%",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 10,
+    padding: 10,
   },
   title: {
     fontSize: 24,
@@ -215,12 +221,14 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     fontSize: 16,
+    marginTop: 10,
   },
   button: {
     backgroundColor: "#6B21A8",
     paddingVertical: 12,
     borderRadius: 5,
     alignItems: "center",
+    opacity: 0.7, // Button transparency when disabled
   },
   buttonText: {
     color: "white",

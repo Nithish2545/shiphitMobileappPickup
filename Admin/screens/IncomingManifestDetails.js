@@ -1,62 +1,71 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+} from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome } from "@expo/vector-icons";
 import apiURLs from "../../utility/googlescreen/apiURLs";
 
 function IncomingManifestDetails() {
   const route = useRoute();
   const navigation = useNavigation();
   const { awbnumber } = route.params;
-  const API_URL =  apiURLs.sheety;
-const fetchRowByAWB = async (awbNumber) => {
-  try {
-    const response = await axios.get(API_URL);
-    const allUsers = response.data.sheet1;
-    const matchedUser = allUsers.find((user) => user.awbNumber === awbnumber);
-    return matchedUser;
-  } catch (error) {
-    console.error("Error fetching row by AWB number:", error);
-    return null;
-  }
-};
-
-const updateRowByID = async (rowId, updatedFields) => {
-  try {
-    const response = await fetch(`${API_URL}/${rowId}`, {
-      method: "PUT",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        sheet1: {
-          ...updatedFields,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Failed to update the row. Status: ${response.status}. Error: ${errorText}`
-      );
+  const API_URL = apiURLs.sheety;
+  
+  const fetchRowByAWB = async (awbNumber) => {
+    try {
+      const response = await axios.get(API_URL);
+      const allUsers = response.data.sheet1;
+      const matchedUser = allUsers.find((user) => user.awbNumber === awbnumber);
+      return matchedUser;
+    } catch (error) {
+      console.error("Error fetching row by AWB number:", error);
+      return null;
     }
+  };
 
-    const data = await response.json();
-    console.log(data);
-    
-    console.log("Row updated successfully");
-  } catch (error) {
-    console.error("Error updating row:", error);
-  }
-};
+  const updateRowByID = async (rowId, updatedFields) => {
+    try {
+      const response = await fetch(`${API_URL}/${rowId}`, {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sheet1: {
+            ...updatedFields,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to update the row. Status: ${response.status}. Error: ${errorText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log(data);
+
+      console.log("Row updated successfully");
+    } catch (error) {
+      console.error("Error updating row:", error);
+    }
+  };
 
   const [user, setUser] = useState(null);
   const [actualWeight, setActualWeight] = useState("");
-  const [actualNumPackages, setActualNumPackages] = useState("");
+  const [actualNumPackages, setActualNumPackages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false); // State for submit button loading
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -71,9 +80,13 @@ const updateRowByID = async (rowId, updatedFields) => {
 
     fetchUserData();
   }, [awbnumber]);
-console.log(user?.id)
+
+  console.log(user?.id);
+
   const handleSubmit = async () => {
     if (user && user.id) {
+      setIsSubmitting(true); // Start loading
+
       const details = {
         actualWeight: actualWeight,
         actualNoOfPackages: actualNumPackages,
@@ -84,6 +97,7 @@ console.log(user?.id)
 
       setActualWeight("");
       setActualNumPackages("");
+      setIsSubmitting(false); // Stop loading
 
       navigation.navigate("Admin");
     } else {
@@ -91,7 +105,10 @@ console.log(user?.id)
     }
   };
 
-  if (loading) return <ActivityIndicator size="large" color="#6B21A8" style={styles.loading} />;
+  if (loading)
+    return (
+      <ActivityIndicator size="large" color="#6B21A8" style={styles.loading} />
+    );
 
   return (
     <View style={styles.container}>
@@ -111,19 +128,34 @@ console.log(user?.id)
         <View style={styles.infoRow}>
           <Text style={styles.label}>Weight (Approx):</Text>
           <Text style={styles.value}>{user.weightapx}</Text>
-          <FontAwesome name="check-circle" size={20} color="green" style={styles.icon} />
+          <FontAwesome
+            name="check-circle"
+            size={20}
+            color="green"
+            style={styles.icon}
+          />
         </View>
 
         <View style={styles.infoRow}>
           <Text style={styles.label}>Post Pickup Weight:</Text>
           <Text style={styles.value}>{user.postPickupWeight}</Text>
-          <FontAwesome name="check-circle" size={20} color="green" style={styles.icon} />
+          <FontAwesome
+            name="check-circle"
+            size={20}
+            color="green"
+            style={styles.icon}
+          />
         </View>
 
         <View style={styles.infoRow}>
           <Text style={styles.label}>Post Pickup Packages:</Text>
           <Text style={styles.value}>{user.postNumberOfPackages}</Text>
-          <FontAwesome name="check-circle" size={20} color="green" style={styles.icon} />
+          <FontAwesome
+            name="check-circle"
+            size={20}
+            color="green"
+            style={styles.icon}
+          />
         </View>
 
         <View style={styles.inputGroup}>
@@ -133,25 +165,52 @@ console.log(user?.id)
             onChangeText={setActualWeight}
             placeholder="Enter actual weight"
             keyboardType="numeric"
-            style={styles.input}
+            style={styles.finalWeightInput}
           />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Final Number of Packages:</Text>
-          <TextInput
-            value={actualNumPackages}
-            onChangeText={setActualNumPackages}
-            placeholder="Enter number of packages"
-            keyboardType="numeric"
-            style={styles.input}
-          />
+          <View style={styles.increDecreContainer}>
+            {/* Decrement Button */}
+            <TouchableOpacity
+              style={styles.increDecreButton}
+              onPress={() =>
+                setActualNumPackages((prev) =>
+                  Math.max(1, parseInt(prev, 10) - 1)
+                )
+              }
+            >
+              <Text style={styles.buttonText}>-</Text>
+            </TouchableOpacity>
+
+            {/* Input Field */}
+            <Text style={styles.value}>{actualNumPackages}</Text>
+
+            {/* Increment Button */}
+            <TouchableOpacity
+              style={styles.increDecreButton}
+              onPress={() =>
+                setActualNumPackages((prev) => parseInt(prev, 10) + 1)
+              }
+            >
+              <Text style={styles.buttonText}>+</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <TouchableOpacity onPress={handleSubmit} style={styles.button}>
-          <Text style={styles.buttonText}>Submit</Text>
+        {/* Submit Button with Loading Indicator */}
+        <TouchableOpacity
+          onPress={handleSubmit}
+          style={styles.button}
+          disabled={isSubmitting} // Disable button while loading
+        >
+          {isSubmitting ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Submit</Text>
+          )}
         </TouchableOpacity>
-
       </View>
     </View>
   );
@@ -165,10 +224,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   card: {
-    borderWidth: 1,          // Adds border width
-    borderColor: '#D1D5DB', // Sets the color of the border
-    borderRadius: 10,        // Adds rounded corners to the border
-    padding: 10,  
+    width: "90%",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 10,
+    padding: 10,
   },
   title: {
     fontSize: 24,
@@ -192,19 +252,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#1F2937",
     marginLeft: 8,
+    marginRight: 8,
   },
   icon: {
     marginLeft: 8,
   },
   inputGroup: {
     marginBottom: 15,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
   },
   button: {
     backgroundColor: "#6B21A8",
@@ -220,6 +274,36 @@ const styles = StyleSheet.create({
   loading: {
     flex: 1,
     justifyContent: "center",
+  },
+  increDecreContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop:3
+  },
+  increDecreButton: {
+    backgroundColor: "#6B21A8",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  finalWeightInput: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 5,
+    padding: 10,
+    marginTop: 3,
+    fontSize: 16,
+    marginHorizontal: 10,
+    width: "90%",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 16,
   },
 });
 

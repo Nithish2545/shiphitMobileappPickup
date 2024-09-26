@@ -73,6 +73,7 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
       ) : (
         userData.map((user, index) => (
         <View style={styles.card} key={index}>
+
             <View style={styles.statusContainer}>
               <View
                 style={[
@@ -96,6 +97,7 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
                 >
                   RUN SHEET
                 </Text>
+                <Text style={{color:"green", fontWeight:"700"}}>{user.franchise}</Text>
               </View>
             </View>
 
@@ -135,8 +137,8 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
               <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
+              <Text style={styles.label}>Pickup Area</Text>
+              <Text style={styles.value}>{user.pickuparea || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup DateTime:</Text>
@@ -180,7 +182,11 @@ const styles = StyleSheet.create({
   },
   statusBadge: {
     paddingVertical: 6,
+    display:"flex",
+    justifyContent:"space-between",
+    flexDirection:"row",
     paddingHorizontal: 12,
+    backgroundColor: "#E2E8F0", // Light gray background for default status
     borderRadius: 20, // Updated border radius for a rounded badge
   },
   statusPending: {
