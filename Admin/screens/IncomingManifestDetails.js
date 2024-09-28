@@ -17,7 +17,7 @@ function IncomingManifestDetails() {
   const navigation = useNavigation();
   const { awbnumber } = route.params;
   const API_URL = apiURLs.sheety;
-  
+
   const fetchRowByAWB = async (awbNumber) => {
     try {
       const response = await axios.get(API_URL);
@@ -38,22 +38,13 @@ function IncomingManifestDetails() {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          sheet1: {
-            ...updatedFields,
-          },
-        }),
+        body: JSON.stringify({ sheet1: { ...updatedFields } }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(
-          `Failed to update the row. Status: ${response.status}. Error: ${errorText}`
-        );
+        throw new Error(`Failed to update the row. Status: ${response.status}. Error: ${errorText}`);
       }
-
-      const data = await response.json();
-      console.log(data);
 
       console.log("Row updated successfully");
     } catch (error) {
@@ -65,7 +56,10 @@ function IncomingManifestDetails() {
   const [actualWeight, setActualWeight] = useState("");
   const [actualNumPackages, setActualNumPackages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false); // State for submit button loading
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState(false);
+  const [errors, setErrors] = useState({ country: false, vendor: false });
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -81,12 +75,19 @@ function IncomingManifestDetails() {
     fetchUserData();
   }, [awbnumber]);
 
-  console.log(user?.id);
-
   const handleSubmit = async () => {
-    if (user && user.id) {
-      setIsSubmitting(true); // Start loading
+    setErrors({ country: false, vendor: false });
 
+    if (!selectedCountry) {
+      setErrors((prev) => ({ ...prev, country: true }));
+    }
+
+    if (!selectedVendor) {
+      setErrors((prev) => ({ ...prev, vendor: true }));
+    }
+
+    if (user && user.id && selectedCountry && selectedVendor) {
+      setIsSubmitting(true);
       const details = {
         actualWeight: actualWeight,
         actualNoOfPackages: actualNumPackages,
@@ -94,11 +95,9 @@ function IncomingManifestDetails() {
       };
 
       await updateRowByID(user.id, details);
-
       setActualWeight("");
-      setActualNumPackages("");
-      setIsSubmitting(false); // Stop loading
-
+      setActualNumPackages(1);
+      setIsSubmitting(false);
       navigation.navigate("Admin");
     } else {
       console.error("Cannot update row: User or Row ID is missing");
@@ -106,15 +105,12 @@ function IncomingManifestDetails() {
   };
 
   if (loading)
-    return (
-      <ActivityIndicator size="large" color="#6B21A8" style={styles.loading} />
-    );
+    return <ActivityIndicator size="large" color="#6B21A8" style={styles.loading} />;
 
   return (
     <View style={styles.container}>
       <View style={styles.card}>
         <Text style={styles.title}>Outgoing Manifest</Text>
-
         <View style={styles.info}>
           <Text style={styles.label}>AWB Number:</Text>
           <Text style={styles.value}>{user.awbNumber}</Text>
@@ -128,34 +124,39 @@ function IncomingManifestDetails() {
         <View style={styles.infoRow}>
           <Text style={styles.label}>Weight (Approx):</Text>
           <Text style={styles.value}>{user.weightapx}</Text>
-          <FontAwesome
-            name="check-circle"
-            size={20}
-            color="green"
-            style={styles.icon}
-          />
+          <FontAwesome name="check-circle" size={20} color="green" style={styles.icon} />
         </View>
 
         <View style={styles.infoRow}>
           <Text style={styles.label}>Post Pickup Weight:</Text>
           <Text style={styles.value}>{user.postPickupWeight}</Text>
-          <FontAwesome
-            name="check-circle"
-            size={20}
-            color="green"
-            style={styles.icon}
-          />
+          <FontAwesome name="check-circle" size={20} color="green" style={styles.icon} />
         </View>
 
         <View style={styles.infoRow}>
           <Text style={styles.label}>Post Pickup Packages:</Text>
           <Text style={styles.value}>{user.postNumberOfPackages}</Text>
-          <FontAwesome
-            name="check-circle"
-            size={20}
-            color="green"
-            style={styles.icon}
-          />
+          <FontAwesome name="check-circle" size={20} color="green" style={styles.icon} />
+        </View>
+
+        <View style={styles.infoRowFromTo}>
+          <Text style={styles.label}>From address:</Text>
+          <Text style={styles.valueFromTo}>{user.consignorlocation}</Text>
+        </View>
+
+        <View style={styles.infoRowFromTo}>
+          <Text style={styles.label}>To address:</Text>
+          <Text style={styles.valueFromTo}>{user.consigneelocation}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Country:</Text>
+          <Text style={styles.valueFromTo}>{user.destination}</Text>
+        </View>
+        
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Vendor:</Text>
+          <Text style={styles.valueFromTo}>{user.vendorName}</Text>
         </View>
 
         <View style={styles.inputGroup}>
@@ -172,7 +173,6 @@ function IncomingManifestDetails() {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Final Number of Packages:</Text>
           <View style={styles.increDecreContainer}>
-            {/* Decrement Button */}
             <TouchableOpacity
               style={styles.increDecreButton}
               onPress={() =>
@@ -184,10 +184,8 @@ function IncomingManifestDetails() {
               <Text style={styles.buttonText}>-</Text>
             </TouchableOpacity>
 
-            {/* Input Field */}
             <Text style={styles.value}>{actualNumPackages}</Text>
 
-            {/* Increment Button */}
             <TouchableOpacity
               style={styles.increDecreButton}
               onPress={() =>
@@ -199,11 +197,40 @@ function IncomingManifestDetails() {
           </View>
         </View>
 
+        {/* Checkboxes for Country and Vendor */}
+        <View style={styles.checkboxGroup}>
+          <TouchableOpacity
+            style={styles.checkbox}
+            onPress={() => setSelectedCountry(!selectedCountry)}
+          >
+            <Text style={styles.checkboxText}>Select Country</Text>
+            {selectedCountry ? (
+              <FontAwesome name="check-square" size={20} color="green" />
+            ) : (
+              <FontAwesome name="square-o" size={20} color="gray" />
+            )}
+          </TouchableOpacity>
+          {errors.country && <Text style={styles.errorText}>Please select the country.</Text>}
+
+          <TouchableOpacity
+            style={styles.checkbox}
+            onPress={() => setSelectedVendor(!selectedVendor)}
+          >
+            <Text style={styles.checkboxText}>Select Vendor</Text>
+            {selectedVendor ? (
+              <FontAwesome name="check-square" size={20} color="green" />
+            ) : (
+              <FontAwesome name="square-o" size={20} color="gray" />
+            )}
+          </TouchableOpacity>
+          {errors.vendor && <Text style={styles.errorText}>Please select the vendor.</Text>}
+        </View>
+
         {/* Submit Button with Loading Indicator */}
         <TouchableOpacity
           onPress={handleSubmit}
           style={styles.button}
-          disabled={isSubmitting} // Disable button while loading
+          disabled={isSubmitting}
         >
           {isSubmitting ? (
             <ActivityIndicator size="small" color="#fff" />
@@ -237,11 +264,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   info: {
-    marginBottom: 10,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
     marginBottom: 10,
   },
   label: {
@@ -278,7 +300,7 @@ const styles = StyleSheet.create({
   increDecreContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop:3
+    marginTop: 3,
   },
   increDecreButton: {
     backgroundColor: "#6B21A8",
@@ -298,12 +320,23 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     width: "90%",
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 5,
-    padding: 10,
+  checkboxGroup: {
+    marginVertical: 15,
+  },
+  checkbox: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  checkboxText: {
     fontSize: 16,
+    color: "#1F2937",
+    marginRight: 10,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 5,
   },
 });
 

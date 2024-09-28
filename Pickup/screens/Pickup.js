@@ -40,17 +40,6 @@ export default function Admin() {
       });
   };
 
-  const parsePickupDateTime = (dateTimeString) => {
-    const [datePart, timePart] = dateTimeString.split("&"); // Split date and time
-    const [year, month, day] = datePart.split("-"); // Get year, month, day
-    const [hour, minute] = timePart.split(" ")[0].split(":"); // Get hour and minute
-
-    // Convert hour to 24-hour format if it's PM
-    const isPM = timePart.includes("PM") && hour !== "12";
-    const adjustedHour = isPM ? parseInt(hour, 10) + 12 : hour;
-    const date = new Date(year, month - 1, day, adjustedHour, minute || 0); // Create Date object
-    return date;
-  };
 
   useEffect(() => {
     const fetchData = async () => {

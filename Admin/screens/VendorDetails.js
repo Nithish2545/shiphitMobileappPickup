@@ -144,7 +144,26 @@ function VendorDetails() {
             style={styles.icon}
           />
         </View>
-
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Vendor:</Text>
+          <Text style={styles.value}>{user.vendorName}</Text>
+          <FontAwesome
+            name="check-circle"
+            size={20}
+            color="green"
+            style={styles.icon}
+          />
+        </View>
+        {/* Form */}
+        <View style={styles.infoRowFromTo}>
+          <Text style={styles.label}>From address:</Text>
+          <Text style={styles.valueFromTo}>{user.consignorlocation}</Text>
+        </View>
+        {/* To */}
+        <View style={styles.infoRowFromTo}>
+          <Text style={styles.label}>To address:</Text>
+          <Text style={styles.valueFromTo}>{user.consigneelocation}</Text>
+        </View>
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Enter Vendor AWB Number:</Text>
           <TextInput
@@ -200,6 +219,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
+  infoRowFromTo: {
+    flexDirection: "column",
+    gap: 10,
+    marginBottom: 10,
+  },
   label: {
     fontSize: 16,
     color: "#6B7280",
@@ -208,6 +232,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#1F2937",
     marginLeft: 8,
+  },
+  valueFromTo: {
+    fontSize: 18,
+    marginLeft: 20,
+    color: "#1F2937",
+    width: "50px", // Set width to 100px
   },
   icon: {
     marginLeft: 8,

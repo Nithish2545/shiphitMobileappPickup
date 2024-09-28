@@ -106,7 +106,7 @@ export default function Admin() {
       setUserData(sortedData);
       console.log(sortedData);
       parsePickupDateTime;
-      await fetchAssignments(); // Fetch assignments
+      await fetchAssignments(); // Fetch assignments 
     } catch (error) {
       if (error.response) {
         setError(

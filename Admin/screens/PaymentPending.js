@@ -62,21 +62,22 @@ const PaymentPending = ({ userData, pickupPersons }) => {
               <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
+              <Text style={styles.label}>Phone number:</Text>
+              <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
+            </View>
+            <View style={styles.infoRow}>
               <Text style={styles.label}>Country</Text>
               <Text style={styles.value}>{user.destination || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Weight APX:</Text>
-              <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
+              <Text style={styles.label}>Final weight:</Text>
+              <Text style={styles.value}>{user.actualWeight || "N/A"}</Text>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
-            </View>
+          
 
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Pickup DateTime:</Text>
-              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
+              <Text style={styles.label}>PickUp Person:</Text>
+              <Text style={styles.value}>{user.pickUpPersonName || "N/A"}</Text>
             </View>
           </TouchableOpacity>
         ))
