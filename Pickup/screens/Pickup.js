@@ -19,7 +19,6 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 export default function Admin() {
-  
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false); // Add refreshing state
   const [userData, setUserData] = useState([]);
@@ -39,7 +38,6 @@ export default function Admin() {
         console.error("Error signing out:", error);
       });
   };
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -147,6 +145,10 @@ export default function Admin() {
   return (
     <View style={styles.container}>
       <View style={styles.signout}>
+        <Text style={{ color: "black", fontWeight: "600", fontSize: 18 }}>
+          {currentTab}
+        </Text>
+
         <Text
           style={{
             paddingVertical: 10,
@@ -216,9 +218,10 @@ export default function Admin() {
 const styles = StyleSheet.create({
   signout: {
     display: "flex",
-    padding: 10,
+    paddingRight: 15,
+    paddingLeft: 15,
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     alignItems: "center",
     height: 70,
     borderBottomWidth: 1, // Adds the bottom border
@@ -233,7 +236,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   scrollContainer: {
-    padding:10,
+    padding: 10,
   },
   errorText: {
     color: "red",

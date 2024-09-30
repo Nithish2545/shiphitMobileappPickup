@@ -13,8 +13,9 @@ import { FontAwesome } from "@expo/vector-icons";
 import apiURLs from "../../utility/googlescreen/apiURLs";
 
 function IncomingManifestDetails() {
-  const route = useRoute();
   const navigation = useNavigation();
+
+  const route = useRoute();
   const { awbnumber } = route.params;
   const API_URL = apiURLs.sheety;
 
@@ -30,7 +31,7 @@ function IncomingManifestDetails() {
     }
   };
 
-  const updateRowByID = async (rowId, updatedFields) => {
+  const updateRowByID = async (rowId , updatedFields) => {
     try {
       const response = await fetch(`${API_URL}/${rowId}`, {
         method: "PUT",
@@ -86,8 +87,8 @@ function IncomingManifestDetails() {
       setErrors((prev) => ({ ...prev, vendor: true }));
     }
 
-    if (user && user.id && selectedCountry && selectedVendor) {
       setIsSubmitting(true);
+      
       const details = {
         actualWeight: actualWeight,
         actualNoOfPackages: actualNumPackages,
@@ -99,14 +100,10 @@ function IncomingManifestDetails() {
       setActualNumPackages(1);
       setIsSubmitting(false);
       navigation.navigate("Admin");
-    } else {
-      console.error("Cannot update row: User or Row ID is missing");
-    }
   };
 
   if (loading)
     return <ActivityIndicator size="large" color="#6B21A8" style={styles.loading} />;
-
   return (
     <View style={styles.container}>
       <View style={styles.card}>
@@ -150,7 +147,7 @@ function IncomingManifestDetails() {
         </View>
 
         <View style={styles.infoRow}>
-          <Text style={styles.label}>Country:</Text>
+          <Text style={styles.label}>Destination:</Text>
           <Text style={styles.valueFromTo}>{user.destination}</Text>
         </View>
         
@@ -197,35 +194,6 @@ function IncomingManifestDetails() {
           </View>
         </View>
 
-        {/* Checkboxes for Country and Vendor */}
-        <View style={styles.checkboxGroup}>
-          <TouchableOpacity
-            style={styles.checkbox}
-            onPress={() => setSelectedCountry(!selectedCountry)}
-          >
-            <Text style={styles.checkboxText}>Select Country</Text>
-            {selectedCountry ? (
-              <FontAwesome name="check-square" size={20} color="green" />
-            ) : (
-              <FontAwesome name="square-o" size={20} color="gray" />
-            )}
-          </TouchableOpacity>
-          {errors.country && <Text style={styles.errorText}>Please select the country.</Text>}
-
-          <TouchableOpacity
-            style={styles.checkbox}
-            onPress={() => setSelectedVendor(!selectedVendor)}
-          >
-            <Text style={styles.checkboxText}>Select Vendor</Text>
-            {selectedVendor ? (
-              <FontAwesome name="check-square" size={20} color="green" />
-            ) : (
-              <FontAwesome name="square-o" size={20} color="gray" />
-            )}
-          </TouchableOpacity>
-          {errors.vendor && <Text style={styles.errorText}>Please select the vendor.</Text>}
-        </View>
-
         {/* Submit Button with Loading Indicator */}
         <TouchableOpacity
           onPress={handleSubmit}
@@ -249,6 +217,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F4F6",
     alignItems: "center",
     justifyContent: "center",
+  },
+  valueFromTo:{
+    marginLeft:10,
+    marginBottom:10
   },
   card: {
     width: "90%",
@@ -338,6 +310,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 5,
   },
+  infoRow:{
+   marginTop:5,
+   marginBottom:5,
+    display:"flex",
+    flexDirection:"row"
+  }
 });
 
 export default IncomingManifestDetails;

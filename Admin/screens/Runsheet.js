@@ -2,11 +2,13 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Picker } from "@react-native-picker/picker"; // Ensure you are using the correct Picker library
 import apiURLs from "../../utility/googlescreen/apiURLs";
-import { Linking } from 'react-native';
+import { Linking } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 const Runsheet = ({ userData: initialData, pickupPersons }) => {
-
-  const [userData, setUserData] = useState(initialData); 
+  const [userData, setUserData] = useState(initialData);
+console.log(userData)
+const navigation = useNavigation();
 
   const parsePickupDateTime = (dateTimeString) => {
     const [datePart, timePart] = dateTimeString.split("&"); // Split date and time
@@ -19,12 +21,18 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
     const date = new Date(year, month - 1, day, adjustedHour, minute || 0); // Create Date object
     return date;
   };
-  
+
   const API_URL = apiURLs.sheety;
 
   const handleOpenMap = (latitude, longitude) => {
     const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-    Linking.openURL(url).catch(err => console.error("Failed to open URL:", err));
+    Linking.openURL(url).catch((err) =>
+      console.error("Failed to open URL:", err)
+    );
+  };
+
+  const makeCall = (number) => {
+    Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
   };
 
   const handleAssignmentChange = async (awbNumber, value, index) => {
@@ -64,16 +72,24 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
     }
   };
 
+  const handleCardPress = (awbNumber) => {
+    // Handle card press action
+    console.log(awbNumber);
+    navigation.navigate("CardDetails", { awbnumber: awbNumber });
+  };
+
   return (
-    <View >
+    <View>
       {userData.length === 0 ? (
         <View style={styles.noPickups}>
           <Text style={styles.noPickupsText}>No pickups available</Text>
         </View>
       ) : (
         userData.map((user, index) => (
-        <View style={styles.card} key={index}>
-
+          <TouchableOpacity
+          onPress={( ) =>  handleCardPress(user.awbNumber)}
+          >
+          <View style={styles.card} key={index}>
             <View style={styles.statusContainer}>
               <View
                 style={[
@@ -97,7 +113,18 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
                 >
                   RUN SHEET
                 </Text>
-                <Text style={{color:"green", fontWeight:"700"}}>{user.franchise}</Text>
+                <Text
+                  style={{
+                    color: "#6D28D9",
+                    textTransform: "uppercase",
+                    fontWeight: "700",
+                  }}
+                >
+                  {user.pickupBookedBy}
+                </Text>
+                <Text style={{ color: "green", fontWeight: "700" }}>
+                  {user.pickuparea}
+                </Text>
               </View>
             </View>
 
@@ -116,7 +143,12 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
               <Picker
                 selectedValue={user.pickUpPersonName || ""}
                 style={styles.picker}
-                enabled={user.pickUpPersonName == "Unassigned" || user.pickUpPersonName ==""  ? true : false}
+                enabled={
+                  user.pickUpPersonName == "Unassigned" ||
+                  user.pickUpPersonName == ""
+                    ? true
+                    : false
+                }
                 onValueChange={(value) =>
                   handleAssignmentChange(user.awbNumber, value, user.id)
                 }
@@ -128,24 +160,29 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
             </View>
 
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Country</Text>
+              <Text style={styles.label}>Destination</Text>
               <Text style={styles.value}>{user.destination || "N/A"}</Text>
             </View>
-            
+
             <View style={styles.infoRow}>
               <Text style={styles.label}>Weight APX:</Text>
               <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
             </View>
-            <View style={styles.infoRow}>
+            {/* <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup Area</Text>
               <Text style={styles.value}>{user.pickuparea || "N/A"}</Text>
-            </View>
+            </View> */}
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup DateTime:</Text>
               <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Coordinates:</Text>
+              <TouchableOpacity
+                style={styles.mapButton}
+                onPress={() => makeCall(user.consignorphonenumber)}
+              >
+                <Text style={styles.mapButtonText}>Call</Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.mapButton}
                 onPress={() => handleOpenMap(user.latitude, user.longitude)}
@@ -153,7 +190,8 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
                 <Text style={styles.mapButtonText}>View on Map</Text>
               </TouchableOpacity>
             </View>
-            </View>
+          </View>
+          </TouchableOpacity>
         ))
       )}
     </View>
@@ -170,21 +208,20 @@ const styles = StyleSheet.create({
     fontSize: 16, // Added font size for better readability
   },
   card: {
-    borderWidth: 1,          // Adds border width
-    borderColor: '#D1D5DB', // Sets the color of the border
-    borderRadius: 10,        // Adds rounded corners to the border
-    padding: 10,  
-    marginBottom:30
+    borderWidth: 1, // Adds border width
+    borderColor: "#D1D5DB", // Sets the color of the border
+    borderRadius: 10, // Adds rounded corners to the border
+    padding: 10,
+    marginBottom: 30,
   },
   statusContainer: {
     marginBottom: 12,
-    
   },
   statusBadge: {
     paddingVertical: 6,
-    display:"flex",
-    justifyContent:"space-between",
-    flexDirection:"row",
+    display: "flex",
+    justifyContent: "space-between",
+    flexDirection: "row",
     paddingHorizontal: 12,
     backgroundColor: "#E2E8F0", // Light gray background for default status
     borderRadius: 20, // Updated border radius for a rounded badge

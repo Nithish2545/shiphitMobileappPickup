@@ -133,7 +133,6 @@ function VendorDetails() {
             style={styles.icon}
           />
         </View>
-
         <View style={styles.infoRow}>
           <Text style={styles.label}>Final No of boxes:</Text>
           <Text style={styles.value}>{user.actualNoOfPackages}</Text>
@@ -154,15 +153,53 @@ function VendorDetails() {
             style={styles.icon}
           />
         </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Destination:</Text>
+          <Text style={styles.value}>{user.destination}</Text>
+          <FontAwesome
+            name="check-circle"
+            size={20}
+            color="green"
+            style={styles.icon}
+          />
+        </View>
         {/* Form */}
         <View style={styles.infoRowFromTo}>
           <Text style={styles.label}>From address:</Text>
-          <Text style={styles.valueFromTo}>{user.consignorlocation}</Text>
+          <View style={{ display: "flex", flexDirection: "row" }}>
+            {user.consignorlocation ? (
+              <>
+                <Text style={styles.valueFromTo}>{user.consignorlocation}</Text>
+                <FontAwesome
+                  name="check-circle"
+                  size={20}
+                  color="green"
+                  style={styles.icon}
+                />
+              </>
+            ) : (
+              <>-</>
+            )}
+          </View>
         </View>
         {/* To */}
         <View style={styles.infoRowFromTo}>
           <Text style={styles.label}>To address:</Text>
-          <Text style={styles.valueFromTo}>{user.consigneelocation}</Text>
+          <View style={{ display: "flex", flexDirection: "row" }}>
+            {user.consigneelocation ? (
+              <>
+                <Text style={styles.valueFromTo}>{user.consigneelocation}</Text>
+                <FontAwesome
+                  name="check-circle"
+                  size={20}
+                  color="green"
+                  style={styles.icon}
+                />
+              </>
+            ) : (
+              <>-</>
+            )}
+          </View>
         </View>
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Enter Vendor AWB Number:</Text>
@@ -174,7 +211,6 @@ function VendorDetails() {
             style={styles.input}
           />
         </View>
-
         <TouchableOpacity
           onPress={handleSubmit}
           style={styles.button}
@@ -237,7 +273,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginLeft: 20,
     color: "#1F2937",
-    width: "50px", // Set width to 100px
+    width: "230px", // Set widdth to 100px
   },
   icon: {
     marginLeft: 8,

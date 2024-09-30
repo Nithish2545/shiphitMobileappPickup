@@ -47,10 +47,13 @@ const PickupCompleted = ({ userData, pickupPersons }) => {
                 >
                   PICKUP COMPLETED
                 </Text>
+                <Text style={{ color: "green", fontWeight: "700" , fontSize:17}}>
+                  {user.pickuparea}
+                </Text>
               </View>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>pending No:</Text>
+              <Text style={styles.label}>AWB No:</Text>
               <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
@@ -58,20 +61,16 @@ const PickupCompleted = ({ userData, pickupPersons }) => {
               <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Country</Text>
+              <Text style={styles.label}>Destination</Text>
               <Text style={styles.value}>{user.destination || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Weight APX:</Text>
-              <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
+              <Text style={styles.label}>Post Pickup Weight:</Text>
+              <Text style={styles.value}>{user.postPickupWeight || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Pickup DateTime:</Text>
-              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
+              <Text style={styles.label}>Pickup Completed:</Text>
+              <Text style={styles.value}>{user.pickupCompletedDatatime || "N/A"}</Text>
             </View>
           </TouchableOpacity>
         ))
@@ -114,6 +113,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#D1FAE5", // Light green background for completed status
   },
   statusDefault: {
+    display:"flex",
+    flexDirection:"row",
+    justifyContent:"space-between",
     backgroundColor: "#E2E8F0", // Light gray background for default status
   },
   statusText: {

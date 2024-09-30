@@ -18,6 +18,11 @@ const Runsheet = ({ userData }) => {
   
   };
 
+  const makeCall = (number) => {
+    Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
+  };
+
+
   return (
     <View>
       {userData.length === 0 ? (
@@ -54,6 +59,9 @@ const Runsheet = ({ userData }) => {
                 >
                   RUN SHEET
                 </Text>
+                <Text style={{ color: "green", fontWeight: "700" , fontSize:17}}>
+                  {user.pickuparea}
+                </Text>
               </View>
             </View>
             <View style={styles.infoRow}>
@@ -72,16 +80,26 @@ const Runsheet = ({ userData }) => {
               <Text style={styles.label}>Weight APX:</Text>
               <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
             </View>
-            <View style={styles.infoRow}>
+            {/* <View style={styles.infoRow}>
               <Text style={styles.label}>Phone number:</Text>
               <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
-            </View>
+            </View> */}
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup DateTime:</Text>
               <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
             </View>
+
+               <View style={styles.infoRow}>
+              <Text style={styles.label}>Pickup Address:</Text>
+              <Text style={styles.conLocation}>{user.consignorlocation || "N/A"}</Text>
+            </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Coordinates:</Text>
+            <TouchableOpacity
+                style={styles.mapButton}
+                onPress={() => makeCall(user.consignorphonenumber)}
+              >
+                <Text style={styles.mapButtonText}>Call</Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.mapButton}
                 onPress={() => handleOpenMap(user.latitude, user.longitude)}
@@ -130,6 +148,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#D1FAE5", // Light green background for completed status
   },
   statusDefault: {
+    display:"flex",
+    flexDirection:"row",
+    justifyContent:"space-between",
     backgroundColor: "#E2E8F0", // Light gray background for default status
   },
   statusText: {
@@ -158,6 +179,12 @@ const styles = StyleSheet.create({
   value: {
     color: "#1F2937", // Updated color for values
     fontSize: 16, // Updated font size for values
+  },
+  conLocation:{
+    color: "#1F2937", // Updated color for values
+    fontSize: 16,
+    width:"70%",
+    textAlign:"right"
   },
   picker: {
     height: 50,

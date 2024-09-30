@@ -82,6 +82,7 @@ export default function Admin() {
   }, []);
 
   const parsePickupDateTime = (dateTimeString) => {
+    console.log(dateTimeString)
     const [datePart, timePart] = dateTimeString.split("&"); // Split date and time
     const [year, month, day] = datePart.split("-"); // Get year, month, day
     const [hour, minute] = timePart.split(" ")[0].split(":"); // Get hour and minute
@@ -98,11 +99,7 @@ export default function Admin() {
 
     try {
       const result = await axios.get(API_URL);
-      const sortedData = result.data.sheet1.sort((a, b) => {
-        const dateTimeA = parsePickupDateTime(a.pickupDatetime);
-        const dateTimeB = parsePickupDateTime(b.pickupDatetime);
-        return dateTimeA - dateTimeB; // Sort by date and time
-      });
+      const sortedData = result.data.sheet1
       setUserData(sortedData);
       console.log(sortedData);
       parsePickupDateTime;
@@ -144,10 +141,12 @@ export default function Admin() {
   const handleTabChange = (tab) => {
     setcurrentTab(tab);
   };
-
   return (
     <View style={styles.container}>
       <View style={styles.signout}>
+      <Text  style={{color:"black" , fontWeight:"600" , fontSize:18}}>
+        {currentTab == "INCOMING MANIFEST" ?  "WAREHOUSE" : currentTab}
+        </Text>
         <Text
           style={{
             paddingVertical: 10,
@@ -240,12 +239,12 @@ export default function Admin() {
 const styles = StyleSheet.create({
   signout: {
     display: "flex",
-    padding: 10,
+    paddingRight:15,
+    paddingLeft:15,
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     alignItems: "center",
     height: 70,
-
     borderBottomWidth: 1, // Adds the bottom border
     borderBottomColor: "lightgrey",
   },

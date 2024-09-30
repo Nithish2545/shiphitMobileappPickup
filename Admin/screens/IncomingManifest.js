@@ -1,26 +1,27 @@
 import { useNavigation } from "@react-navigation/native";
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Linking } from "react-native";
 
-const Runsheet = ({ userData}) => {
-
+const Runsheet = ({ userData }) => {
   const navigation = useNavigation();
 
   const handleCardPress = (awbNumber) => {
     // Handle card press action
-    console.log(awbNumber)
-    navigation.navigate("IncomingManifestDetails", { awbnumber:awbNumber });
-
+    console.log(awbNumber);
+    navigation.navigate("IncomingManifestDetails", { awbnumber: awbNumber });
   };
 
   const handleOpenMap = (latitude, longitude) => {
     // Handle map opening action
     // Handle map opening action
-    
   };
 
   const handleAssignmentChange = (awbNumber, value, index) => {
     // Handle assignment change
+  };
+
+  const makeCall = (number) => {
+    Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
   };
 
   return (
@@ -59,6 +60,18 @@ const Runsheet = ({ userData}) => {
                 >
                   WAREHOUSE
                 </Text>
+                <Text
+                  style={{
+                    color: "#6D28D9",
+                    textTransform: "uppercase",
+                    fontWeight: "700",
+                  }}
+                >
+                  {user.pickupBookedBy}
+                </Text>
+                <Text style={{ color: "green", fontWeight: "700" }}>
+                  {user.pickuparea}
+                </Text>
               </View>
             </View>
 
@@ -73,25 +86,41 @@ const Runsheet = ({ userData}) => {
             </View>
 
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Country:</Text>
+              <Text style={styles.label}>Destination:</Text>
               <Text style={styles.value}>{user.destination || "N/A"}</Text>
             </View>
 
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Weight APX:</Text>
-              <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
+              <Text style={styles.label}>Post Pickup Weight:</Text>
+              <Text style={styles.value}>{user.postPickupWeight || "N/A"}</Text>
             </View>
 
-            <View style={styles.infoRow}>
+            {/* <View style={styles.infoRow}>
               <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
+              <Text style={styles.value}>
+                {user.consignorphonenumber || "N/A"}
+              </Text>
+            </View> */}
+          
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Pickup completed:</Text>
+              <Text style={styles.value}>{user.pickupCompletedDatatime || "N/A"}</Text>
             </View>
 
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Pickup DateTime:</Text>
-              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
-            </View>
-           
+            <TouchableOpacity
+              style={styles.mapButton}
+              onPress={() => makeCall(user.consignorphonenumber)}
+            >
+              <Text
+                style={{
+                  color: "white",
+                  fontSize: 17,
+                  alignSelf: "flex-start",
+                }}
+              >
+                Call
+              </Text>
+            </TouchableOpacity>
           </TouchableOpacity>
         ))
       )}
@@ -109,10 +138,10 @@ const styles = StyleSheet.create({
     fontSize: 16, // Added font size for better readability
   },
   card: {
-    borderWidth: 1,          // Adds border width
-    borderColor: '#D1D5DB', // Sets the color of the border
-    borderRadius: 10,        // Adds rounded corners to the border
-    padding: 10,  
+    borderWidth: 1, // Adds border width
+    borderColor: "#D1D5DB", // Sets the color of the border
+    borderRadius: 10, // Adds rounded corners to the border
+    padding: 10,
   },
   statusContainer: {
     marginBottom: 12,
@@ -129,6 +158,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#D1FAE5", // Light green background for completed status
   },
   statusDefault: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
     backgroundColor: "#E2E8F0", // Light gray background for default status
   },
   statusText: {
@@ -166,6 +198,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#6D28D9", // Updated color for map button
     paddingVertical: 10, // Adjusted padding for button
     paddingHorizontal: 16,
+    alignSelf:"flex-start",
     borderRadius: 20, // Rounded button corners
   },
   mapButtonText: {

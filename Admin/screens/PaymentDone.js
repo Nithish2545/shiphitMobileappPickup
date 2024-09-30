@@ -55,6 +55,18 @@ console.log(userData)
                 >
                   PAYMENT DONE
                 </Text>
+                <Text
+                  style={{
+                    color: "#6D28D9",
+                    textTransform: "uppercase",
+                    fontWeight: "700",
+                  }}
+                >
+                  {user.pickupBookedBy}
+                </Text>
+                <Text style={{ color: "green", fontWeight: "700" }}>
+                  {user.pickuparea}
+                </Text>
               </View>
             </View>
             <View style={styles.infoRow}>
@@ -75,7 +87,7 @@ console.log(userData)
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Final weight:</Text>
-              <Text style={styles.value}>{user.actualWeight || "N/A"}</Text>
+              <Text style={styles.value}>{user.actualWeight + " " + "KG" || "N/A"}</Text>
             </View>
          
             <View style={styles.infoRow}>
@@ -119,6 +131,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#D1FAE5", // Light green background for completed status
   },
   statusDefault: {
+    display:"flex",
+    flexDirection:"row",
+    justifyContent:"space-between",
     backgroundColor: "#E2E8F0", // Light gray background for default status
   },
   statusText: {

@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import Pickup from "./Pickup/screens/Pickup";
 import PickupDetails from  "./Pickup/screens/PickupDetails";
 import VendorDetails from "./Admin/screens/VendorDetails";
+import CardDetails from "./Admin/screens/CardDetails";
 
 export default function App() {
 
@@ -63,6 +64,10 @@ export default function App() {
             <Stack.Screen
               name="IncomingManifestDetails"
               component={IncomingManifestDetails}
+            />
+               <Stack.Screen
+              name="CardDetails"
+              component={CardDetails}
             />
             <Stack.Screen name="PaymentPending" component={PaymentPending} />
             <Stack.Screen name="PaymentDone" component={PaymentDone} />

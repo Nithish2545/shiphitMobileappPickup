@@ -51,10 +51,22 @@ const ShipmentConnected = ({ userData}) => {
                 >
                   SHIPMENT CONNECTED
                 </Text>
+                <Text
+                  style={{
+                    color: "#6D28D9",
+                    textTransform: "uppercase",
+                    fontWeight: "700",
+                  }}
+                >
+                  {user.pickupBookedBy}
+                </Text>
+                <Text style={{ color: "green", fontWeight: "700" }}>
+                  {user.pickuparea}
+                </Text>
               </View>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>AwbNumber No:</Text>
+              <Text style={styles.label}>Awb Number:</Text>
               <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
@@ -62,21 +74,20 @@ const ShipmentConnected = ({ userData}) => {
               <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Country</Text>
+              <Text style={styles.label}>Destination</Text>
               <Text style={styles.value}>{user.destination || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Weight APX:</Text>
-              <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
+              <Text style={styles.label}>Final weight:</Text>
+              <Text style={styles.value}>{user.actualWeight + " " + "KG" || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
+              <Text style={styles.label}>Vendor:</Text>
+              <Text style={styles.value}>{user.vendorName || "N/A"}</Text>
             </View>
-
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Pickup DateTime:</Text>
-              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
+              <Text style={styles.label}>Pickup Connected:</Text>
+              <Text style={styles.value}>{user.packageConnectedDataTime || "N/A"}</Text>
             </View>
           </TouchableOpacity>
         ))
@@ -115,6 +126,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#D1FAE5", // Light green background for completed status
   },
   statusDefault: {
+    display:"flex",
+    justifyContent:"space-between",
+    flexDirection:"row",
     backgroundColor: "#E2E8F0", // Light gray background for default status
   },
   statusText: {
