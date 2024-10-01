@@ -19,12 +19,16 @@ const SignIn = ({ navigation }) => {
   const [Autherror, setAuthError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { control, handleSubmit, formState: { errors } } = useForm();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
 
   const handleSignIn = async (data) => {
     const { email, password } = data;
     setLoading(true);
-    setAuthError("");  // Clear previous error
+    setAuthError(""); // Clear previous error
 
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
@@ -39,6 +43,10 @@ const SignIn = ({ navigation }) => {
               return "sathish";
             case "sangeetha@gmail.com":
               return "sangeetha";
+            case "jaga@gmail.com":
+              return "jaga";
+            case "pravin@gmail.com":
+              return "pravin";
             default:
               return response.user.email;
           }

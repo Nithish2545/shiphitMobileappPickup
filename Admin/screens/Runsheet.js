@@ -87,7 +87,7 @@ const navigation = useNavigation();
       ) : (
         userData.map((user, index) => (
           <TouchableOpacity
-          onPress={( ) =>  handleCardPress(user.awbNumber)}
+          // onPress={( ) =>  handleCardPress(user.awbNumber)}
           >
           <View style={styles.card} key={index}>
             <View style={styles.statusContainer}>
@@ -183,6 +183,14 @@ const navigation = useNavigation();
               >
                 <Text style={styles.mapButtonText}>Call</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.mapButton}
+              onPress={( ) =>  handleCardPress(user.awbNumber)}
+              >
+                <Text style={styles.mapButtonText}>Details</Text>
+              </TouchableOpacity>
+
+
               <TouchableOpacity
                 style={styles.mapButton}
                 onPress={() => handleOpenMap(user.latitude, user.longitude)}

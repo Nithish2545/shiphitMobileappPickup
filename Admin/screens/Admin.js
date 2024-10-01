@@ -34,7 +34,7 @@ export default function Admin() {
   const kovai = apiURLs.kovai;
   const pondy = apiURLs.sheetDB;
   const chennai = apiURLs.sheetDB;
-  const pickupPersons = ["Unassigned", "sangeetha", "sathish"];
+  const pickupPersons = ["Unassigned", "sangeetha", "sathish" , "pravin" , "jaga"];
   const [currentTab, setcurrentTab] = useState("RUN SHEET");
 
   const onRefresh = async () => {

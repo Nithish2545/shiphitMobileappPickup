@@ -143,7 +143,7 @@ function IncomingManifestDetails() {
 
         <View style={styles.infoRowFromTo}>
           <Text style={styles.label}>To address:</Text>
-          <Text style={styles.valueFromTo}>{user.consigneelocation}</Text>
+          <Text style={styles.valueFromTo}>{user.consigneelocation != "" ?  user.consigneelocation : "N/A"}</Text>
         </View>
 
         <View style={styles.infoRow}>
@@ -220,7 +220,8 @@ const styles = StyleSheet.create({
   },
   valueFromTo:{
     marginLeft:10,
-    marginBottom:10
+    marginBottom:10,
+    fontSize:15
   },
   card: {
     width: "90%",
