@@ -206,7 +206,6 @@ export default function Admin() {
           />
         </TouchableOpacity>
       </View>
-
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : error ? (

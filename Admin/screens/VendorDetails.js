@@ -11,6 +11,8 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
 import { FontAwesome } from "@expo/vector-icons";
 import apiURLs from "../../utility/googlescreen/apiURLs";
+import * as ImagePicker from "expo-image-picker";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 function VendorDetails() {
   const route = useRoute();
@@ -65,6 +67,30 @@ function VendorDetails() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false); // New state for submit loading
 
+  const PickupCompletedDate = () => {
+    const now = new Date();
+
+    // Convert to IST using toLocaleString with timeZone option
+    const istDate = now.toLocaleDateString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      day: "numeric",
+      month: "numeric",
+    });
+
+    const istTime = now.toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    });
+
+    // Remove minutes to fit the required format (e.g., 2 PM)
+    const [hour, period] = istTime.split(" ");
+    const formattedTime = `${hour} ${period}`;
+
+    return `${istDate} &${formattedTime}`;
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       const matchedUser = await fetchRowByAWB(awbnumber);
@@ -80,11 +106,13 @@ function VendorDetails() {
   }, [awbnumber]);
 
   const handleSubmit = async () => {
+    
     if (user && user.id) {
       setIsSubmitting(true); // Start loading
       const details = {
         vendorAwbnumber: vendorAwbnumber,
         status: "SHIPMENT CONNECTED",
+        packageConnectedDataTime: PickupCompletedDate(),
       };
 
       await updateRowByID(user.id, details);

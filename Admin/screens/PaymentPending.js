@@ -7,7 +7,6 @@ const PaymentPending = ({ userData, pickupPersons }) => {
 
   const navigation = useNavigation();
 
-
   const makeCall = (number) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
   };
@@ -131,6 +130,7 @@ const styles = StyleSheet.create({
     borderColor: '#D1D5DB', // Sets the color of the border
     borderRadius: 10,        // Adds rounded corners to the border
     padding: 10,  
+    marginBottom:10
   },
   statusContainer: {
     marginBottom: 12,

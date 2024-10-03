@@ -122,14 +122,25 @@ const PickupDetails = () => {
 
   const PickupCompletedDate = () => {
     const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
-    const istTime = new Date(now.getTime() + istOffset);
-    const date = istTime.toLocaleDateString("en-IN");
-    const time = istTime.toLocaleTimeString("en-IN", { hour12: true });
-    return `${date} ${time}`;
+
+    // Extract day and month, ensuring no leading zero
+    const day = now.getDate(); // Get day without leading zero
+    const month = now.getMonth() + 1; // Get month (0-indexed, so add 1)
+
+    // Format the time in IST with AM/PM in uppercase
+    const istTime = now
+      .toLocaleTimeString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        hour: "numeric",
+        hour12: true,
+      })
+      .toUpperCase(); // Ensure AM/PM is uppercase
+
+    return `${day}-${month} &${istTime}`;
   };
 
   const handleSubmit = async () => {
+    console.log(PickupCompletedDate());
     if (!validateForm()) return;
 
     setSubmitLoading(true);

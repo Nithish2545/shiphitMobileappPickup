@@ -86,7 +86,6 @@ const Runsheet = ({ userData }) => {
               <Text style={styles.label}>Pickup DateTime:</Text>
               <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
             </View>
-
                <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup Address:</Text>
               <Text style={styles.conLocation}>{user.consignorlocation || "N/A"}</Text>
