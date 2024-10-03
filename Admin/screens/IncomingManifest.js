@@ -1,8 +1,15 @@
 import { useNavigation } from "@react-navigation/native";
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Linking } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Linking,
+} from "react-native";
 
 const Runsheet = ({ userData }) => {
+  
   const navigation = useNavigation();
 
   const handleCardPress = (awbNumber) => {
@@ -11,14 +18,13 @@ const Runsheet = ({ userData }) => {
     navigation.navigate("IncomingManifestDetails", { awbnumber: awbNumber });
   };
 
-  const handleOpenMap = (latitude, longitude) => {
-    // Handle map opening action
-    // Handle map opening action
+
+  const CardDetails = (awbNumber) => {
+    // Handle card press action
+    console.log(awbNumber);
+    navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 
-  const handleAssignmentChange = (awbNumber, value, index) => {
-    // Handle assignment change
-  };
 
   const makeCall = (number) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
@@ -101,26 +107,35 @@ const Runsheet = ({ userData }) => {
                 {user.consignorphonenumber || "N/A"}
               </Text>
             </View> */}
-          
+
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup completed:</Text>
-              <Text style={styles.value}>{user.pickupCompletedDatatime || "N/A"}</Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.mapButton}
-              onPress={() => makeCall(user.consignorphonenumber)}
-            >
-              <Text
-                style={{
-                  color: "white",
-                  fontSize: 17,
-                  alignSelf: "flex-start",
-                }}
-              >
-                Call
+              <Text style={styles.value}>
+                {user.pickupCompletedDatatime || "N/A"}
               </Text>
-            </TouchableOpacity>
+            </View>
+            <View style={{display:"flex" , flexDirection:"row" , gap:20,  position:"relative"}}>
+              <TouchableOpacity
+                style={styles.mapButton}
+                onPress={() => makeCall(user.consignorphonenumber)}
+              >
+                <Text
+                  style={{
+                    color: "white",
+                    fontSize: 17,
+                    alignSelf: "flex-start",
+                  }}
+                >
+                  Call
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.mapButton}
+                onPress={() => CardDetails(user.awbNumber)}
+              >
+                <Text style={styles.mapButtonText}>Details</Text>
+              </TouchableOpacity>
+            </View>
           </TouchableOpacity>
         ))
       )}
@@ -198,7 +213,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#6D28D9", // Updated color for map button
     paddingVertical: 10, // Adjusted padding for button
     paddingHorizontal: 16,
-    alignSelf:"flex-start",
+    alignSelf: "flex-start",
     borderRadius: 20, // Rounded button corners
   },
   mapButtonText: {

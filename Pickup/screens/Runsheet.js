@@ -15,13 +15,11 @@ const Runsheet = ({ userData }) => {
   const handleOpenMap = (latitude, longitude) => {
     const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
     Linking.openURL(url).catch(err => console.error("Failed to open URL:", err));
-  
   };
 
   const makeCall = (number) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
   };
-
 
   return (
     <View>

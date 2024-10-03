@@ -1,18 +1,21 @@
+import { useNavigation } from "@react-navigation/native";
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Linking } from "react-native";
 // Removed Picker import since it is commented out
 
 const PaymentPending = ({ userData, pickupPersons }) => {
-  const handleCardPress = (awbNumber) => {
+
+  const navigation = useNavigation();
+
+
+  const makeCall = (number) => {
+    Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
+  };
+
+  const CardDetails = (awbNumber) => {
     // Handle card press action
-  };
-
-  const handleOpenMap = (latitude, longitude) => {
-    // Handle map opening action
-  };
-
-  const handleAssignmentChange = (awbNumber, value, index) => {
-    // Handle assignment change
+    console.log(awbNumber);
+    navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 
   return (
@@ -23,10 +26,9 @@ const PaymentPending = ({ userData, pickupPersons }) => {
         </View>
       ) : (
         userData.map((user, index) => (
-          <TouchableOpacity
+          <View
             key={index}
             style={styles.card}
-            onPress={() => handleCardPress(user.awbNumber)}
           >
             <View style={styles.statusContainer}>
               <View
@@ -85,7 +87,30 @@ const PaymentPending = ({ userData, pickupPersons }) => {
               <Text style={styles.label}>PickUp Person:</Text>
               <Text style={styles.value}>{user.pickUpPersonName || "N/A"}</Text>
             </View>
-          </TouchableOpacity>
+         
+            <View style={{display:"flex" , flexDirection:"row" , gap:20,  position:"relative"}}>
+              <TouchableOpacity
+                style={styles.mapButton}
+                onPress={() => makeCall(user.consignorphonenumber)}
+              >
+                <Text
+                  style={{
+                    color: "white",
+                    fontSize: 17,
+                    alignSelf: "flex-start",
+                  }}
+                >
+                  Call
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.mapButton}
+                onPress={() => CardDetails(user.awbNumber)}
+              >
+                <Text style={styles.mapButtonText}>Details</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         ))
       )}
     </View>

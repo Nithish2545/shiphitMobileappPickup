@@ -7,8 +7,8 @@ import { useNavigation } from "@react-navigation/native";
 
 const Runsheet = ({ userData: initialData, pickupPersons }) => {
   const [userData, setUserData] = useState(initialData);
-console.log(userData)
-const navigation = useNavigation();
+  console.log(userData);
+  const navigation = useNavigation();
 
   const parsePickupDateTime = (dateTimeString) => {
     const [datePart, timePart] = dateTimeString.split("&"); // Split date and time
@@ -86,120 +86,118 @@ const navigation = useNavigation();
         </View>
       ) : (
         userData.map((user, index) => (
-          <TouchableOpacity
+          <View
           // onPress={( ) =>  handleCardPress(user.awbNumber)}
           >
-          <View style={styles.card} key={index}>
-            <View style={styles.statusContainer}>
-              <View
-                style={[
-                  styles.statusBadge,
-                  user.status === "PENDING"
-                    ? styles.statusPending
-                    : user.status === "COMPLETED"
-                    ? styles.statusCompleted
-                    : styles.statusDefault,
-                ]}
-              >
-                <Text
+            <View style={styles.card} key={index}>
+              <View style={styles.statusContainer}>
+                <View
                   style={[
-                    styles.statusText,
+                    styles.statusBadge,
                     user.status === "PENDING"
-                      ? styles.textPending
+                      ? styles.statusPending
                       : user.status === "COMPLETED"
-                      ? styles.textCompleted
-                      : styles.textDefault,
+                      ? styles.statusCompleted
+                      : styles.statusDefault,
                   ]}
                 >
-                  RUN SHEET
-                </Text>
-                <Text
-                  style={{
-                    color: "#6D28D9",
-                    textTransform: "uppercase",
-                    fontWeight: "700",
-                  }}
-                >
-                  {user.pickupBookedBy}
-                </Text>
-                <Text style={{ color: "green", fontWeight: "700" }}>
-                  {user.pickuparea}
-                </Text>
+                  <Text
+                    style={[
+                      styles.statusText,
+                      user.status === "PENDING"
+                        ? styles.textPending
+                        : user.status === "COMPLETED"
+                        ? styles.textCompleted
+                        : styles.textDefault,
+                    ]}
+                  >
+                    RUN SHEET
+                  </Text>
+                  <Text
+                    style={{
+                      color: "#6D28D9",
+                      textTransform: "uppercase",
+                      fontWeight: "700",
+                    }}
+                  >
+                    {user.pickupBookedBy}
+                  </Text>
+                  <Text style={{ color: "green", fontWeight: "700" }}>
+                    {user.pickuparea}
+                  </Text>
+                </View>
               </View>
-            </View>
 
-            {/* Wrap all text inside <Text> */}
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>AWB No:</Text>
-              <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Consignor:</Text>
-              <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
-            </View>
+              {/* Wrap all text inside <Text> */}
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>AWB No:</Text>
+                <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Consignor:</Text>
+                <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
+              </View>
 
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Pickup Person:</Text>
-              <Picker
-                selectedValue={user.pickUpPersonName || ""}
-                style={styles.picker}
-                enabled={
-                  user.pickUpPersonName == "Unassigned" ||
-                  user.pickUpPersonName == ""
-                    ? true
-                    : false
-                }
-                onValueChange={(value) =>
-                  handleAssignmentChange(user.awbNumber, value, user.id)
-                }
-              >
-                {pickupPersons.map((person, index) => (
-                  <Picker.Item key={index} label={person} value={person} />
-                ))}
-              </Picker>
-            </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Pickup Person:</Text>
+                <Picker
+                  selectedValue={user.pickUpPersonName || ""}
+                  style={styles.picker}
+                  enabled={
+                    user.pickUpPersonName == "Unassigned" ||
+                    user.pickUpPersonName == ""
+                      ? true
+                      : false
+                  }
+                  onValueChange={(value) =>
+                    handleAssignmentChange(user.awbNumber, value, user.id)
+                  }
+                >
+                  {pickupPersons.map((person, index) => (
+                    <Picker.Item key={index} label={person} value={person} />
+                  ))}
+                </Picker>
+              </View>
 
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Destination</Text>
-              <Text style={styles.value}>{user.destination || "N/A"}</Text>
-            </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Destination</Text>
+                <Text style={styles.value}>{user.destination || "N/A"}</Text>
+              </View>
 
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Weight APX:</Text>
-              <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
-            </View>
-            {/* <View style={styles.infoRow}>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Weight APX:</Text>
+                <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
+              </View>
+              {/* <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup Area</Text>
               <Text style={styles.value}>{user.pickuparea || "N/A"}</Text>
             </View> */}
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Pickup DateTime:</Text>
-              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <TouchableOpacity
-                style={styles.mapButton}
-                onPress={() => makeCall(user.consignorphonenumber)}
-              >
-                <Text style={styles.mapButtonText}>Call</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.mapButton}
-              onPress={( ) =>  handleCardPress(user.awbNumber)}
-              >
-                <Text style={styles.mapButtonText}>Details</Text>
-              </TouchableOpacity>
-
-
-              <TouchableOpacity
-                style={styles.mapButton}
-                onPress={() => handleOpenMap(user.latitude, user.longitude)}
-              >
-                <Text style={styles.mapButtonText}>View on Map</Text>
-              </TouchableOpacity>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Pickup DateTime:</Text>
+                <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <TouchableOpacity
+                  style={styles.mapButton}
+                  onPress={() => makeCall(user.consignorphonenumber)}
+                >
+                  <Text style={styles.mapButtonText}>Call</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.mapButton}
+                  onPress={() => handleCardPress(user.awbNumber)}
+                >
+                  <Text style={styles.mapButtonText}>Details</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.mapButton}
+                  onPress={() => handleOpenMap(user.latitude, user.longitude)}
+                >
+                  <Text style={styles.mapButtonText}>View on Map</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-          </TouchableOpacity>
         ))
       )}
     </View>

@@ -178,7 +178,7 @@ function VendorDetails() {
                 />
               </>
             ) : (
-              <>-</>
+              <Text>-</Text>
             )}
           </View>
         </View>
@@ -197,7 +197,7 @@ function VendorDetails() {
                 />
               </>
             ) : (
-              <>-</>
+              <Text>-</Text>
             )}
           </View>
         </View>

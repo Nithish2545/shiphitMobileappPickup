@@ -135,7 +135,7 @@ export default function Admin() {
 
   const incomingManifestItems = userData.filter(
     (user) =>
-      user.status === "INCOMING MANIFEST" && user.pickUpPersonName === userName
+      (user.status === "INCOMING MANIFEST" || user.status === "PAYMENT PENDING" || user.status === "PAYMENT DONE" || user.status === "SHIPMENT CONNECTED" ) && user.pickUpPersonName === userName
   );
 
   const handleTabChange = (tab) => {

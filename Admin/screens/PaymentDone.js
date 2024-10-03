@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 // Removed Picker import since it is commented out
 
@@ -11,13 +11,16 @@ const PaymentDone = ({ userData, pickupPersons }) => {
     navigation.navigate("VendorDetails", { awbnumber:awbNumber });
   };
 
-  const handleOpenMap = (latitude, longitude) => {
-    // Handle map opening action
+  const makeCall = (number) => {
+    Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
   };
 
-  const handleAssignmentChange = (awbNumber, value, index) => {
-    // Handle assignment change
+  const CardDetails = (awbNumber) => {
+    // Handle card press action
+    console.log(awbNumber);
+    navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
+
 console.log(userData)
   return (
     <View>
@@ -94,6 +97,30 @@ console.log(userData)
               <Text style={styles.label}>PickUp Person:</Text>
               <Text style={styles.value}>{user.pickUpPersonName || "N/A"}</Text>
             </View>
+
+            <View style={{display:"flex" , flexDirection:"row" , gap:20,  position:"relative"}}>
+              <TouchableOpacity
+                style={styles.mapButton}
+                onPress={() => makeCall(user.consignorphonenumber)}
+              >
+                <Text
+                  style={{
+                    color: "white",
+                    fontSize: 17,
+                    alignSelf: "flex-start",
+                  }}
+                >
+                  Call
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.mapButton}
+                onPress={() => CardDetails(user.awbNumber)}
+              >
+                <Text style={styles.mapButtonText}>Details</Text>
+              </TouchableOpacity>
+            </View>
+
           </TouchableOpacity>
         ))
       )}
@@ -115,6 +142,7 @@ const styles = StyleSheet.create({
     borderColor: '#D1D5DB', // Sets the color of the border
     borderRadius: 10,        // Adds rounded corners to the border
     padding: 10,  
+    marginBottom:10
   },
   statusContainer: {
     marginBottom: 12,
