@@ -218,7 +218,8 @@ export default function Admin() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {currentTab === "RUN SHEET" ? (
+            <PaymentDone userData={paymentDone} />
+          {/* {currentTab === "RUN SHEET" ? (
             <Runsheet userData={currentItems} pickupPersons={pickupPersons} />
           ) : currentTab === "INCOMING MANIFEST" ? (
             <Incomingmanifest userData={incomingManifestItems} />
@@ -228,7 +229,7 @@ export default function Admin() {
             <PaymentDone userData={paymentDone} />
           ) : currentTab === "SHIPMENT CONNECTED" ? (
             <ShipmentConnected userData={shipmentconnected} />
-          ) : null}
+          ) : null} */}
         </ScrollView>
       )}
     </View>

@@ -104,6 +104,7 @@ function IncomingManifestDetails() {
 
   if (loading)
     return <ActivityIndicator size="large" color="#6B21A8" style={styles.loading} />;
+ 
   return (
     <View style={styles.container}>
       <View style={styles.card}>
