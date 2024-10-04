@@ -154,6 +154,8 @@ function VendorDetails() {
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
       quality: 1,
     });
 
@@ -323,6 +325,7 @@ function VendorDetails() {
           </TouchableOpacity>
         </View>
 
+
         <TouchableOpacity
           onPress={handleSubmit(onSubmit)}
           style={styles.button}
@@ -350,33 +353,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  
   image: {
     width: 100,
     height: 100,
     borderRadius: 8,
     marginRight: 8,
   },
-
   removeButton: {
     backgroundColor: "red",
     borderRadius: 8,
     padding: 8,
   },
-
   removeButtonText: {
     color: "#fff",
   },
-
   uploadButton: {
     backgroundColor: "#6B21A8",
     borderRadius: 8,
     padding: 12,
-    marginBottom:20,
-    marginTop:20,
     alignItems: "center",
   },
-
   uploadButtonText: {
     color: "#fff",
     fontWeight: "bold",
@@ -452,6 +448,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 5,
     alignItems: "center",
+    opacity: 0.7, // Button transparency when disabled
   },
   buttonText: {
     color: "white",

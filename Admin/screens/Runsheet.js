@@ -10,17 +10,38 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
   console.log(userData);
   const navigation = useNavigation();
 
-  const parsePickupDateTime = (dateTimeString) => {
-    const [datePart, timePart] = dateTimeString.split("&"); // Split date and time
-    const [year, month, day] = datePart.split("-"); // Get year, month, day
-    const [hour, minute] = timePart.split(" ")[0].split(":"); // Get hour and minute
+  function parseDateTime(pickupDatetime) {
+    // Remove "&" and any extra spaces
+    const formattedDatetime = pickupDatetime.replace("&", "").trim();
 
-    // Convert hour to 24-hour format if it's PM
-    const isPM = timePart.includes("PM") && hour !== "12";
-    const adjustedHour = isPM ? parseInt(hour, 10) + 12 : hour;
-    const date = new Date(year, month - 1, day, adjustedHour, minute || 0); // Create Date object
-    return date;
-  };
+    // Split date part and time part
+    const [datePart, timePart] = formattedDatetime.split(/\s+/);
+    const [day, month] = datePart.split("-").map(Number);
+
+    // Check if time part is present and valid
+    if (!timePart || !/\d+/.test(timePart)) {
+        return new Date(2024, month - 1, day); // Only date part is available, return date with default time
+    }
+
+    // Extract the hour and AM/PM, with a fallback
+    const match = timePart.match(/(\d+)\s*(AM|PM)/);
+    if (!match) {
+        return new Date(2024, month - 1, day); // No valid time, return date without time
+    }
+
+    let [hour, modifier] = match.slice(1);
+    hour = parseInt(hour, 10);
+
+    // Convert to 24-hour format
+    if (modifier === "PM" && hour !== 12) {
+        hour += 12;
+    } else if (modifier === "AM" && hour === 12) {
+        hour = 0;
+    }
+
+    // Assuming all data is for the year 2024
+    return new Date(2024, month - 1, day, hour);
+}
 
   const API_URL = apiURLs.sheety;
 

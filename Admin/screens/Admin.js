@@ -22,6 +22,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { signOut } from "firebase/auth";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Allshipments from "./Allshipments";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -34,8 +35,48 @@ export default function Admin() {
   const kovai = apiURLs.kovai;
   const pondy = apiURLs.sheetDB;
   const chennai = apiURLs.sheetDB;
-  const pickupPersons = ["Unassigned", "sangeetha", "sathish" , "pravin" , "jaga"];
-  const [currentTab, setcurrentTab] = useState("RUN SHEET");
+  const pickupPersons = [
+    "Unassigned",
+    "sangeetha",
+    "sathish",
+    "pravin",
+    "jaga",
+  ];
+
+  const [currentTab, setcurrentTab] = useState("LIST SHIPMENTS");
+
+  function parseDateTime(pickupDatetime) {
+    // Remove "&" and any extra spaces
+    const formattedDatetime = pickupDatetime.replace("&", "").trim();
+
+    // Split date part and time part
+    const [datePart, timePart] = formattedDatetime.split(/\s+/);
+    const [day, month] = datePart.split("-").map(Number);
+
+    // Check if time part is present and valid
+    if (!timePart || !/\d+/.test(timePart)) {
+      return new Date(2024, month - 1, day); // Only date part is available, return date with default time
+    }
+
+    // Extract the hour and AM/PM, with a fallback
+    const match = timePart.match(/(\d+)\s*(AM|PM)/);
+    if (!match) {
+      return new Date(2024, month - 1, day); // No valid time, return date without time
+    }
+
+    let [hour, modifier] = match.slice(1);
+    hour = parseInt(hour, 10);
+
+    // Convert to 24-hour format
+    if (modifier === "PM" && hour !== 12) {
+      hour += 12;
+    } else if (modifier === "AM" && hour === 12) {
+      hour = 0;
+    }
+
+    // Assuming all data is for the year 2024
+    return new Date(2024, month - 1, day, hour);
+  }
 
   const onRefresh = async () => {
     setRefreshing(true); // Start refreshing
@@ -82,7 +123,7 @@ export default function Admin() {
   }, []);
 
   const parsePickupDateTime = (dateTimeString) => {
-    console.log(dateTimeString)
+    console.log(dateTimeString);
     const [datePart, timePart] = dateTimeString.split("&"); // Split date and time
     const [year, month, day] = datePart.split("-"); // Get year, month, day
     const [hour, minute] = timePart.split(" ")[0].split(":"); // Get hour and minute
@@ -99,11 +140,11 @@ export default function Admin() {
 
     try {
       const result = await axios.get(API_URL);
-      const sortedData = result.data.sheet1
+      const sortedData = result.data.sheet1;
       setUserData(sortedData);
       console.log(sortedData);
       parsePickupDateTime;
-      await fetchAssignments(); // Fetch assignments 
+      await fetchAssignments(); // Fetch assignments
     } catch (error) {
       if (error.response) {
         setError(
@@ -126,26 +167,53 @@ export default function Admin() {
   }, [userRole]);
 
   // Filter data based on STATUS
-  const currentItems = userData.filter((user) => user.status === "RUN SHEET");
-  const incomingManifestItems = userData.filter(
-    (user) => user.status === "INCOMING MANIFEST"
+  const AllShipments = userData.sort(
+    (a, b) => parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
   );
-  const paymentPending = userData.filter(
-    (user) => user.status === "PAYMENT PENDING"
-  );
-  const paymentDone = userData.filter((user) => user.status === "PAYMENT DONE");
-  const shipmentconnected = userData.filter(
-    (user) => user.status === "SHIPMENT CONNECTED"
-  );
+  const currentItems = userData
+    .filter((user) => user.status === "RUN SHEET")
+    .sort(
+      (a, b) =>
+        parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
+    );
+
+  const incomingManifestItems = userData
+    .filter((user) => user.status === "INCOMING MANIFEST")
+    .sort(
+      (a, b) =>
+        parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
+    );
+
+  const paymentPending = userData
+    .filter((user) => user.status === "PAYMENT PENDING")
+    .sort(
+      (a, b) =>
+        parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
+    );
+
+  const paymentDone = userData
+    .filter((user) => user.status === "PAYMENT DONE")
+    .sort(
+      (a, b) =>
+        parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
+    );
+
+  const shipmentconnected = userData
+    .filter((user) => user.status === "SHIPMENT CONNECTED")
+    .sort(
+      (a, b) =>
+        parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
+    );
 
   const handleTabChange = (tab) => {
     setcurrentTab(tab);
   };
+
   return (
     <View style={styles.container}>
       <View style={styles.signout}>
-      <Text  style={{color:"black" , fontWeight:"600" , fontSize:18}}>
-        {currentTab == "INCOMING MANIFEST" ?  "WAREHOUSE" : currentTab}
+        <Text style={{ color: "black", fontWeight: "600", fontSize: 18 }}>
+          {currentTab == "INCOMING MANIFEST" ? "WAREHOUSE" : currentTab}
         </Text>
         <Text
           style={{
@@ -170,6 +238,13 @@ export default function Admin() {
         </Text>
       </View>
       <View style={styles.nav}>
+        <TouchableOpacity onPress={() => handleTabChange("LIST SHIPMENTS")}>
+          <MaterialCommunityIcons
+            name="view-list"
+            size={32}
+            color={currentTab === "LIST SHIPMENTS" ? "#8647D3" : "#A985D4"}
+          />
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => handleTabChange("RUN SHEET")}>
           <FontAwesome5
             name="running"
@@ -218,8 +293,7 @@ export default function Admin() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-            <PaymentDone userData={paymentDone} />
-          {/* {currentTab === "RUN SHEET" ? (
+          {currentTab === "RUN SHEET" ? (
             <Runsheet userData={currentItems} pickupPersons={pickupPersons} />
           ) : currentTab === "INCOMING MANIFEST" ? (
             <Incomingmanifest userData={incomingManifestItems} />
@@ -229,7 +303,9 @@ export default function Admin() {
             <PaymentDone userData={paymentDone} />
           ) : currentTab === "SHIPMENT CONNECTED" ? (
             <ShipmentConnected userData={shipmentconnected} />
-          ) : null} */}
+          ) : currentTab === "LIST SHIPMENTS" ? (
+            <Allshipments userData={AllShipments} />
+          ) : null}
         </ScrollView>
       )}
     </View>
@@ -239,8 +315,8 @@ export default function Admin() {
 const styles = StyleSheet.create({
   signout: {
     display: "flex",
-    paddingRight:15,
-    paddingLeft:15,
+    paddingRight: 15,
+    paddingLeft: 15,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
