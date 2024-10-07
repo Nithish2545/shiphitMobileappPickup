@@ -11,6 +11,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
 import { FontAwesome } from "@expo/vector-icons";
 import apiURLs from "../../utility/googlescreen/apiURLs";
+import { CallMerge } from "@mui/icons-material";
 
 function IncomingManifestDetails() {
   const navigation = useNavigation();
@@ -31,7 +32,7 @@ function IncomingManifestDetails() {
     }
   };
 
-  const updateRowByID = async (rowId , updatedFields) => {
+  const updateRowByID = async (rowId, updatedFields) => {
     try {
       const response = await fetch(`${API_URL}/${rowId}`, {
         method: "PUT",
@@ -44,7 +45,9 @@ function IncomingManifestDetails() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to update the row. Status: ${response.status}. Error: ${errorText}`);
+        throw new Error(
+          `Failed to update the row. Status: ${response.status}. Error: ${errorText}`
+        );
       }
 
       console.log("Row updated successfully");
@@ -55,13 +58,14 @@ function IncomingManifestDetails() {
 
   const [user, setUser] = useState(null);
   const [actualWeight, setActualWeight] = useState("");
+  const [rto, setrto] = useState("");
   const [actualNumPackages, setActualNumPackages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState(false);
   const [errors, setErrors] = useState({ country: false, vendor: false });
-
+console.log(rto)
   useEffect(() => {
     const fetchUserData = async () => {
       const matchedUser = await fetchRowByAWB(awbnumber);
@@ -77,6 +81,7 @@ function IncomingManifestDetails() {
   }, [awbnumber]);
 
   const handleSubmit = async () => {
+    console.log(rto)
     setErrors({ country: false, vendor: false });
 
     if (!selectedCountry) {
@@ -87,24 +92,27 @@ function IncomingManifestDetails() {
       setErrors((prev) => ({ ...prev, vendor: true }));
     }
 
-      setIsSubmitting(true);
-      
-      const details = {
-        actualWeight: actualWeight,
-        actualNoOfPackages: actualNumPackages,
-        status: "PAYMENT PENDING",
-      };
+    setIsSubmitting(true);
 
-      await updateRowByID(user.id, details);
-      setActualWeight("");
-      setActualNumPackages(1);
-      setIsSubmitting(false);
-      navigation.navigate("Admin");
+    const details = {
+      actualWeight: actualWeight,
+      actualNoOfPackages: actualNumPackages,
+      status: "PAYMENT PENDING",
+      rtoIfAny:rto
+    };
+
+    await updateRowByID(user.id, details);
+    setActualWeight("");
+    setActualNumPackages(1);
+    setIsSubmitting(false);
+    navigation.navigate("Admin");
   };
 
   if (loading)
-    return <ActivityIndicator size="large" color="#6B21A8" style={styles.loading} />;
- 
+    return (
+      <ActivityIndicator size="large" color="#6B21A8" style={styles.loading} />
+    );
+
   return (
     <View style={styles.container}>
       <View style={styles.card}>
@@ -122,19 +130,34 @@ function IncomingManifestDetails() {
         <View style={styles.infoRow}>
           <Text style={styles.label}>Weight (Approx):</Text>
           <Text style={styles.value}>{user.weightapx}</Text>
-          <FontAwesome name="check-circle" size={20} color="green" style={styles.icon} />
+          <FontAwesome
+            name="check-circle"
+            size={20}
+            color="green"
+            style={styles.icon}
+          />
         </View>
 
         <View style={styles.infoRow}>
           <Text style={styles.label}>Post Pickup Weight:</Text>
           <Text style={styles.value}>{user.postPickupWeight}</Text>
-          <FontAwesome name="check-circle" size={20} color="green" style={styles.icon} />
+          <FontAwesome
+            name="check-circle"
+            size={20}
+            color="green"
+            style={styles.icon}
+          />
         </View>
 
         <View style={styles.infoRow}>
           <Text style={styles.label}>Post Pickup Packages:</Text>
           <Text style={styles.value}>{user.postNumberOfPackages}</Text>
-          <FontAwesome name="check-circle" size={20} color="green" style={styles.icon} />
+          <FontAwesome
+            name="check-circle"
+            size={20}
+            color="green"
+            style={styles.icon}
+          />
         </View>
 
         <View style={styles.infoRowFromTo}>
@@ -144,14 +167,16 @@ function IncomingManifestDetails() {
 
         <View style={styles.infoRowFromTo}>
           <Text style={styles.label}>To address:</Text>
-          <Text style={styles.valueFromTo}>{user.consigneelocation != "" ?  user.consigneelocation : "N/A"}</Text>
+          <Text style={styles.valueFromTo}>
+            {user.consigneelocation != "" ? user.consigneelocation : "N/A"}
+          </Text>
         </View>
 
         <View style={styles.infoRow}>
           <Text style={styles.label}>Destination:</Text>
           <Text style={styles.valueFromTo}>{user.destination}</Text>
         </View>
-        
+
         <View style={styles.infoRow}>
           <Text style={styles.label}>Vendor:</Text>
           <Text style={styles.valueFromTo}>{user.vendorName}</Text>
@@ -194,7 +219,18 @@ function IncomingManifestDetails() {
             </TouchableOpacity>
           </View>
         </View>
-
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>RTO:</Text>
+          <TextInput
+            value={rto}
+            onChangeText={setrto}
+            placeholder="Enter RTO"
+            keyboardType="default"
+            numberOfLines={4} // You can adjust this based on how many lines you want
+            style={styles.finalWeightInput}
+         
+         />
+        </View>
         {/* Submit Button with Loading Indicator */}
         <TouchableOpacity
           onPress={handleSubmit}
@@ -219,10 +255,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  valueFromTo:{
-    marginLeft:10,
-    marginBottom:10,
-    fontSize:15
+  valueFromTo: {
+    marginLeft: 10,
+    marginBottom: 10,
+    fontSize: 15,
   },
   card: {
     width: "90%",
@@ -312,12 +348,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 5,
   },
-  infoRow:{
-   marginTop:5,
-   marginBottom:5,
-    display:"flex",
-    flexDirection:"row"
-  }
+  infoRow: {
+    marginTop: 5,
+    marginBottom: 5,
+    display: "flex",
+    flexDirection: "row",
+  },
 });
 
 export default IncomingManifestDetails;

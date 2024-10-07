@@ -238,7 +238,10 @@ export default function Admin() {
         </Text>
       </View>
       <View style={styles.nav}>
-        <TouchableOpacity onPress={() => handleTabChange("LIST SHIPMENTS")}>
+        <TouchableOpacity
+          style={styles.buttonSpace}
+          onPress={() => handleTabChange("LIST SHIPMENTS")}
+        >
           <MaterialCommunityIcons
             name="view-list"
             size={32}
@@ -293,7 +296,8 @@ export default function Admin() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {currentTab === "RUN SHEET" ? (
+          <Incomingmanifest userData={incomingManifestItems} />
+          {/* {currentTab === "RUN SHEET" ? (
             <Runsheet userData={currentItems} pickupPersons={pickupPersons} />
           ) : currentTab === "INCOMING MANIFEST" ? (
             <Incomingmanifest userData={incomingManifestItems} />
@@ -305,7 +309,7 @@ export default function Admin() {
             <ShipmentConnected userData={shipmentconnected} />
           ) : currentTab === "LIST SHIPMENTS" ? (
             <Allshipments userData={AllShipments} />
-          ) : null}
+          ) : null} */}
         </ScrollView>
       )}
     </View>
@@ -313,6 +317,9 @@ export default function Admin() {
 }
 
 const styles = StyleSheet.create({
+  buttonSpace: {
+    padding: 10,
+  },
   signout: {
     display: "flex",
     paddingRight: 15,

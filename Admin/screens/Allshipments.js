@@ -6,8 +6,7 @@ import { Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 const Allshipments = ({ userData: initialData, pickupPersons }) => {
-  
-    const [userData, setUserData] = useState(initialData);
+  const [userData, setUserData] = useState(initialData);
   const navigation = useNavigation();
 
   const parsePickupDateTime = (dateTimeString) => {
@@ -86,100 +85,93 @@ const Allshipments = ({ userData: initialData, pickupPersons }) => {
         </View>
       ) : (
         userData?.map((user, index) => (
-            <View
-            // onPress={( ) =>  handleCardPress(user.awbNumber)}
-            >
-              <View style={styles.card} key={index}>
-                <View style={styles.statusContainer}>
-                  <View
+          <View
+          // onPress={( ) =>  handleCardPress(user.awbNumber)}
+          >
+            <View style={styles.card} key={index}>
+              <View style={styles.statusContainer}>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    user.status === "PENDING"
+                      ? styles.statusPending
+                      : user.status === "COMPLETED"
+                      ? styles.statusCompleted
+                      : styles.statusDefault,
+                  ]}
+                >
+                  <Text
                     style={[
-                      styles.statusBadge,
+                      styles.statusText,
                       user.status === "PENDING"
-                        ? styles.statusPending
+                        ? styles.textPending
                         : user.status === "COMPLETED"
-                        ? styles.statusCompleted
-                        : styles.statusDefault,
+                        ? styles.textCompleted
+                        : styles.textDefault,
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.statusText,
-                        user.status === "PENDING"
-                          ? styles.textPending
-                          : user.status === "COMPLETED"
-                          ? styles.textCompleted
-                          : styles.textDefault,
-                      ]}
-                    >
-                      RUN SHEET
-                    </Text>
+                    RUN SHEET
+                  </Text>
 
-
-
-                    <Text
-                      style={{
-                        color: "#6D28D9",
-                        textTransform: "uppercase",
-                        fontWeight: "700",
-                      }}
-                    >
-                      {user.pickupBookedBy}
-                    </Text>
-                    <Text style={{ color: "green", fontWeight: "700" }}>
-                      {user.pickuparea}
-                    </Text>
-                  </View>
+                  <Text
+                    style={{
+                      color: "#6D28D9",
+                      textTransform: "uppercase",
+                      fontWeight: "700",
+                    }}
+                  >
+                    {user.pickupBookedBy}
+                  </Text>
+                  <Text style={{ color: "green", fontWeight: "700" }}>
+                    {user.pickuparea}
+                  </Text>
                 </View>
-  
-                {/* Wrap all text inside <Text> */}
-                <View style={styles.infoRow}>
-                  <Text style={styles.label}>AWB No:</Text>
-                  <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.label}>Consignor:</Text>
-                  <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
-                </View>
-  
-                <View style={styles.infoRow}>
-                  <Text style={styles.label}>Destination</Text>
-                  <Text style={styles.value}>{user.destination || "N/A"}</Text>
-                </View>
-  
-                <View style={styles.infoRow}>
-                  <Text style={styles.label}>Weight APX:</Text>
-                  <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
-                </View>
-                <View style={styles.infoRow}>
+              </View>
+              {/* Wrap all text inside <Text> */}
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>AWB No:</Text>
+                <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Consignor:</Text>
+                <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Destination</Text>
+                <Text style={styles.value}>{user.destination || "N/A"}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Weight APX:</Text>
+                <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
+              </View>
+              <View style={styles.infoRow}>
                 <Text style={styles.label}>Pickup Area</Text>
                 <Text style={styles.value}>{user.pickuparea || "N/A"}</Text>
               </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.label}>Pickup DateTime:</Text>
-                  <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
-                </View>
-                <View style={styles.infoRow}>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Pickup DateTime:</Text>
+                <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <TouchableOpacity style={styles.status}>
+                  <Text style={styles.statustext}>{user.status}</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
-                    style={styles.status}
-                  >
-                    <Text style={styles.statustext}>{user.status}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.mapButton}
-                    onPress={() => makeCall(user.consignorphonenumber)}
-                  >
-                    <Text style={styles.mapButtonText}>Call</Text>
-                  </TouchableOpacity>
-                 
-                  <TouchableOpacity
-                    style={styles.mapButton}
-                    onPress={() => handleCardPress(user.awbNumber)}
-                  >
-                    <Text style={styles.mapButtonText}>Details</Text>
-                  </TouchableOpacity>
-                </View>
+                  style={styles.mapButton}
+                  onPress={() => makeCall(user.consignorphonenumber)}
+                >
+                  <Text style={styles.mapButtonText}>Call</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.mapButton}
+                  onPress={() => handleCardPress(user.awbNumber)}
+                >
+                  <Text style={styles.mapButtonText}>Details</Text>
+                </TouchableOpacity>
               </View>
             </View>
+          </View>
         ))
       )}
     </View>
@@ -238,6 +230,7 @@ const styles = StyleSheet.create({
   },
   infoRow: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 10, // Increased margin for better spacing
   },
@@ -255,9 +248,9 @@ const styles = StyleSheet.create({
     width: 150,
   },
   status: {
-    color:"black",
-    paddingVertical: 10, // Adjusted padding for button
-    paddingHorizontal: 16,
+    color: "black",
+    // paddingVertical: 10, // Adjusted padding for button
+    // paddingHorizontal: 16,
     borderRadius: 20, // Rounded button corners
   },
   mapButton: {
@@ -269,7 +262,7 @@ const styles = StyleSheet.create({
   statustext: {
     color: "red",
     fontWeight: "600", // Added font weight for button text
-    fontSize: 16, // Added font size for button text
+    fontSize: 14, // Added font size for button text
   },
   mapButtonText: {
     color: "#FFFFFF",
@@ -279,32 +272,3 @@ const styles = StyleSheet.create({
 });
 
 export default Allshipments;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -20,13 +20,13 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
 
     // Check if time part is present and valid
     if (!timePart || !/\d+/.test(timePart)) {
-        return new Date(2024, month - 1, day); // Only date part is available, return date with default time
+      return new Date(2024, month - 1, day); // Only date part is available, return date with default time
     }
 
     // Extract the hour and AM/PM, with a fallback
     const match = timePart.match(/(\d+)\s*(AM|PM)/);
     if (!match) {
-        return new Date(2024, month - 1, day); // No valid time, return date without time
+      return new Date(2024, month - 1, day); // No valid time, return date without time
     }
 
     let [hour, modifier] = match.slice(1);
@@ -34,14 +34,14 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
 
     // Convert to 24-hour format
     if (modifier === "PM" && hour !== 12) {
-        hour += 12;
+      hour += 12;
     } else if (modifier === "AM" && hour === 12) {
-        hour = 0;
+      hour = 0;
     }
 
     // Assuming all data is for the year 2024
     return new Date(2024, month - 1, day, hour);
-}
+  }
 
   const API_URL = apiURLs.sheety;
 
@@ -164,12 +164,12 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
                 <Picker
                   selectedValue={user.pickUpPersonName || ""}
                   style={styles.picker}
-                  enabled={
-                    user.pickUpPersonName == "Unassigned" ||
-                    user.pickUpPersonName == ""
-                      ? true
-                      : false
-                  }
+                  // enabled={
+                  //   user.pickUpPersonName == "Unassigned" ||
+                  //   user.pickUpPersonName == ""
+                  //     ? true
+                  //     : false
+                  // }
                   onValueChange={(value) =>
                     handleAssignmentChange(user.awbNumber, value, user.id)
                   }
