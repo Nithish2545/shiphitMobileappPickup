@@ -3,13 +3,11 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 // Removed Picker import since it is commented out
 
 const PickupCompleted = ({ userData, pickupPersons }) => {
+  
   const handleCardPress = (awbNumber) => {
     // Handle card press action
   };
   console.log(userData);
-  const handleOpenMap = (latitude, longitude) => {
-    // Handle map opening action
-  };
 
   return (
     <View>
