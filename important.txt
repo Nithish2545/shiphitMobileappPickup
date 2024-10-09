@@ -20,3 +20,6 @@ https://enquiry-app-9d329.web.app
 
 
 =SEQUENCE(COUNTA(N2:N))
+
+
+npx react-native start --reset-cache
