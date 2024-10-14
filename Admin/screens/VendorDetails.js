@@ -9,9 +9,7 @@ import {
   Image,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import axios from "axios";
 import { FontAwesome } from "@expo/vector-icons";
-import apiURLs from "../../utility/googlescreen/apiURLs";
 import { Controller, useForm } from "react-hook-form";
 import { db, storage } from "../../FirebaseConfig"; // Import Firebase storage
 import * as ImagePicker from "expo-image-picker"; // Import ImagePicker
@@ -22,7 +20,6 @@ function VendorDetails() {
   const route = useRoute();
   const navigation = useNavigation();
   const { awbnumber } = route.params;
-  const API_URL = apiURLs.sheety;
 
   const {
     control,

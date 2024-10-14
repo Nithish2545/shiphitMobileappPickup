@@ -37,7 +37,6 @@ const SignIn = ({ navigation }) => {
 
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
-      console.log(response);
 
       let userData = {
         name: (() => {
@@ -50,8 +49,9 @@ const SignIn = ({ navigation }) => {
               return "sangeetha";
             case "jaga@gmail.com":
               return "jaga";
-            case "pravin@gmail.com":
-              return "pravin";
+            case "praven@gmail.com":
+              console.log("praven@gmail.com")
+              return "praven";
             default:
               return response.user.email;
           }
@@ -63,7 +63,6 @@ const SignIn = ({ navigation }) => {
       await AsyncStorage.setItem("userData", JSON.stringify(userData));
       setLoading(false);
     } catch (error) {
-      console.log(error.code);
       setLoading(false);
 
       // Map Firebase errors to custom messages
@@ -167,7 +166,6 @@ const SignIn = ({ navigation }) => {
           </View>
         </TouchableOpacity>
       </View>
-
       <View style={styles.footer}>
         <TouchableOpacity
           onPress={() =>

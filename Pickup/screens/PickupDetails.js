@@ -10,15 +10,13 @@ import {
   ScrollView,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
-import axios from "axios";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../../FirebaseConfig";
-import apiURLs from "../../utility/googlescreen/apiURLs";
+import { db, storage } from "../../FirebaseConfig";
 import * as ImagePicker from "expo-image-picker";
 import { TouchableOpacity } from "react-native";
+import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 // import Ionicons from "react-native-vector-icons/Ionicons"; // Import vector icons
 
-const API_URL = apiURLs.sheety;
 
 const PickupDetails = () => {
   const route = useRoute();
@@ -39,21 +37,34 @@ const PickupDetails = () => {
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const result = await axios.get(API_URL);
-        const userDetails = result.data.sheet1.find(
-          (item) => item.status === "RUN SHEET" && item.awbNumber === awbnumber
+        // Create Firestore query
+        const q = query(
+          collection(db, "pickup"),
+          where("status", "==", "RUN SHEET"),
+          where("awbNumber", "==", awbnumber)
         );
-        setDetails(userDetails);
-        setPickupWeight(userDetails?.pickupWeight || "");
-        setNumberOfPackages(userDetails?.numberOfPackages || 1);
+
+        // Execute query and get matching documents
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const userDetails = querySnapshot.docs[0].data(); // Assuming awbNumber is unique, take the first match
+
+          // Set state with fetched details
+          setDetails(userDetails);
+          setPickupWeight(userDetails?.pickupWeight || "");
+          setNumberOfPackages(userDetails?.numberOfPackages || 1);
+        } else {
+          console.log("No data found for the provided awbNumber and status.");
+        }
       } catch (error) {
-        handleError(error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
+
     fetchDetails();
-  }, [awbnumber]);
+  }, []);
 
   const uploadFileToFirebase = async (file, folder) => {
     const response = await fetch(file.uri);
@@ -164,8 +175,7 @@ const PickupDetails = () => {
         formImages.map((file) => uploadFileToFirebase(file, "FORM IMAGES"))
       );
 
-      await axios.put(`${API_URL}/${details.id}`, {
-        sheet1: {
+      const updatedFields =  {
           postPickupWeight: `${pickupWeight} KG`,
           postNumberOfPackages: numberOfPackages,
           status: "INCOMING MANIFEST",
@@ -174,8 +184,23 @@ const PickupDetails = () => {
           PACKAGEWEIGHTIMAGES: packageWeightImageUrls.join(", "),
           FORMIMAGES: formImageUrls.join(", "),
           pickupCompletedDatatime: PickupCompletedDate(),
-        },
+        }
+
+      const q = query(
+        collection(db, "pickup"),
+        where("awbNumber", "==", awbnumber)
+      );
+  
+      const querySnapshot = await getDocs(q);
+      let final_result = [];
+  
+      querySnapshot.forEach((doc) => {
+        final_result.push({ id: doc.id, ...doc.data() });
       });
+  
+      const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
+  
+      updateDoc(docRef, updatedFields);
 
       navigation.navigate("Pickup");
     } catch (error) {

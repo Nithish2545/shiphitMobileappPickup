@@ -35,7 +35,7 @@ export default function Admin() {
     "Unassigned",
     "sangeetha",
     "sathish",
-    "pravin",
+    "praven",
     "jaga",
   ];
 

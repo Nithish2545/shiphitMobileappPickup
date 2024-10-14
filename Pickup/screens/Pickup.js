@@ -7,26 +7,22 @@ import {
   TouchableOpacity,
   RefreshControl, // Import RefreshControl
 } from "react-native";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import Runsheet from "./Runsheet";
-import apiURLs from "../../utility/googlescreen/apiURLs";
 import PickupCompleted from "./PickupCompleted";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { FIREBASE_AUTH } from "../../FirebaseConfig";
+import { db, FIREBASE_AUTH } from "../../FirebaseConfig";
 import { signOut } from "firebase/auth";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { collection, onSnapshot } from "firebase/firestore";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false); // Add refreshing state
   const [userData, setUserData] = useState([]);
   const [error, setError] = useState("");
-  const [userRole, setUserRole] = useState(null);
-  const [assignments, setAssignments] = useState({});
   const [userName, setUserName] = useState("");
-  const API_URL = apiURLs.sheetDB;
   const [currentTab, setcurrentTab] = useState("RUN SHEET");
 
   const handleSignOut = () => {
@@ -41,7 +37,6 @@ export default function Admin() {
 
   useEffect(() => {
     const fetchData = async () => {
-      
       try {
         const getData = async (key) => {
           const value = await AsyncStorage.getItem(key);
@@ -52,7 +47,6 @@ export default function Admin() {
 
         if (local_S_userData) {
           setUserName(local_S_userData.name);
-          console.log(local_S_userData);
         } else {
           console.log("No data found for key 'userData'");
         }
@@ -60,65 +54,33 @@ export default function Admin() {
         console.error("Failed to load data from AsyncStorage", e);
       }
     };
-
     fetchData();
-  }, []);
-
-  const fetchAssignments = async () => {
-    try {
-      const result = await axios.get(API_URL);
-      const assignmentsData = result.data.sheet1.reduce((acc, item) => {
-        acc[item.awbNumber] = item.pickUpPersonName;
-        return acc;
-      }, {});
-      setAssignments(assignmentsData);
-    } catch (error) {
-      console.error("Error fetching assignments from Google Sheets:", error);
-    }
-  };
-
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const token = await AsyncStorage.getItem("authToken");
-        if (token) {
-          const user = JSON.parse(token);
-          setUserRole(user.role);
-        }
-      } catch (error) {
-        console.error("Error fetching user role:", error);
-      }
-    };
-    fetchUserRole();
   }, []);
 
   const fetchData = async () => {
-    setLoading(true);
-    try {
-      const result = await axios.get(API_URL);
-      setUserData(result.data.sheet1);
-      console.log(result.data.sheet1);
-      await fetchAssignments();
-    } catch (error) {
-      if (error.response) {
-        setError(
-          `Error ${error.response.status}: ${
-            error.response.data.message || error.message
-          }`
-        );
-      } else if (error.request) {
-        setError("Network error. Please check your connection.");
-      } else {
+    const unsubscribe = onSnapshot(
+      collection(db, "pickup"),
+      (querySnapshot) => {
+        const sortedData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })); // Map through documents to get data
+        setUserData(sortedData);
+      },
+      (error) => {
         setError(`Error: ${error.message}`);
+        setLoading(false); // Stop loading on error
       }
-    } finally {
-      setLoading(false);
-    }
+    );
+
+    // Cleanup the listener on component unmount
+    return () => unsubscribe();
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchData(); // Fetch data initially
+    setLoading(false); // Set loading to false after fetching data
+  }, [userName]);
 
   // Refresh Handler
   const onRefresh = async () => {
@@ -127,18 +89,19 @@ export default function Admin() {
     setRefreshing(false); // Stop refreshing
   };
 
-  // Filter data based on
-  console.log(userName);
-
   const currentItems = userData.filter(
     (user) => user.status === "RUN SHEET" && user.pickUpPersonName === userName
   );
 
   const incomingManifestItems = userData.filter(
     (user) =>
-      (user.status === "INCOMING MANIFEST" || user.status === "PAYMENT PENDING" || user.status === "PAYMENT DONE" || user.status === "SHIPMENT CONNECTED" ) && user.pickUpPersonName === userName
+      (user.status === "INCOMING MANIFEST" ||
+        user.status === "PAYMENT PENDING" ||
+        user.status === "PAYMENT DONE" ||
+        user.status === "SHIPMENT CONNECTED") &&
+      user.pickUpPersonName === userName
   );
-
+  console.log(incomingManifestItems, userName);
   const handleTabChange = (tab) => {
     setcurrentTab(tab);
   };
