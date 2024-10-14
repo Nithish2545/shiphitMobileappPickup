@@ -1,74 +1,14 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Picker } from "@react-native-picker/picker"; // Ensure you are using the correct Picker library
-import apiURLs from "../../utility/googlescreen/apiURLs";
 import { Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
-const Allshipments = ({ userData: initialData, pickupPersons }) => {
-  const [userData, setUserData] = useState(initialData);
+const Allshipments = ({ userData}) => {
   const navigation = useNavigation();
-
-  const parsePickupDateTime = (dateTimeString) => {
-    const [datePart, timePart] = dateTimeString.split("&"); // Split date and time
-    const [year, month, day] = datePart.split("-"); // Get year, month, day
-    const [hour, minute] = timePart.split(" ")[0].split(":"); // Get hour and minute
-
-    // Convert hour to 24-hour format if it's PM
-    const isPM = timePart.includes("PM") && hour !== "12";
-    const adjustedHour = isPM ? parseInt(hour, 10) + 12 : hour;
-    const date = new Date(year, month - 1, day, adjustedHour, minute || 0); // Create Date object
-    return date;
-  };
-
-  const API_URL = apiURLs.sheety;
-
-  const handleOpenMap = (latitude, longitude) => {
-    const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-    Linking.openURL(url).catch((err) =>
-      console.error("Failed to open URL:", err)
-    );
-  };
+  console.log("AllShipments" , userData)
 
   const makeCall = (number) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
-  };
-
-  const handleAssignmentChange = async (awbNumber, value, index) => {
-    try {
-      const response = await fetch(`${API_URL}/${index}`, {
-        method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sheet1: {
-            pickUpPersonName: value,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Failed to update the row. Status: ${response.status}. Error: ${errorText}`
-        );
-      }
-
-      const data = await response.json();
-      console.log("Row updated successfully");
-
-      setUserData((prevData) =>
-        prevData.map((user) =>
-          user.awbNumber === awbNumber
-            ? { ...user, pickUpPersonName: value }
-            : user
-        )
-      );
-    } catch (error) {
-      console.error("Error updating row:", error);
-    }
   };
 
   const handleCardPress = (awbNumber) => {
@@ -79,7 +19,7 @@ const Allshipments = ({ userData: initialData, pickupPersons }) => {
 
   return (
     <View>
-      {userData.length === 0 ? (
+      {userData.length == 0 ? (
         <View style={styles.noPickups}>
           <Text style={styles.noPickupsText}>No pickups available</Text>
         </View>

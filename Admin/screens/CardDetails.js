@@ -9,8 +9,8 @@ import {
   SafeAreaView,
   StatusBar,
 } from "react-native";
-import axios from "axios";
-import apiURLs from "../../utility/googlescreen/apiURLs";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../../FirebaseConfig";
 
 function CardDetails() {
   const route = useRoute();
@@ -18,16 +18,29 @@ function CardDetails() {
   const [details, setDetails] = useState(null);
 
   useEffect(() => {
-    axios
-      .get(apiURLs.sheety)
-      .then((response) => {
-        const result = response.data.sheet1.filter(
-          (d) => d.awbNumber == awbnumber
-        );
-        setDetails(result?.[0]);
-      })
-      .catch((error) => console.error(error));
-  }, []);
+    const fetchData = async () => {
+      try {
+        // Create a query to find the document with the matching awbNumber
+        const q = query(collection(db, "pickup"), where("awbNumber", "==", awbnumber));
+  
+        // Fetch the query results from Firestore
+        const querySnapshot = await getDocs(q);
+  
+        // Assuming awbNumber is unique, we'll grab the first result
+        const result = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        if (result.length > 0) {
+          setDetails(result[0]); // Set the details if a match is found
+        } else {
+          console.error(`No document found with AWB number: ${awbnumber}`);
+        }
+      } catch (error) {
+        console.error("Error fetching document from Firestore:", error);
+      }
+    };
+  
+    fetchData(); // Call the fetchData function on component mount
+  }, [awbnumber]); // Add awbnumber as a dependency
 
   if (!details) return <ActivityIndicator size="large" color="#6200EE" />;
 

@@ -1,14 +1,49 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Picker } from "@react-native-picker/picker"; // Ensure you are using the correct Picker library
 import apiURLs from "../../utility/googlescreen/apiURLs";
 import { Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import {
+  collection,
+  doc,
+  getDocs,
+  onSnapshot,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { db } from "../../FirebaseConfig";
 
-const Runsheet = ({ userData: initialData, pickupPersons }) => {
-  const [userData, setUserData] = useState(initialData);
+const Runsheet = ({ pickupPersons }) => {
+  const [userData, setUserData] = useState([]);
   console.log(userData);
   const navigation = useNavigation();
+
+  const fetchData = () => {
+    console.log("Fetching data...");
+    const unsubscribe = onSnapshot(
+      collection(db, "pickup"),
+      (querySnapshot) => {
+        // Filter documents where status is "RUN SHEET"
+        const sortedData = querySnapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
+          .filter((data) => data.status === "RUN SHEET"); // Filter based on status
+        setUserData(sortedData);
+        console.log(sortedData);
+        // If you have a function named parsePickupDateTime, call it here
+      },
+      (error) => {
+        console.error(`Error fetching data: ${error.message}`); // Log error if any
+      }
+    );
+    // Cleanup the listener on component unmount
+    return () => unsubscribe();
+  };
+
+  useEffect(() => {
+    fetchData(); // Fetch data initially
+  }, []);
 
   function parseDateTime(pickupDatetime) {
     // Remove "&" and any extra spaces
@@ -43,8 +78,6 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
     return new Date(2024, month - 1, day, hour);
   }
 
-  const API_URL = apiURLs.sheety;
-
   const handleOpenMap = (latitude, longitude) => {
     const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
     Linking.openURL(url).catch((err) =>
@@ -56,40 +89,40 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
   };
 
-  const handleAssignmentChange = async (awbNumber, value, index) => {
+  const handleAssignmentChange = async (awbNumber, value) => {
     try {
-      const response = await fetch(`${API_URL}/${index}`, {
-        method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sheet1: {
-            pickUpPersonName: value,
-          },
-        }),
+      const q = query(
+        collection(db, "pickup"),
+        where("awbNumber", "==", awbNumber),
+      );
+
+      const querySnapshot = await getDocs(q);
+      let final_result = [];
+
+      querySnapshot.forEach((doc) => {
+        final_result.push({ id: doc.id, ...doc.data() });
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Failed to update the row. Status: ${response.status}. Error: ${errorText}`
-        );
-      }
+      const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
 
-      const data = await response.json();
-      console.log("Row updated successfully");
+      // Update the document with the new pickUpPersonName
+      console.log(docRef);
 
-      setUserData((prevData) =>
-        prevData.map((user) =>
-          user.awbNumber === awbNumber
-            ? { ...user, pickUpPersonName: value }
-            : user
-        )
-      );
+      await updateDoc(docRef, {
+        pickUpPersonName: value,
+      });
+
+      // console.log("Document updated successfully",value);
+      // // Update the local state to reflect the new pickUpPersonName
+      // setUserData((prevData) =>
+      //   prevData.map((user) =>
+      //     user.awbNumber === awbNumber
+      //       ? { ...user, pickUpPersonName: value }
+      //       : user
+      //   )
+      // );
     } catch (error) {
-      console.error("Error updating row:", error);
+      console.error("Error updating document:", error);
     }
   };
 

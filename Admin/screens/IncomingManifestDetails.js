@@ -8,53 +8,15 @@ import {
   StyleSheet,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import axios from "axios";
 import { FontAwesome } from "@expo/vector-icons";
-import apiURLs from "../../utility/googlescreen/apiURLs";
-import { CallMerge } from "@mui/icons-material";
+import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { db } from "../../FirebaseConfig";
 
 function IncomingManifestDetails() {
   const navigation = useNavigation();
 
   const route = useRoute();
   const { awbnumber } = route.params;
-  const API_URL = apiURLs.sheety;
-
-  const fetchRowByAWB = async (awbNumber) => {
-    try {
-      const response = await axios.get(API_URL);
-      const allUsers = response.data.sheet1;
-      const matchedUser = allUsers.find((user) => user.awbNumber === awbnumber);
-      return matchedUser;
-    } catch (error) {
-      console.error("Error fetching row by AWB number:", error);
-      return null;
-    }
-  };
-
-  const updateRowByID = async (rowId, updatedFields) => {
-    try {
-      const response = await fetch(`${API_URL}/${rowId}`, {
-        method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ sheet1: { ...updatedFields } }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Failed to update the row. Status: ${response.status}. Error: ${errorText}`
-        );
-      }
-
-      console.log("Row updated successfully");
-    } catch (error) {
-      console.error("Error updating row:", error);
-    }
-  };
 
   const [user, setUser] = useState(null);
   const [actualWeight, setActualWeight] = useState("");
@@ -65,7 +27,29 @@ function IncomingManifestDetails() {
   const [selectedCountry, setSelectedCountry] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState(false);
   const [errors, setErrors] = useState({ country: false, vendor: false });
-console.log(rto)
+
+  const fetchRowByAWB = async (awbNumber) => {
+    console.log(typeof awbNumber);
+    try {
+      const q = query(
+        collection(db, "pickup"),
+        where("awbNumber", "==", awbnumber)
+      );
+
+      const querySnapshot = await getDocs(q);
+      let final_result = [];
+
+      querySnapshot.forEach((doc) => {
+        final_result.push({ id: doc.id, ...doc.data() });
+      });
+      console.log(final_result);
+      setUser(final_result[0]);
+    } catch (error) {
+      console.error("Error fetching row by AWB number:", error);
+      return null; // Return null in case of an error
+    }
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       const matchedUser = await fetchRowByAWB(awbnumber);
@@ -81,7 +65,8 @@ console.log(rto)
   }, [awbnumber]);
 
   const handleSubmit = async () => {
-    console.log(rto)
+
+    console.log(rto);
     setErrors({ country: false, vendor: false });
 
     if (!selectedCountry) {
@@ -94,18 +79,32 @@ console.log(rto)
 
     setIsSubmitting(true);
 
-    const details = {
+    const updatedFields = {
       actualWeight: actualWeight,
       actualNoOfPackages: actualNumPackages,
       status: "PAYMENT PENDING",
-      rtoIfAny:rto
+      rtoIfAny: rto,
     };
 
-    await updateRowByID(user.id, details);
+    const q = query(
+      collection(db, "pickup"),
+      where("awbNumber", "==", awbnumber)
+    );
+
+    const querySnapshot = await getDocs(q);
+    let final_result = [];
+
+    querySnapshot.forEach((doc) => {
+      final_result.push({ id: doc.id, ...doc.data() });
+    });
+
+    const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
+
+    updateDoc(docRef, updatedFields);
     setActualWeight("");
     setActualNumPackages(1);
     setIsSubmitting(false);
-    navigation.navigate("Admin");
+    navigation.navigate("Runsheet");
   };
 
   if (loading)
@@ -228,8 +227,7 @@ console.log(rto)
             keyboardType="default"
             numberOfLines={4} // You can adjust this based on how many lines you want
             style={styles.finalWeightInput}
-         
-         />
+          />
         </View>
         {/* Submit Button with Loading Indicator */}
         <TouchableOpacity

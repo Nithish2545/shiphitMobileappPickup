@@ -7,22 +7,21 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from "react-native";
-import axios from "axios";
-import apiURLs from "../../utility/googlescreen/apiURLs";
 import { useEffect, useState } from "react";
 import Runsheet from "./Runsheet";
 import Incomingmanifest from "../screens/IncomingManifest";
-import PaymentPending from "./PaymentPending";
-import PaymentDone from "./PaymentDone";
-import ShipmentConnected from "./ShipmentConnected";
+import PaymentDone from "../screens/PaymentDone";
+import PaymentPending from "../screens/PaymentPending";
+import  ShipmentConnected from "../screens/ShipmentConnected"
 import Ionicons from "@expo/vector-icons/Ionicons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { signOut } from "firebase/auth";
-import { FIREBASE_AUTH } from "../../FirebaseConfig";
+import { db, FIREBASE_AUTH } from "../../FirebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Allshipments from "./Allshipments";
+import { collection, onSnapshot } from "firebase/firestore"; // Import Firestore functions
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -31,10 +30,7 @@ export default function Admin() {
   const [userRole, setUserRole] = useState(null);
   const [assignments, setAssignments] = useState({});
   const [refreshing, setRefreshing] = useState(false); // Add refreshing state
-  const API_URL = apiURLs.sheetDB;
-  const kovai = apiURLs.kovai;
-  const pondy = apiURLs.sheetDB;
-  const chennai = apiURLs.sheetDB;
+
   const pickupPersons = [
     "Unassigned",
     "sangeetha",
@@ -43,7 +39,9 @@ export default function Admin() {
     "jaga",
   ];
 
-  const [currentTab, setcurrentTab] = useState("LIST SHIPMENTS");
+  // LIST SHIPMENTS
+  
+  const [currentTab, setcurrentTab] = useState("RUN SHEET");
 
   function parseDateTime(pickupDatetime) {
     // Remove "&" and any extra spaces
@@ -94,18 +92,18 @@ export default function Admin() {
       });
   };
 
-  const fetchAssignments = async () => {
-    try {
-      const result = await axios.get(API_URL);
-      const assignmentsData = result.data.sheet1.reduce((acc, item) => {
-        acc[item.AWB_NUMBER] = item.PickUpPersonName;
-        return acc;
-      }, {});
-      setAssignments(assignmentsData);
-    } catch (error) {
-      console.error("Error fetching assignments from Google Sheets:", error);
-    }
-  };
+  // const fetchAssignments = async () => {
+  //   try {
+  //     const result = await axios.get(API_URL);
+  //     const assignmentsData = result.data.sheet1.reduce((acc, item) => {
+  //       acc[item.AWB_NUMBER] = item.PickUpPersonName;
+  //       return acc;
+  //     }, {});
+  //     setAssignments(assignmentsData);
+  //   } catch (error) {
+  //     console.error("Error fetching assignments from Google Sheets:", error);
+  //   }
+  // };
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -134,42 +132,33 @@ export default function Admin() {
     const date = new Date(year, month - 1, day, adjustedHour, minute || 0); // Create Date object
     return date;
   };
-
-  const fetchData = async () => {
-    setLoading(true);
-
-    try {
-      const result = await axios.get(API_URL);
-      const sortedData = result.data.sheet1;
+  const fetchData = () => {
+    console.log("test")
+    const unsubscribe = onSnapshot(collection(db, "pickup"), (querySnapshot) => {
+      const sortedData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); // Map through documents to get data
       setUserData(sortedData);
       console.log(sortedData);
-      parsePickupDateTime;
-      await fetchAssignments(); // Fetch assignments
-    } catch (error) {
-      if (error.response) {
-        setError(
-          `Error ${error.response.status}: ${
-            error.response.data.message || error.message
-          }`
-        );
-      } else if (error.request) {
-        setError("Network error. Please check your connection.");
-      } else {
-        setError(`Error: ${error.message}`);
-      }
-    } finally {
-      setLoading(false);
-    }
+      // If you have a function named parsePickupDateTime, call it here
+      // fetchAssignments(); // Fetch assignments
+    }, (error) => {
+      setError(`Error: ${error.message}`);
+      setLoading(false); // Stop loading on error
+    });
+
+    // Cleanup the listener on component unmount
+    return () => unsubscribe();
   };
 
   useEffect(() => {
     fetchData(); // Fetch data initially
-  }, [userRole]);
+    setLoading(false); // Set loading to false after fetching data
+  }, [userRole  ]);
 
   // Filter data based on STATUS
   const AllShipments = userData.sort(
     (a, b) => parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
   );
+
   const currentItems = userData
     .filter((user) => user.status === "RUN SHEET")
     .sort(
@@ -297,7 +286,7 @@ export default function Admin() {
           }
         >
            {currentTab === "RUN SHEET" ? (
-            <Runsheet userData={currentItems} pickupPersons={pickupPersons} />
+            <Runsheet  pickupPersons={pickupPersons} />
           ) : currentTab === "INCOMING MANIFEST" ? (
             <Incomingmanifest userData={incomingManifestItems} />
           ) : currentTab === "PAYMENT PENDING" ? (

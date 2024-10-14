@@ -1,14 +1,48 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Linking } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Linking,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../../FirebaseConfig";
 // Removed Picker import since it is commented out
 
-const PaymentDone = ({ userData, pickupPersons }) => {
+const PaymentDone = () => {
+  const [userData, setuserData] = useState([]);
+  const fetchData = () => {
+    console.log("Fetching data...");
+    const unsubscribe = onSnapshot(
+      collection(db, "pickup"),
+      (querySnapshot) => {
+        // Filter documents where status is "RUN SHEET"
+        const sortedData = querySnapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
+          .filter((data) => data.status === "PAYMENT DONE"); // Filter based on status
+        setuserData(sortedData);
+        console.log(sortedData);
+        // If you have a function named parsePickupDateTime, call it here
+      },
+      (error) => {
+        console.error(`Error fetching data: ${error.message}`); // Log error if any
+      }
+    );
+    // Cleanup the listener on component unmount
+    return () => unsubscribe();
+  };
+
+  useEffect(() => {
+    fetchData(); // Fetch data initially
+  }, []);
+
   const navigation = useNavigation();
-  
+
   const handleCardPress = (awbNumber) => {
     // Handle card press action
-    navigation.navigate("VendorDetails", { awbnumber:awbNumber });
+    navigation.navigate("VendorDetails", { awbnumber: awbNumber });
   };
 
   const makeCall = (number) => {
@@ -21,7 +55,7 @@ const PaymentDone = ({ userData, pickupPersons }) => {
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 
-console.log(userData)
+  console.log(userData);
   return (
     <View>
       {userData.length === 0 ? (
@@ -82,7 +116,9 @@ console.log(userData)
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
+              <Text style={styles.value}>
+                {user.consignorphonenumber || "N/A"}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Country</Text>
@@ -90,15 +126,24 @@ console.log(userData)
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Final weight:</Text>
-              <Text style={styles.value}>{user.actualWeight + " " + "KG" || "N/A"}</Text>
+              <Text style={styles.value}>
+                {user.actualWeight + " " + "KG" || "N/A"}
+              </Text>
             </View>
-         
+
             <View style={styles.infoRow}>
               <Text style={styles.label}>PickUp Person:</Text>
               <Text style={styles.value}>{user.pickUpPersonName || "N/A"}</Text>
             </View>
 
-            <View style={{display:"flex" , flexDirection:"row" , gap:20,  position:"relative"}}>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: 20,
+                position: "relative",
+              }}
+            >
               <TouchableOpacity
                 style={styles.mapButton}
                 onPress={() => makeCall(user.consignorphonenumber)}
@@ -120,7 +165,6 @@ console.log(userData)
                 <Text style={styles.mapButtonText}>Details</Text>
               </TouchableOpacity>
             </View>
-
           </TouchableOpacity>
         ))
       )}
@@ -138,11 +182,11 @@ const styles = StyleSheet.create({
     fontSize: 16, // Added font size for better readability
   },
   card: {
-    borderWidth: 1,          // Adds border width
-    borderColor: '#D1D5DB', // Sets the color of the border
-    borderRadius: 10,        // Adds rounded corners to the border
-    padding: 10,  
-    marginBottom:10
+    borderWidth: 1, // Adds border width
+    borderColor: "#D1D5DB", // Sets the color of the border
+    borderRadius: 10, // Adds rounded corners to the border
+    padding: 10,
+    marginBottom: 10,
   },
   statusContainer: {
     marginBottom: 12,
@@ -159,9 +203,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#D1FAE5", // Light green background for completed status
   },
   statusDefault: {
-    display:"flex",
-    flexDirection:"row",
-    justifyContent:"space-between",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
     backgroundColor: "#E2E8F0", // Light gray background for default status
   },
   statusText: {

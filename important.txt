@@ -1,17 +1,3 @@
-Enquiry App:
-
-    dinesh@gmail.com
-    dinesh_shiphit
-
-    sana@gmail.com
-    sanashiphit_25
-
-    testing
-    testing
-    
-    smitha@gmail.com
-    smithashiphit
-
 pickup admin :
 
     dhanush@gmail.com
@@ -28,17 +14,10 @@ pickup :
     jaga@gmail.com
     jagashiphit
 
-
-
-
-
 https://enquiry-app-9d329.web.app
-
 
 =SEQUENCE(COUNTA(N2:N), 1, 1001, 1)
 
-
 =SEQUENCE(COUNTA(N2:N))
-
 
 npx react-native start --reset-cache
