@@ -20,7 +20,6 @@ import { collection, onSnapshot } from "firebase/firestore";
 import ModalDatePicker from "react-native-modal-datetime-picker";
 
 export default function Admin() {
-
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [userData, setUserData] = useState([]);
@@ -40,8 +39,7 @@ export default function Admin() {
     setSelectedDate(formattedDate);
     setDatePickerVisibility(false);
   };
-  
-  console.log(tofilterDate);
+
 
   const handleSignOut = () => {
     signOut(FIREBASE_AUTH)
@@ -71,24 +69,26 @@ export default function Admin() {
 
   const parsePickupDate = (pickupDatetime) => {
     // Split date and time parts
-    const [datePart, timePart] = pickupDatetime.split('&').map(part => part.trim());
-    const [day, month] = datePart.split('-').map(Number);
-    const [hourPart, period] = timePart.split(' ').map(part => part.trim());
-  
+    const [datePart, timePart] = pickupDatetime
+      .split("&")
+      .map((part) => part.trim());
+    const [day, month] = datePart.split("-").map(Number);
+    const [hourPart, period] = timePart.split(" ").map((part) => part.trim());
+
     // Adjust hour based on AM/PM
     let hour = parseInt(hourPart);
-    if (period === 'PM' && hour < 12) hour += 12;
-    if (period === 'AM' && hour === 12) hour = 0;
-  
+    if (period === "PM" && hour < 12) hour += 12;
+    if (period === "AM" && hour === 12) hour = 0;
+
     // Create a new Date object
     const date = new Date();
     date.setDate(day);
     date.setMonth(month - 1); // Months are 0-indexed
     date.setHours(hour, 0, 0, 0); // Set hours, minutes, seconds, and milliseconds to 0
-  
+
     return date;
   };
-  
+
   const fetchData = async () => {
     const unsubscribe = onSnapshot(
       collection(db, "pickup"),
@@ -104,7 +104,7 @@ export default function Admin() {
             const dateB = parsePickupDate(b.pickupDatetime);
             return dateA - dateB; // Sort in ascending order
           });
-  
+
         setUserData(sortedData);
       },
       (error) => {
@@ -112,7 +112,7 @@ export default function Admin() {
         setLoading(false);
       }
     );
-  
+
     return () => unsubscribe();
   };
 
@@ -131,7 +131,7 @@ export default function Admin() {
     (user) =>
       user.status === "RUN SHEET" &&
       user.pickUpPersonName === userName &&
-      user.pickupDatetime.includes(tofilterDate)
+      user.pickupDatetime?.includes(tofilterDate)
   );
 
   const incomingManifestItems = userData.filter(
@@ -140,8 +140,8 @@ export default function Admin() {
         user.status === "PAYMENT PENDING" ||
         user.status === "PAYMENT DONE" ||
         user.status === "SHIPMENT CONNECTED") &&
-      user.pickUpPersonName === userName && 
-      user.pickupCompletedDatatime.includes(tofilterDate)
+      user.pickUpPersonName === userName &&
+      user.pickupCompletedDatatime?.includes(tofilterDate)
   );
 
   console.log(incomingManifestItems);
@@ -160,7 +160,9 @@ export default function Admin() {
           }}
         >
           <Text style={{ color: "black", fontWeight: "600", fontSize: 18 }}>
-            {currentTab}
+            {currentTab == "INCOMING MANIFEST"
+              ? "PICKUP COMPLETED"
+              : currentTab}
           </Text>
           <Text
             style={{
@@ -184,31 +186,30 @@ export default function Admin() {
             Sign out
           </Text>
         </View>
-        <View style={{display:"flex", flexDirection:"row", gap:20}}>
 
-        <TouchableOpacity
-          onPress={() => setDatePickerVisibility(true)}
-          style={styles.datePickerInput}
-        >
-          <TextInput
-            style={styles.datePickerText}
-            value={selectedDate}
-            editable={false} // Prevent user input
-            placeholder="dd/mm/yyyy" // Set placeholder
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-        style={styles.clearButton}
-        onPress={() => {
-          settofilterdate("");
-          setSelectedDate(null); // Clear selected date
-          setDatePickerVisibility(false); // Close the modal
-        }}
-      >
-        
-        <Text style={styles.clearButtonText}>Clear Date</Text>
-      </TouchableOpacity>
-      </View>
+        <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
+          <TouchableOpacity
+            onPress={() => setDatePickerVisibility(true)}
+            style={styles.datePickerInput}
+          >
+            <TextInput
+              style={styles.datePickerText}
+              value={selectedDate}
+              editable={false} // Prevent user input
+              placeholder="dd/mm/yyyy" // Set placeholder
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={() => {
+              settofilterdate("");
+              setSelectedDate(null); // Clear selected date
+              setDatePickerVisibility(false); // Close the modal
+            }}
+          >
+            <Text style={styles.clearButtonText}>Clear Date</Text>
+          </TouchableOpacity>
+        </View>
 
         <ModalDatePicker
           isVisible={isDatePickerVisible}
@@ -259,16 +260,16 @@ export default function Admin() {
 
 const styles = StyleSheet.create({
   clearButton: {
-    backgroundColor: '#6200ea', // Purple button background
+    backgroundColor: "#6200ea", // Purple button background
     paddingVertical: 10,
     paddingHorizontal: 8,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   clearButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   datePickerInput: {
     borderWidth: 1,

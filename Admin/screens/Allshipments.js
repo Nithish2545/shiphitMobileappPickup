@@ -1,9 +1,36 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../../FirebaseConfig";
 
-const Allshipments = ({ userData}) => {
+const Allshipments = ({ userData }) => {
+  // const [userData , setUserData] = useState([])
+  // const fetchData = () => {
+  //   console.log("Fetching data...");
+  //   const unsubscribe = onSnapshot(
+  //     collection(db, "pickup"),
+  //     (querySnapshot) => {
+  //       // Filter documents where status is "RUN SHEET"
+  //       const sortedData = querySnapshot.docs
+  //         .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
+  //         .filter((data) => data.pickupDatetime.includes(datetime)); // Filter based on status
+  //       setUserData(sortedData);
+  //       // If you have a function named parsePickupDateTime, call it here
+  //     },
+  //     (error) => {
+  //       console.error(`Error fetching data: ${error.message}`); // Log error if any
+  //     }
+  //   );
+  //   // Cleanup the listener on component unmount
+  //   return () => unsubscribe();
+  // };
+
+  // useEffect(() => {
+  //   fetchData(); // Fetch data initially
+  // }, [datetime]);
+
   const navigation = useNavigation();
   console.log("AllShipments" , userData)
 
@@ -52,7 +79,6 @@ const Allshipments = ({ userData}) => {
                   >
                     RUN SHEET
                   </Text>
-
                   <Text
                     style={{
                       color: "#6D28D9",

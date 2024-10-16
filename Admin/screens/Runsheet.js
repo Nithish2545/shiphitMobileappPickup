@@ -14,12 +14,10 @@ import {
 } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 
-const Runsheet = ({ pickupPersons }) => {
-  
+const Runsheet = ({ pickupPersons , datetime }) => {
+  console.log(typeof datetime)
   const [userData, setUserData] = useState([]);
-  console.log(userData);
   const navigation = useNavigation();
-
   const fetchData = () => {
     console.log("Fetching data...");
     const unsubscribe = onSnapshot(
@@ -28,7 +26,7 @@ const Runsheet = ({ pickupPersons }) => {
         // Filter documents where status is "RUN SHEET"
         const sortedData = querySnapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
-          .filter((data) => data.status === "RUN SHEET"); // Filter based on status
+          .filter((data) => data.status === "RUN SHEET" && data.pickupDatetime.includes(datetime)); // Filter based on status
         setUserData(sortedData);
         console.log(sortedData);
         // If you have a function named parsePickupDateTime, call it here
@@ -43,40 +41,7 @@ const Runsheet = ({ pickupPersons }) => {
 
   useEffect(() => {
     fetchData(); // Fetch data initially
-  }, []);
-
-  function parseDateTime(pickupDatetime) {
-    // Remove "&" and any extra spaces
-    const formattedDatetime = pickupDatetime.replace("&", "").trim();
-
-    // Split date part and time part
-    const [datePart, timePart] = formattedDatetime.split(/\s+/);
-    const [day, month] = datePart.split("-").map(Number);
-
-    // Check if time part is present and valid
-    if (!timePart || !/\d+/.test(timePart)) {
-      return new Date(2024, month - 1, day); // Only date part is available, return date with default time
-    }
-
-    // Extract the hour and AM/PM, with a fallback
-    const match = timePart.match(/(\d+)\s*(AM|PM)/);
-    if (!match) {
-      return new Date(2024, month - 1, day); // No valid time, return date without time
-    }
-
-    let [hour, modifier] = match.slice(1);
-    hour = parseInt(hour, 10);
-
-    // Convert to 24-hour format
-    if (modifier === "PM" && hour !== 12) {
-      hour += 12;
-    } else if (modifier === "AM" && hour === 12) {
-      hour = 0;
-    }
-
-    // Assuming all data is for the year 2024
-    return new Date(2024, month - 1, day, hour);
-  }
+  }, [datetime]);
 
   const handleOpenMap = (latitude, longitude) => {
     const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
@@ -207,7 +172,7 @@ const Runsheet = ({ pickupPersons }) => {
                     handleAssignmentChange(user.awbNumber, value, user.id)
                   }
                 >
-                  {pickupPersons.map((person, index) => (
+                  {pickupPersons?.map((person, index) => (
                     <Picker.Item key={index} label={person} value={person} />
                   ))}
                 </Picker>

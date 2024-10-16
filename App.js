@@ -74,7 +74,6 @@ export default function App() {
             <Stack.Screen name="PaymentDone" component={PaymentDone} />
             <Stack.Screen name="VendorDetails" component={VendorDetails} />
             <Stack.Screen name="Shipmentconnected" component={ShipmentConnected} />
-        
           </>
         ) : currentUserRole === "pickup" ? (
           // If the logged-in user is a pickup person, show Pickup screens

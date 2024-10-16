@@ -6,13 +6,14 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  TextInput,
 } from "react-native";
 import { useEffect, useState } from "react";
 import Runsheet from "./Runsheet";
 import Incomingmanifest from "../screens/IncomingManifest";
 import PaymentDone from "../screens/PaymentDone";
 import PaymentPending from "../screens/PaymentPending";
-import  ShipmentConnected from "../screens/ShipmentConnected"
+import ShipmentConnected from "../screens/ShipmentConnected";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -22,6 +23,7 @@ import { db, FIREBASE_AUTH } from "../../FirebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Allshipments from "./Allshipments";
 import { collection, onSnapshot } from "firebase/firestore"; // Import Firestore functions
+import ModalDatePicker from "react-native-modal-datetime-picker";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -30,6 +32,18 @@ export default function Admin() {
   const [userRole, setUserRole] = useState(null);
   const [assignments, setAssignments] = useState({});
   const [refreshing, setRefreshing] = useState(false); // Add refreshing state
+  const [selectedDate, setSelectedDate] = useState("");
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [tofilterDate, settofilterdate] = useState("");
+  const handleDatePicked = (date) => {
+    const day = date.getDate(); // Get day without leading zero
+    const month = date.getMonth() + 1; // Get month (0-based index) without leading zero
+    const year = date.getFullYear(); // Get full year
+    const formattedDate = `${day}-${month}-${year}`; // Format as dd-mm-yyyy
+    settofilterdate(`${day}-${month}`);
+    setSelectedDate(formattedDate);
+    setDatePickerVisibility(false);
+  };
 
   const pickupPersons = [
     "Unassigned",
@@ -40,8 +54,8 @@ export default function Admin() {
   ];
 
   // LIST SHIPMENTS
-  
-  const [currentTab, setcurrentTab] = useState("RUN SHEET");
+
+  const [currentTab, setcurrentTab] = useState("LIST SHIPMENTS");
 
   function parseDateTime(pickupDatetime) {
     // Remove "&" and any extra spaces
@@ -133,17 +147,22 @@ export default function Admin() {
     return date;
   };
   const fetchData = () => {
-    console.log("test")
-    const unsubscribe = onSnapshot(collection(db, "pickup"), (querySnapshot) => {
-      const sortedData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); // Map through documents to get data
-      setUserData(sortedData);
-      console.log(sortedData);
-      // If you have a function named parsePickupDateTime, call it here
-      // fetchAssignments(); // Fetch assignments
-    }, (error) => {
-      setError(`Error: ${error.message}`);
-      setLoading(false); // Stop loading on error
-    });
+    const unsubscribe = onSnapshot(
+      collection(db, "pickup"),
+      (querySnapshot) => {
+        const sortedData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })); // Map through documents to get data
+        setUserData(sortedData);
+        // If you have a function named parsePickupDateTime, call it here
+        // fetchAssignments(); // Fetch assignments
+      },
+      (error) => {
+        setError(`Error: ${error.message}`);
+        setLoading(false); // Stop loading on error
+      }
+    );
 
     // Cleanup the listener on component unmount
     return () => unsubscribe();
@@ -152,12 +171,15 @@ export default function Admin() {
   useEffect(() => {
     fetchData(); // Fetch data initially
     setLoading(false); // Set loading to false after fetching data
-  }, [userRole  ]);
+  }, [userRole]);
 
   // Filter data based on STATUS
-  const AllShipments = userData.sort(
-    (a, b) => parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
-  );
+  const AllShipments = userData
+    .filter((data) => data.pickupDatetime.includes(tofilterDate))
+    .sort(
+      (a, b) =>
+        parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
+    );
 
   const currentItems = userData
     .filter((user) => user.status === "RUN SHEET")
@@ -167,7 +189,11 @@ export default function Admin() {
     );
 
   const incomingManifestItems = userData
-    .filter((user) => user.status === "INCOMING MANIFEST")
+    .filter(
+      (user) =>
+        user.status === "INCOMING MANIFEST" &&
+        user.pickupDatetime.includes(tofilterDate)
+    )
     .sort(
       (a, b) =>
         parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
@@ -201,30 +227,69 @@ export default function Admin() {
   return (
     <View style={styles.container}>
       <View style={styles.signout}>
-        <Text style={{ color: "black", fontWeight: "600", fontSize: 18 }}>
-          {currentTab == "INCOMING MANIFEST" ? "WAREHOUSE" : currentTab}
-        </Text>
-        <Text
+        <View
           style={{
-            paddingVertical: 10,
-            paddingHorizontal: 20,
-            backgroundColor: "#8647D3", // The primary purple color
-            color: "white",
-            fontWeight: "bold",
-            borderRadius: 8, // Rounded corners
-            textAlign: "center",
-            borderWidth: 2,
-            borderColor: "#5A2E91", // Darker purple for the border
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
-            elevation: 5, // Elevation for Android shadow
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
           }}
-          onPress={handleSignOut}
         >
-          Sign out
-        </Text>
+          <Text style={{ color: "black", fontWeight: "600", fontSize: 18 }}>
+            {currentTab == "INCOMING MANIFEST" ? "WAREHOUSE" : currentTab}
+          </Text>
+          <Text
+            style={{
+              paddingVertical: 10,
+              paddingHorizontal: 20,
+              backgroundColor: "#8647D3", // The primary purple color
+              color: "white",
+              fontWeight: "bold",
+              borderRadius: 8, // Rounded corners
+              textAlign: "center",
+              borderWidth: 2,
+              borderColor: "#5A2E91", // Darker purple for the border
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+              elevation: 5, // Elevation for Android shadow
+            }}
+            onPress={handleSignOut}
+          >
+            Sign out
+          </Text>
+        </View>
+
+        <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
+          <TouchableOpacity
+            onPress={() => setDatePickerVisibility(true)}
+            style={styles.datePickerInput}
+          >
+            <TextInput
+              style={styles.datePickerText}
+              value={selectedDate}
+              editable={false} // Prevent user input
+              placeholder="dd/mm/yyyy" // Set placeholder
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={() => {
+              settofilterdate("");
+              setSelectedDate(null); // Clear selected date
+              setDatePickerVisibility(false); // Close the modal
+            }}
+          >
+            <Text style={styles.clearButtonText}>Clear Date</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ModalDatePicker
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleDatePicked}
+          onCancel={() => setDatePickerVisibility(false)}
+        />
       </View>
       <View style={styles.nav}>
         <TouchableOpacity
@@ -285,19 +350,31 @@ export default function Admin() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-           {currentTab === "RUN SHEET" ? (
-            <Runsheet  pickupPersons={pickupPersons} />
+          {currentTab === "RUN SHEET" ? (
+            <Runsheet pickupPersons={pickupPersons} datetime={tofilterDate} />
           ) : currentTab === "INCOMING MANIFEST" ? (
-            <Incomingmanifest userData={incomingManifestItems} />
+            <Incomingmanifest
+              userData={incomingManifestItems}
+              datetime={tofilterDate}
+            />
           ) : currentTab === "PAYMENT PENDING" ? (
-            <PaymentPending userData={paymentPending} />
+            <PaymentPending userData={paymentPending} datetime={tofilterDate} />
           ) : currentTab === "PAYMENT DONE" ? (
-            <PaymentDone userData={paymentDone} />
+            <PaymentDone userData={paymentDone} datetime={tofilterDate} />
           ) : currentTab === "SHIPMENT CONNECTED" ? (
-            <ShipmentConnected userData={shipmentconnected} />
+            <ShipmentConnected
+              userData={shipmentconnected}
+              datetime={tofilterDate}
+            />
           ) : currentTab === "LIST SHIPMENTS" ? (
-            <Allshipments userData={AllShipments} />
-          ) : null} 
+            <Allshipments userData={AllShipments} datetime={tofilterDate} />
+          ) : null}
+          {/* 
+          {currentTab === "RUN SHEET" ? (
+            <Incomingmanifest userData={incomingManifestItems} />
+          ) : currentTab === "INCOMING MANIFEST" ? (
+            <Runsheet pickupPersons={pickupPersons} />
+          ) : null} */}
         </ScrollView>
       )}
     </View>
@@ -305,6 +382,33 @@ export default function Admin() {
 }
 
 const styles = StyleSheet.create({
+  clearButton: {
+    backgroundColor: "#6200ea", // Purple button background
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  clearButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  datePickerInput: {
+    borderWidth: 1,
+    borderColor: "#8647D3",
+    borderRadius: 5,
+    backgroundColor: "#fff",
+    display: "flex",
+    alignSelf: "flex-start",
+  },
+  datePickerText: {
+    color: "black",
+    fontSize: 16,
+    height: 40,
+    padding: 10,
+  },
   buttonSpace: {
     padding: 10,
   },
@@ -312,10 +416,10 @@ const styles = StyleSheet.create({
     display: "flex",
     paddingRight: 15,
     paddingLeft: 15,
-    flexDirection: "row",
+    flexDirection: "column",
     justifyContent: "space-between",
-    alignItems: "center",
-    height: 70,
+    height: 100,
+    paddingBottom: 20,
     borderBottomWidth: 1, // Adds the bottom border
     borderBottomColor: "lightgrey",
   },

@@ -14,7 +14,14 @@ import { Controller, useForm } from "react-hook-form";
 import { db, storage } from "../../FirebaseConfig"; // Import Firebase storage
 import * as ImagePicker from "expo-image-picker"; // Import ImagePicker
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 
 function VendorDetails() {
   const route = useRoute();
@@ -43,6 +50,7 @@ function VendorDetails() {
       });
       console.log(final_result);
       setUser(final_result[0]);
+      return final_result[0]
     } catch (error) {
       console.error("Error fetching row by AWB number:", error);
       return null; // Return null in case of an error
@@ -88,8 +96,21 @@ function VendorDetails() {
   }, [awbnumber]);
 
   const onSubmit = async (data) => {
-
     setIsSubmitting(true); // Start loading
+
+    // Function to upload the image to Firebase
+    const uploadImage = async (imageUri) => {
+      if (!imageUri) return null; // Return null if no image selected
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const storageRef = ref(
+        storage,
+        `${awbnumber}/AWB NUMBER IMAGE/${Date.now()}.jpg`
+      ); // Create a reference in the specified folder
+      await uploadBytes(storageRef, blob); // Upload the image
+      const downloadURL = await getDownloadURL(storageRef); // Get the download URL
+      return downloadURL; // Return the URL
+    };
 
     const updatedFields = {
       vendorAwbnumber: data.vendorAwbnumber,
@@ -117,24 +138,7 @@ function VendorDetails() {
     setFinalWeightImage(null); // Reset the image
     setIsSubmitting(false); // Stop loading
 
-    navigation.navigate("Shipmentconnected");
-  };
-
-  // Function to upload the image to Firebase
-  const uploadImage = async (imageUri) => {
-    if (!imageUri) return null; // Return null if no image selected
-
-    const response = await fetch(imageUri);
-    const blob = await response.blob();
-    const storageRef = ref(
-      storage,
-      `${awbnumber}/AWB NUMBER IMAGE/${Date.now()}.jpg`
-    ); // Create a reference in the specified folder
-
-    await uploadBytes(storageRef, blob); // Upload the image
-
-    const downloadURL = await getDownloadURL(storageRef); // Get the download URL
-    return downloadURL; // Return the URL
+    navigation.navigate("Admin");
   };
 
   // Function to handle image selection
@@ -302,12 +306,11 @@ function VendorDetails() {
           <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
             <Text style={styles.uploadButtonText}>
               {finalWeightImage
-                ? "Change Final Weight Image"
-                : "Upload Final Weight Image"}
+                ? "Change AWB BAR CODE Image"
+                : "Upload AWB BAR CODE Image"}
             </Text>
           </TouchableOpacity>
         </View>
-
         <TouchableOpacity
           onPress={handleSubmit(onSubmit)}
           style={styles.button}

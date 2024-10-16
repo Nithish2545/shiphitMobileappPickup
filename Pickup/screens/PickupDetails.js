@@ -44,9 +44,8 @@ const PickupDetails = () => {
   const [timestamp, setTimestamp] = useState(null);
   const [metadata, setMetadata] = useState(null);
   const [PickupersonImage, setPickupersonImage] = useState("");
-  
+
   const formatToIST = (exifDateTime) => {
-    console.log("exifDateTime" , exifDateTime)
     if (!exifDateTime) return "Unknown date"; // Handle null case
 
     const parts = exifDateTime.split(" ");
@@ -93,14 +92,14 @@ const PickupDetails = () => {
 
     if (!result.cancelled) {
       setImage(result.assets[0].uri); // Ensure the correct URI is set from assets
-
       if (result.assets[0].exif) {
         setMetadata(result.assets[0].exif);
-        setTimestamp(formatToIST(result.assets[0].exif.DateTime) || "Unknown date");
+        setTimestamp(
+          formatToIST(result.assets[0].exif.DateTime) || "Unknown date"
+        );
       } else {
         setTimestamp(new Date().toString());
       }
-
       setPickupersonImage(result.assets[0].uri);
     }
   };
@@ -114,11 +113,18 @@ const PickupDetails = () => {
     const response = await fetch(uri);
     const blob = await response.blob(); // Convert the image to a Blob
 
-    const storageRef = ref(storage, `${awbnumber}/${"PickupPersonImage"}`); // Create a reference in Firebase Storage
+    const storageRef = ref(
+      storage,
+      `${awbnumber}/${"PICKUPPERSONIMAGE"}/${"Image"}`
+    ); // Create a reference in Firebase Storage
+
     try {
       await uploadBytes(storageRef, blob); // Upload the Blob
-      console.log("Upload successful");
+      const url = await getDownloadURL(storageRef);
       // Alert.alert("Success", "Image uploaded successfully!");
+      console.log("Upload successful");
+
+      return url;
     } catch (error) {
       console.error("Upload failed:", error);
       // Alert.alert("Upload failed", "There was an error uploading your image.");
@@ -152,7 +158,7 @@ const PickupDetails = () => {
           setNumberOfPackages(userDetails?.numberOfPackages || 1);
         } else {
           console.log("No data found for the provided awbNumber and status.");
-        }
+                }
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -168,10 +174,7 @@ const PickupDetails = () => {
     const blob = await response.blob();
     const storageRef = ref(storage, `${awbnumber}/${folder}/${file.fileName}`);
     await uploadBytes(storageRef, blob);
-
     const url = await getDownloadURL(storageRef);
-    uploadImage(PickupersonImage);
-    console.log(url);
     return url;
   };
 
@@ -259,9 +262,7 @@ const PickupDetails = () => {
   };
 
   const handleSubmit = async () => {
-    console.log(PickupCompletedDate());
     if (!validateForm()) return;
-
     setSubmitLoading(true);
 
     try {
@@ -274,11 +275,13 @@ const PickupDetails = () => {
           uploadFileToFirebase(file, "PRODUCT IMAGES")
         )
       );
+
       const packageWeightImageUrls = await Promise.all(
         packageWeightImages.map((file) =>
           uploadFileToFirebase(file, "PACKAGE WEIGHT")
         )
       );
+
       const formImageUrls = await Promise.all(
         formImages.map((file) => uploadFileToFirebase(file, "FORM IMAGES"))
       );
@@ -288,13 +291,14 @@ const PickupDetails = () => {
         postNumberOfPackages: numberOfPackages,
         status: "INCOMING MANIFEST",
         pickUpPersonNameStatus: "PICKUP COMPLETED",
-        PRODUCTSIMAGE: productImageUrls.join(", "),
-        PACKAGEWEIGHTIMAGES: packageWeightImageUrls.join(", "),
-        FORMIMAGES: formImageUrls.join(", "),
+        PRODUCTSIMAGE: productImageUrls,
+        PACKAGEWEIGHTIMAGES: packageWeightImageUrls,
+        FORMIMAGES: formImageUrls,
         pickupCompletedDatatime: PickupCompletedDate(),
-        PickupImageTakenTime: timestamp
+        PickupImageTakenTime: timestamp,
+        PickupPersonImageURL: await uploadImage(PickupersonImage),
       };
-
+      console.log("formImageUrls", formImageUrls);
       const q = query(
         collection(db, "pickup"),
         where("awbNumber", "==", awbnumber)
@@ -361,7 +365,6 @@ const PickupDetails = () => {
   const handleGoBack = () => {
     navigation.goBack(); // Go back one step in the navigation stack
   };
-
   return (
     <View>
       <ScrollView contentContainerStyle={styles.container}>
@@ -378,8 +381,8 @@ const PickupDetails = () => {
               <Text style={styles.text}>{details.awbNumber}</Text>
             </View>
             <View style={styles.detailContainer}>
-              <Text style={styles.label}>Consignee:</Text>
-              <Text style={styles.text}>{details.name}</Text>
+              <Text style={styles.label}>Consignor:</Text>
+              <Text style={styles.text}>{details.consignorname}</Text>
             </View>
             <View style={styles.detailContainer}>
               <Text style={styles.label}>Destination:</Text>
@@ -391,7 +394,7 @@ const PickupDetails = () => {
             </View>
             <View style={styles.detailContainer}>
               <Text style={styles.label}>Phone Number:</Text>
-              <Text style={styles.text}>{details.phonenumber}</Text>
+              <Text style={styles.text}>{details.consignorphonenumber}</Text>
             </View>
             <View style={styles.detailContainer}>
               <Text style={styles.label}>Pickup DateTime:</Text>

@@ -66,7 +66,7 @@ const Runsheet = ({ userData }) => {
               <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>AWB Number::</Text>
+              <Text style={styles.label}>Consignor:</Text>
               <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
