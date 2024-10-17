@@ -13,6 +13,7 @@ import Pickup from "./Pickup/screens/Pickup";
 import PickupDetails from  "./Pickup/screens/PickupDetails";
 import VendorDetails from "./Admin/screens/VendorDetails";
 import CardDetails from "./Admin/screens/CardDetails";
+import { ClientDetails } from "./Admin/screens/ClientDetails";
 
 export default function App() {
 
@@ -72,6 +73,7 @@ export default function App() {
             <Stack.Screen name="PaymentPending" component={PaymentPending} />
             <Stack.Screen name="PaymentDone" component={PaymentDone} />
             <Stack.Screen name="VendorDetails" component={VendorDetails} />
+            <Stack.Screen name="ClientDetails" component={ClientDetails} />
           </>
         ) : currentUserRole === "pickup" ? (
           // If the logged-in user is a pickup person, show Pickup screens
