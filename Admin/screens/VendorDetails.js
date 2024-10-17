@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
   StyleSheet,
   Image,
+  ScrollView,
+  SafeAreaView,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
@@ -50,7 +52,7 @@ function VendorDetails() {
       });
       console.log(final_result);
       setUser(final_result[0]);
-      return final_result[0]
+      return final_result[0];
     } catch (error) {
       console.error("Error fetching row by AWB number:", error);
       return null; // Return null in case of an error
@@ -63,7 +65,8 @@ function VendorDetails() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false); // New state for submit loading
   const [finalWeightImage, setFinalWeightImage] = useState(null); // State for final weight image
-
+  const [error, seterror] = useState(""); // State for final weight image
+  
   const PickupCompletedDate = () => {
     const now = new Date();
     const istDate = now.toLocaleDateString("en-IN", {
@@ -96,7 +99,12 @@ function VendorDetails() {
   }, [awbnumber]);
 
   const onSubmit = async (data) => {
+if(!finalWeightImage){
+  seterror("AWB Bar code image is required!")
+  return
+}
     setIsSubmitting(true); // Start loading
+
 
     // Function to upload the image to Firebase
     const uploadImage = async (imageUri) => {
@@ -164,10 +172,9 @@ function VendorDetails() {
     );
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
         <Text style={styles.title}>Vendor details</Text>
-
         <View style={styles.info}>
           <Text style={styles.label}>Name:</Text>
           <Text style={styles.value}>{user.consignorname}</Text>
@@ -203,6 +210,7 @@ function VendorDetails() {
             style={styles.icon}
           />
         </View>
+        
         <View style={styles.infoRow}>
           <Text style={styles.label}>Vendor:</Text>
           <Text style={styles.value}>{user.vendorName}</Text>
@@ -311,6 +319,7 @@ function VendorDetails() {
             </Text>
           </TouchableOpacity>
         </View>
+        {error? (<Text style={{color:"red"}}>{error}</Text>) : (<></>)}
         <TouchableOpacity
           onPress={handleSubmit(onSubmit)}
           style={styles.button}
@@ -323,11 +332,19 @@ function VendorDetails() {
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    marginTop: 40,
+    paddingBottom: 40,
+    flexGrow: 1 
+    
+  },
+
   imageUploadContainer: {
     marginTop: 16,
   },
@@ -369,14 +386,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 
-  container: {
-    flex: 1,
-    backgroundColor: "#F3F4F6",
-    alignItems: "center",
-    justifyContent: "center",
-  },
   card: {
     width: "90%",
+    height:"100%",
     borderWidth: 1,
     borderColor: "#D1D5DB",
     borderRadius: 10,
@@ -439,6 +451,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 5,
     alignItems: "center",
+    marginBottom: 20,
   },
   buttonText: {
     color: "white",

@@ -33,7 +33,8 @@ function IncomingManifestDetails() {
   const [selectedVendor, setSelectedVendor] = useState(false);
   const [errors, setErrors] = useState({ country: false, vendor: false });
   const [finalWeightImage, setFinalWeightImage] = useState(null); // State for final weight image
-
+  const [weighterror, setweighterror] = useState("");
+const [weightiimageerror, setweightiimageerror] = useState("")
   const fetchRowByAWB = async () => {
     try {
       const q = query(
@@ -57,10 +58,7 @@ function IncomingManifestDetails() {
     }
   };
 
-  const handleCardPress = (awbNumber) => {
-    // Handle card press action
-    navigation.navigate("CardDetails", { awbnumber: awbNumber });
-  };
+  
 
   const removeImage = () => {
     setFinalWeightImage(null); // Clear the image
@@ -89,7 +87,8 @@ function IncomingManifestDetails() {
 
     await uploadBytes(storageRef, blob); // Upload the image
 
-    const downloadURL = await getDownloadURL(storageRef); // Get the download URL
+    const downloadURL = await getDownloadURL(storageRef);
+    // Get the download URL
     return downloadURL; // Return the URL
   };
 
@@ -108,6 +107,17 @@ function IncomingManifestDetails() {
   }, []);
 
   const handleSubmit = async () => {
+    if(!actualWeight){
+      setweighterror("Final weight is required!")
+      return
+    }
+    
+    if(!finalWeightImage){
+      setweighterror("")
+      setweightiimageerror("Final weight image is required!")
+      return
+    }
+
     setErrors({ country: false, vendor: false });
 
     if (!selectedCountry) {
@@ -245,6 +255,7 @@ function IncomingManifestDetails() {
             keyboardType="numeric"
             style={styles.finalWeightInput}
           />
+          {weighterror ? <Text style={{color:"red"}}>{weighterror}</Text> : <Text></Text>}
         </View>
 
         <View style={styles.imageUploadContainer}>
@@ -266,6 +277,8 @@ function IncomingManifestDetails() {
                 : "Upload Final Weight Image"}
             </Text>
           </TouchableOpacity>
+          {weightiimageerror ? <Text style={{color:"red"}}>{weightiimageerror}</Text> : <Text></Text>}
+
         </View>
 
 

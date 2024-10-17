@@ -43,7 +43,7 @@ const PickupDetails = () => {
   const [image, setImage] = useState(null);
   const [timestamp, setTimestamp] = useState(null);
   const [metadata, setMetadata] = useState(null);
-  const [PickupersonImage, setPickupersonImage] = useState("");
+  const [PickupersonImage, setPickupersonImage] = useState([]);
 
   const formatToIST = (exifDateTime) => {
     if (!exifDateTime) return "Unknown date"; // Handle null case
@@ -100,7 +100,7 @@ const PickupDetails = () => {
       } else {
         setTimestamp(new Date().toString());
       }
-      setPickupersonImage(result.assets[0].uri);
+      setPickupersonImage([result.assets[0].uri]);
     }
   };
 
@@ -227,11 +227,11 @@ const PickupDetails = () => {
       setFormError("You must upload between 1 to 2 form images.");
       return false;
     }
-
-    // if (pickupPersonImage.length === 0 || pickupPersonImage.length > 2) {
-    //   setFormError("You must upload between 1 to 2 form images.");
-    //   return false;
-    // }
+console.log("PickupersonImage" , PickupersonImage)
+    if (PickupersonImage.length === 0 || PickupersonImage.length > 1) {
+      setFormError("Picture Is Required!");
+      return false;
+    }
 
     if (!pickupWeight || !numberOfPackages) {
       setFormError("Pickup weight and number of packages are required.");
@@ -262,6 +262,7 @@ const PickupDetails = () => {
   };
 
   const handleSubmit = async () => {
+
     if (!validateForm()) return;
     setSubmitLoading(true);
 
@@ -406,7 +407,6 @@ const PickupDetails = () => {
                 {details.pickupInstructions || "-"}
               </Text>
             </View>
-
             <View style={styles.formContainer}>
               <Text style={styles.subtitle}>Update Details</Text>
               <Text style={styles.weighttext}>Pickup weight</Text>
@@ -427,7 +427,6 @@ const PickupDetails = () => {
                 >
                   <Text style={styles.buttonText}>-</Text>
                 </TouchableOpacity>
-
                 <TextInput
                   style={styles.quantityInput}
                   value={numberOfPackages.toString()}
@@ -443,7 +442,6 @@ const PickupDetails = () => {
                   <Text style={styles.buttonText}>+</Text>
                 </TouchableOpacity>
               </View>
-
               <FileInput
                 label="Product Images (1-5)"
                 files={productImages}
@@ -515,11 +513,9 @@ const PickupDetails = () => {
                   </View>
                 )}
               </View>
-
               {formError ? (
                 <Text style={styles.errorText}>{formError}</Text>
               ) : null}
-
               <Button
                 title="Submit"
                 onPress={handleSubmit}
