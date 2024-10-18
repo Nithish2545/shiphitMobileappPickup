@@ -7,24 +7,29 @@ import {
   ActivityIndicator,
   StyleSheet,
   Image,
+  ScrollView,
+  SafeAreaView,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import axios from "axios";
 import { FontAwesome } from "@expo/vector-icons";
-import apiURLs from "../../utility/googlescreen/apiURLs";
 import { Controller, useForm } from "react-hook-form";
-import { storage } from "../../FirebaseConfig"; // Import Firebase storage
+import { db, storage } from "../../FirebaseConfig"; // Import Firebase storage
 import * as ImagePicker from "expo-image-picker"; // Import ImagePicker
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 
 function VendorDetails() {
   const route = useRoute();
   const navigation = useNavigation();
   const { awbnumber } = route.params;
-  const API_URL = apiURLs.sheety;
-  const [productImages, setProductImages] = useState([]);
-  const [packageWeightImages, setPackageWeightImages] = useState([]);
-  const [formImages, setFormImages] = useState([]);
+
   const {
     control,
     handleSubmit,
@@ -32,43 +37,25 @@ function VendorDetails() {
   } = useForm();
 
   const fetchRowByAWB = async (awbNumber) => {
+    console.log(typeof awbNumber);
     try {
-      const response = await axios.get(API_URL);
-      const allUsers = response.data.sheet1;
-      const matchedUser = allUsers.find((user) => user.awbNumber === awbnumber);
-      return matchedUser;
+      const q = query(
+        collection(db, "pickup"),
+        where("awbNumber", "==", awbnumber)
+      );
+
+      const querySnapshot = await getDocs(q);
+      let final_result = [];
+
+      querySnapshot.forEach((doc) => {
+        final_result.push({ id: doc.id, ...doc.data() });
+      });
+      console.log(final_result);
+      setUser(final_result[0]);
+      return final_result[0];
     } catch (error) {
       console.error("Error fetching row by AWB number:", error);
-      return null;
-    }
-  };
-
-  const updateRowByID = async (rowId, updatedFields) => {
-    try {
-      const response = await fetch(`${API_URL}/${rowId}`, {
-        method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sheet1: {
-            ...updatedFields,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Failed to update the row. Status: ${response.status}. Error: ${errorText}`
-        );
-      }
-
-      const data = await response.json();
-      console.log("Row updated successfully", data);
-    } catch (error) {
-      console.error("Error updating row:", error);
+      return null; // Return null in case of an error
     }
   };
 
@@ -78,7 +65,8 @@ function VendorDetails() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false); // New state for submit loading
   const [finalWeightImage, setFinalWeightImage] = useState(null); // State for final weight image
-
+  const [error, seterror] = useState(""); // State for final weight image
+  
   const PickupCompletedDate = () => {
     const now = new Date();
     const istDate = now.toLocaleDateString("en-IN", {
@@ -107,47 +95,58 @@ function VendorDetails() {
       }
       setLoading(false);
     };
-
     fetchUserData();
   }, [awbnumber]);
 
   const onSubmit = async (data) => {
-    if (user && user.id) {
-      setIsSubmitting(true); // Start loading
-      const details = {
-        vendorAwbnumber: data.vendorAwbnumber,
-        status: "SHIPMENT CONNECTED",
-        packageConnectedDataTime: PickupCompletedDate(),
-        finalWeightImage: await uploadImage(finalWeightImage), // Upload image and store URL
-      };
+if(!finalWeightImage){
+  seterror("AWB Bar code image is required!")
+  return
+}
+    setIsSubmitting(true); // Start loading
 
-      await updateRowByID(user.id, details);
 
-      setVendorAwbnumber("");
-      setFinalWeightImage(null); // Reset the image
-      setIsSubmitting(false); // Stop loading
+    // Function to upload the image to Firebase
+    const uploadImage = async (imageUri) => {
+      if (!imageUri) return null; // Return null if no image selected
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const storageRef = ref(
+        storage,
+        `${awbnumber}/AWB NUMBER IMAGE/${Date.now()}.jpg`
+      ); // Create a reference in the specified folder
+      await uploadBytes(storageRef, blob); // Upload the image
+      const downloadURL = await getDownloadURL(storageRef); // Get the download URL
+      return downloadURL; // Return the URL
+    };
 
-      navigation.navigate("Admin");
-    } else {
-      console.error("Cannot update row: User or Row ID is missing");
-    }
-  };
+    const updatedFields = {
+      vendorAwbnumber: data.vendorAwbnumber,
+      status: "SHIPMENT CONNECTED",
+      packageConnectedDataTime: PickupCompletedDate(),
+      finalWeightImage: await uploadImage(finalWeightImage), // Upload image and store URL
+    };
 
-  // Function to upload the image to Firebase
-  const uploadImage = async (imageUri) => {
-    if (!imageUri) return null; // Return null if no image selected
+    const q = query(
+      collection(db, "pickup"),
+      where("awbNumber", "==", awbnumber)
+    );
 
-    const response = await fetch(imageUri);
-    const blob = await response.blob();
-    const storageRef = ref(
-      storage,
-      `${awbnumber}/FINAL WEIGHT IMAGE/${Date.now()}.jpg`
-    ); // Create a reference in the specified folder
+    const querySnapshot = await getDocs(q);
+    let final_result = [];
 
-    await uploadBytes(storageRef, blob); // Upload the image
+    querySnapshot.forEach((doc) => {
+      final_result.push({ id: doc.id, ...doc.data() });
+    });
 
-    const downloadURL = await getDownloadURL(storageRef); // Get the download URL
-    return downloadURL; // Return the URL
+    const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
+
+    updateDoc(docRef, updatedFields);
+    setVendorAwbnumber("");
+    setFinalWeightImage(null); // Reset the image
+    setIsSubmitting(false); // Stop loading
+
+    navigation.navigate("Admin");
   };
 
   // Function to handle image selection
@@ -172,12 +171,10 @@ function VendorDetails() {
       <ActivityIndicator size="large" color="#6B21A8" style={styles.loading} />
     );
 
-
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
         <Text style={styles.title}>Vendor details</Text>
-
         <View style={styles.info}>
           <Text style={styles.label}>Name:</Text>
           <Text style={styles.value}>{user.consignorname}</Text>
@@ -213,6 +210,7 @@ function VendorDetails() {
             style={styles.icon}
           />
         </View>
+        
         <View style={styles.infoRow}>
           <Text style={styles.label}>Vendor:</Text>
           <Text style={styles.value}>{user.vendorName}</Text>
@@ -300,9 +298,8 @@ function VendorDetails() {
           )}
         </View>
 
-
-          {/* Final Weight Image Upload */}
-          <View style={styles.imageUploadContainer}>
+        {/* Final Weight Image Upload */}
+        <View style={styles.imageUploadContainer}>
           {finalWeightImage && (
             <View style={styles.imagePreview}>
               <Image source={{ uri: finalWeightImage }} style={styles.image} />
@@ -317,12 +314,12 @@ function VendorDetails() {
           <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
             <Text style={styles.uploadButtonText}>
               {finalWeightImage
-                ? "Change Final Weight Image"
-                : "Upload Final Weight Image"}
+                ? "Change AWB BAR CODE Image"
+                : "Upload AWB BAR CODE Image"}
             </Text>
           </TouchableOpacity>
         </View>
-
+        {error? (<Text style={{color:"red"}}>{error}</Text>) : (<></>)}
         <TouchableOpacity
           onPress={handleSubmit(onSubmit)}
           style={styles.button}
@@ -335,11 +332,18 @@ function VendorDetails() {
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    marginTop: 40,
+    paddingBottom: 40,
+    flexGrow: 1 
+    
+  },
 
   imageUploadContainer: {
     marginTop: 16,
@@ -350,7 +354,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  
+
   image: {
     width: 100,
     height: 100,
@@ -372,8 +376,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#6B21A8",
     borderRadius: 8,
     padding: 12,
-    marginBottom:20,
-    marginTop:20,
+    marginBottom: 20,
+    marginTop: 20,
     alignItems: "center",
   },
 
@@ -382,14 +386,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 
-  container: {
-    flex: 1,
-    backgroundColor: "#F3F4F6",
-    alignItems: "center",
-    justifyContent: "center",
-  },
   card: {
     width: "90%",
+    height:"100%",
     borderWidth: 1,
     borderColor: "#D1D5DB",
     borderRadius: 10,
@@ -452,6 +451,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 5,
     alignItems: "center",
+    marginBottom: 20,
   },
   buttonText: {
     color: "white",

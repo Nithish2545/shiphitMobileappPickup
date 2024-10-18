@@ -13,12 +13,17 @@ import { FIREBASE_AUTH } from "../../FirebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useForm, Controller } from "react-hook-form";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Feather from "@expo/vector-icons/Feather";
 
 const SignIn = ({ navigation }) => {
   const auth = FIREBASE_AUTH;
   const [Autherror, setAuthError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible(!isPasswordVisible);
+  };
   const {
     control,
     handleSubmit,
@@ -32,7 +37,6 @@ const SignIn = ({ navigation }) => {
 
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
-      console.log(response);
 
       let userData = {
         name: (() => {
@@ -45,8 +49,9 @@ const SignIn = ({ navigation }) => {
               return "sangeetha";
             case "jaga@gmail.com":
               return "jaga";
-            case "pravin@gmail.com":
-              return "pravin";
+            case "praven@gmail.com":
+              console.log("praven@gmail.com")
+              return "praven";
             default:
               return response.user.email;
           }
@@ -58,7 +63,6 @@ const SignIn = ({ navigation }) => {
       await AsyncStorage.setItem("userData", JSON.stringify(userData));
       setLoading(false);
     } catch (error) {
-      console.log(error.code);
       setLoading(false);
 
       // Map Firebase errors to custom messages
@@ -119,14 +123,29 @@ const SignIn = ({ navigation }) => {
             },
           }}
           render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your password"
-              secureTextEntry
-              value={value}
-              onChangeText={onChange}
-              placeholderTextColor="#9CA3AF"
-            />
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your password"
+                secureTextEntry={!isPasswordVisible} // Toggle visibility
+                value={value}
+                onChangeText={onChange}
+                placeholderTextColor="#9CA3AF"
+              ></TextInput>
+              <TouchableOpacity
+                onPress={togglePasswordVisibility}
+                style={styles.showHideButton}
+              >
+                <View style={styles.showHideText}>
+                  {isPasswordVisible ? (
+                    <Feather name="eye" size={22} color="black" />
+                  ) : (
+                    <Feather name="eye-off" size={22} color="black" />
+                  )}
+                </View>
+                <Image source={""} />
+              </TouchableOpacity>
+            </View>
           )}
         />
         <Text style={styles.errorText}>{errors.password?.message || " "}</Text>
@@ -147,7 +166,6 @@ const SignIn = ({ navigation }) => {
           </View>
         </TouchableOpacity>
       </View>
-
       <View style={styles.footer}>
         <TouchableOpacity
           onPress={() =>
@@ -232,6 +250,12 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 20,
+    position: "relative",
+  },
+  showHideButton: {
+    position: "absolute",
+    right: 20,
+    top: "30%",
   },
   autherror: {
     color: "red",

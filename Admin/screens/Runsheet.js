@@ -1,49 +1,47 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Picker } from "@react-native-picker/picker"; // Ensure you are using the correct Picker library
-import apiURLs from "../../utility/googlescreen/apiURLs";
 import { Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import {
+  collection,
+  doc,
+  getDocs,
+  onSnapshot,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { db } from "../../FirebaseConfig";
 
-const Runsheet = ({ userData: initialData, pickupPersons }) => {
-  const [userData, setUserData] = useState(initialData);
-  console.log(userData);
+const Runsheet = ({ pickupPersons , datetime }) => {
+  console.log(typeof datetime)
+  const [userData, setUserData] = useState([]);
   const navigation = useNavigation();
+  const fetchData = () => {
+    console.log("Fetching data...");
+    const unsubscribe = onSnapshot(
+      collection(db, "pickup"),
+      (querySnapshot) => {
+        // Filter documents where status is "RUN SHEET"
+        const sortedData = querySnapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
+          .filter((data) => data.status === "RUN SHEET" && data.pickupDatetime.includes(datetime)); // Filter based on status
+        setUserData(sortedData);
+        console.log(sortedData);
+        // If you have a function named parsePickupDateTime, call it here
+      },
+      (error) => {
+        console.error(`Error fetching data: ${error.message}`); // Log error if any
+      }
+    );
+    // Cleanup the listener on component unmount
+    return () => unsubscribe();
+  };
 
-  function parseDateTime(pickupDatetime) {
-    // Remove "&" and any extra spaces
-    const formattedDatetime = pickupDatetime.replace("&", "").trim();
-
-    // Split date part and time part
-    const [datePart, timePart] = formattedDatetime.split(/\s+/);
-    const [day, month] = datePart.split("-").map(Number);
-
-    // Check if time part is present and valid
-    if (!timePart || !/\d+/.test(timePart)) {
-      return new Date(2024, month - 1, day); // Only date part is available, return date with default time
-    }
-
-    // Extract the hour and AM/PM, with a fallback
-    const match = timePart.match(/(\d+)\s*(AM|PM)/);
-    if (!match) {
-      return new Date(2024, month - 1, day); // No valid time, return date without time
-    }
-
-    let [hour, modifier] = match.slice(1);
-    hour = parseInt(hour, 10);
-
-    // Convert to 24-hour format
-    if (modifier === "PM" && hour !== 12) {
-      hour += 12;
-    } else if (modifier === "AM" && hour === 12) {
-      hour = 0;
-    }
-
-    // Assuming all data is for the year 2024
-    return new Date(2024, month - 1, day, hour);
-  }
-
-  const API_URL = apiURLs.sheety;
+  useEffect(() => {
+    fetchData(); // Fetch data initially
+  }, [datetime]);
 
   const handleOpenMap = (latitude, longitude) => {
     const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
@@ -56,40 +54,40 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
   };
 
-  const handleAssignmentChange = async (awbNumber, value, index) => {
+  const handleAssignmentChange = async (awbNumber, value) => {
     try {
-      const response = await fetch(`${API_URL}/${index}`, {
-        method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sheet1: {
-            pickUpPersonName: value,
-          },
-        }),
+      const q = query(
+        collection(db, "pickup"),
+        where("awbNumber", "==", awbNumber),
+      );
+
+      const querySnapshot = await getDocs(q);
+      let final_result = [];
+
+      querySnapshot.forEach((doc) => {
+        final_result.push({ id: doc.id, ...doc.data() });
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Failed to update the row. Status: ${response.status}. Error: ${errorText}`
-        );
-      }
+      const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
 
-      const data = await response.json();
-      console.log("Row updated successfully");
+      // Update the document with the new pickUpPersonName
+      console.log(docRef);
 
-      setUserData((prevData) =>
-        prevData.map((user) =>
-          user.awbNumber === awbNumber
-            ? { ...user, pickUpPersonName: value }
-            : user
-        )
-      );
+      await updateDoc(docRef, {
+        pickUpPersonName: value,
+      });
+
+      // console.log("Document updated successfully",value);
+      // // Update the local state to reflect the new pickUpPersonName
+      // setUserData((prevData) =>
+      //   prevData.map((user) =>
+      //     user.awbNumber === awbNumber
+      //       ? { ...user, pickUpPersonName: value }
+      //       : user
+      //   )
+      // );
     } catch (error) {
-      console.error("Error updating row:", error);
+      console.error("Error updating document:", error);
     }
   };
 
@@ -174,7 +172,7 @@ const Runsheet = ({ userData: initialData, pickupPersons }) => {
                     handleAssignmentChange(user.awbNumber, value, user.id)
                   }
                 >
-                  {pickupPersons.map((person, index) => (
+                  {pickupPersons?.map((person, index) => (
                     <Picker.Item key={index} label={person} value={person} />
                   ))}
                 </Picker>

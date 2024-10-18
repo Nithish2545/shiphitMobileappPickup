@@ -1,11 +1,40 @@
 import { useNavigation } from "@react-navigation/native";
-import React from "react";
+import { collection, onSnapshot } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Linking } from "react-native";
+import { db } from "../../FirebaseConfig";
 // Removed Picker import since it is commented out
 
-const PaymentPending = ({ userData, pickupPersons }) => {
+const PaymentPending = () => {
 
+  const [userData, setuserData] = useState([]);
   const navigation = useNavigation();
+
+  const fetchData = () => {
+    console.log("Fetching data...");
+    const unsubscribe = onSnapshot(
+      collection(db, "pickup"),
+      (querySnapshot) => {
+        // Filter documents where status is "RUN SHEET"
+        const sortedData = querySnapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
+          .filter((data) => data.status === "PAYMENT PENDING"); // Filter based on status
+        setuserData(sortedData);
+        console.log(sortedData);
+        // If you have a function named parsePickupDateTime, call it here
+      },
+      (error) => {
+        console.error(`Error fetching data: ${error.message}`); // Log error if any
+      }
+    );
+    // Cleanup the listener on component unmount
+    return () => unsubscribe();
+  };
+
+  useEffect(() => {
+    fetchData(); // Fetch data initially
+  }, []);
+
 
   const makeCall = (number) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
