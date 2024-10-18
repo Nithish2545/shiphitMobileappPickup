@@ -13,8 +13,8 @@ import Pickup from "./Pickup/screens/Pickup";
 import PickupDetails from  "./Pickup/screens/PickupDetails";
 import VendorDetails from "./Admin/screens/VendorDetails";
 import CardDetails from "./Admin/screens/CardDetails";
-import { ClientDetails } from "./Admin/screens/ClientDetails";
-
+import ShipmentConnected from "./Admin/screens/ShipmentConnected";
+import { ClientInfo } from "./Admin/screens/ClientInfo";
 export default function App() {
 
   const Stack = createStackNavigator();
@@ -73,7 +73,8 @@ export default function App() {
             <Stack.Screen name="PaymentPending" component={PaymentPending} />
             <Stack.Screen name="PaymentDone" component={PaymentDone} />
             <Stack.Screen name="VendorDetails" component={VendorDetails} />
-            <Stack.Screen name="ClientDetails" component={ClientDetails} />
+            <Stack.Screen name="Shipmentconnected" component={ShipmentConnected} />
+            <Stack.Screen name="ClientInfo" component={ClientInfo} />
           </>
         ) : currentUserRole === "pickup" ? (
           // If the logged-in user is a pickup person, show Pickup screens

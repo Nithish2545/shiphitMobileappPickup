@@ -24,6 +24,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Allshipments from "./Allshipments";
 import { collection, onSnapshot } from "firebase/firestore"; // Import Firestore functions
 import ModalDatePicker from "react-native-modal-datetime-picker";
+import { useNavigation } from "@react-navigation/native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -56,6 +58,7 @@ export default function Admin() {
   // LIST SHIPMENTS
 
   const [currentTab, setcurrentTab] = useState("LIST SHIPMENTS");
+  const navigation = useNavigation();
 
   function parseDateTime(pickupDatetime) {
     // Remove "&" and any extra spaces
@@ -259,31 +262,47 @@ export default function Admin() {
             Sign out
           </Text>
         </View>
-
-        <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
-          <TouchableOpacity
-            onPress={() => setDatePickerVisibility(true)}
-            style={styles.datePickerInput}
-          >
-            <TextInput
-              style={styles.datePickerText}
-              value={selectedDate}
-              editable={false} // Prevent user input
-              placeholder="dd/mm/yyyy" // Set placeholder
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.clearButton}
+        <View
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
+            <TouchableOpacity
+              onPress={() => setDatePickerVisibility(true)}
+              style={styles.datePickerInput}
+            >
+              <TextInput
+                style={styles.datePickerText}
+                value={selectedDate}
+                editable={false} // Prevent user input
+                placeholder="dd/mm/yyyy" // Set placeholder
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={() => {
+                settofilterdate("");
+                setSelectedDate(null); // Clear selected date
+                setDatePickerVisibility(false); // Close the modal
+              }}
+            >
+              <Text style={styles.clearButtonText}>Clear Date</Text>
+            </TouchableOpacity>
+          </View>
+          <View>
+            <TouchableOpacity
             onPress={() => {
-              settofilterdate("");
-              setSelectedDate(null); // Clear selected date
-              setDatePickerVisibility(false); // Close the modal
+              navigation.navigate("ClientInfo");
             }}
-          >
-            <Text style={styles.clearButtonText}>Clear Date</Text>
-          </TouchableOpacity>
+            >
+              <MaterialCommunityIcons name="account-details" size={32} color="black" />
+            </TouchableOpacity>
+          </View>
         </View>
-
         <ModalDatePicker
           isVisible={isDatePickerVisible}
           mode="date"
@@ -426,7 +445,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    // paddingTop: 50,
+    paddingTop: 40,
     paddingBottom: 50,
     position: "relative",
   },
