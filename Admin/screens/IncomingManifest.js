@@ -1,5 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
-import React from "react";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,9 +8,42 @@ import {
   StyleSheet,
   Linking,
 } from "react-native";
+import { db } from "../../FirebaseConfig";
 
-const Runsheet = ({ userData }) => {
-  
+const Runsheet = ({ datetime }) => {
+  const [userData, setuserData] = useState([]);
+
+  const fetchData = () => {
+    // Create a query to filter documents where status is "INCOMING MANIFEST"
+    const q = query(
+      collection(db, "pickup"),
+      where("status", "==", "INCOMING MANIFEST") // Add condition to filter by status
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (querySnapshot) => {
+        const sortedData = querySnapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((data) => data.pickupCompletedDatatime.includes(datetime)); // Filter based on status; // Map through documents to get data
+        setuserData(sortedData);
+        console.log(sortedData);
+        // You can call a function here if needed
+        // fetchAssignments(); // Fetch assignments
+      },
+      (error) => {
+        console.error("Error fetching documents:", error);
+      }
+    );
+
+    // Cleanup the listener on component unmount
+    return () => unsubscribe();
+  };
+
+  useEffect(() => {
+    fetchData(); // Fetch data initially
+  }, [datetime]);
+
   const navigation = useNavigation();
 
   const handleCardPress = (awbNumber) => {
@@ -18,13 +52,11 @@ const Runsheet = ({ userData }) => {
     navigation.navigate("IncomingManifestDetails", { awbnumber: awbNumber });
   };
 
-
   const CardDetails = (awbNumber) => {
     // Handle card press action
     console.log(awbNumber);
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
-
 
   const makeCall = (number) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
@@ -114,7 +146,14 @@ const Runsheet = ({ userData }) => {
                 {user.pickupCompletedDatatime || "N/A"}
               </Text>
             </View>
-            <View style={{display:"flex" , flexDirection:"row" , gap:20,  position:"relative"}}>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: 20,
+                position: "relative",
+              }}
+            >
               <TouchableOpacity
                 style={styles.mapButton}
                 onPress={() => makeCall(user.consignorphonenumber)}
@@ -157,6 +196,7 @@ const styles = StyleSheet.create({
     borderColor: "#D1D5DB", // Sets the color of the border
     borderRadius: 10, // Adds rounded corners to the border
     padding: 10,
+    marginBottom: 20,
   },
   statusContainer: {
     marginBottom: 12,

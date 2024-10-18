@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 // Removed Picker import since it is commented out
 
-const PickupCompleted = ({ userData, pickupPersons }) => {
+const PickupCompleted = ({ userData}) => {
   
   const handleCardPress = (awbNumber) => {
     // Handle card press action
@@ -55,7 +55,7 @@ const PickupCompleted = ({ userData, pickupPersons }) => {
               <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Consignee:</Text>
+              <Text style={styles.label}>Consignor:</Text>
               <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
