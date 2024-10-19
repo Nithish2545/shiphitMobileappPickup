@@ -14,7 +14,7 @@ import PickupDetails from  "./Pickup/screens/PickupDetails";
 import VendorDetails from "./Admin/screens/VendorDetails";
 import CardDetails from "./Admin/screens/CardDetails";
 import ShipmentConnected from "./Admin/screens/ShipmentConnected";
-import { ClientInfo } from "./Admin/screens/ClientInfo";
+import ClientInfo from "./Admin/screens/ClientInfo";
 export default function App() {
 
   const Stack = createStackNavigator();

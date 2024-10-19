@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Button, ScrollView } from "react-native";
+import { Button, ScrollView, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import ClientImageRender from "./ClientImageRender";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { storage } from "../../FirebaseConfig";
 import { getDownloadURL, listAll, ref } from "firebase/storage";
-import { View } from "react-native-web";
 import { StyleSheet } from "react-native";
 
 export const ClientInfo = () => {
@@ -33,8 +32,8 @@ export const ClientInfo = () => {
   useEffect(() => {
     const fetchImages = async () => {
       const subFolders = {
-        awbImages: "AWB NUMBER IMAGE/",
         kycImages: "KYC/",
+        awbImages: "AWB NUMBER IMAGE/",
         finalImages: "FINAL IMAGE WEIGHT/",
         pickupImages: "PICKUPPERSONIMAGE/",
       };
@@ -73,6 +72,8 @@ export const ClientInfo = () => {
     setIsModalVisible(false);
     setSelectedImage(null);
   };
+  
+  console.log(imageUrls);
 
   return (
     <SafeAreaView style={{ flex: 1, padding: 10, position: "relative" }}>
@@ -106,11 +107,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff", // Optional: Add background color to the button container
     padding: 10, // Optional: Add padding
     borderRadius: 5, // Optional: Add border radius
-    elevation: 5, // Optional: Add elevation for Android shadow
-    shadowColor: "#000", // Optional: Shadow color for iOS
-    shadowOffset: { width: 0, height: 2 }, // Optional: Shadow offset
-    shadowOpacity: 0.25, // Optional: Shadow opacity
-    shadowRadius: 3.5, // Optional: Shadow radius
   },
 });
 
