@@ -30,6 +30,12 @@ export default function Admin() {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [tofilterDate, settofilterdate] = useState("");
 
+	
+  // FORM IMAGES/
+  // PACKAGE WEIGHT/
+  // PICKUPPERSONIMAGE/
+  // PRODUCT IMAGES/
+
   const handleDatePicked = (date) => {
     const day = date.getDate(); // Get day without leading zero
     const month = date.getMonth() + 1; // Get month (0-based index) without leading zero
@@ -39,7 +45,6 @@ export default function Admin() {
     setSelectedDate(formattedDate);
     setDatePickerVisibility(false);
   };
-
 
   const handleSignOut = () => {
     signOut(FIREBASE_AUTH)
@@ -186,7 +191,6 @@ export default function Admin() {
             Sign out
           </Text>
         </View>
-
         <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
           <TouchableOpacity
             onPress={() => setDatePickerVisibility(true)}

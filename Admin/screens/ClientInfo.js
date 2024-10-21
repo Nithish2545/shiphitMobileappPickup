@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Button, ScrollView, View } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  TextInput,
+  View,
+  TouchableOpacity,
+  Text,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import ClientImageRender from "./ClientImageRender";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { storage } from "../../FirebaseConfig";
 import { getDownloadURL, listAll, ref } from "firebase/storage";
 import { StyleSheet } from "react-native";
+import AntDesign from "@expo/vector-icons/AntDesign";
 
 export const ClientInfo = () => {
   const navigation = useNavigation();
@@ -14,6 +22,8 @@ export const ClientInfo = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [mainFolders, setMainFolders] = useState([]);
+  const [filteredData, setFilteredData] = useState({});
+  const [awbNumber, setAwbNumber] = useState(""); // Changed to string for AWB number
 
   useEffect(() => {
     const fetchFolders = async () => {
@@ -32,11 +42,16 @@ export const ClientInfo = () => {
   useEffect(() => {
     const fetchImages = async () => {
       const subFolders = {
+        pickupPersonImages: "PICKUPPERSONIMAGE/",
         kycImages: "KYC/",
+        productImage: "PRODUCT IMAGES/",
+        packageWeight: "PACKAGE WEIGHT/",
+        formImage: "FORM IMAGES/",
+        finalimageweight: "FINAL IMAGE WEIGHT",
+        paymentProof: "PAYMENT PROOF/",
         awbImages: "AWB NUMBER IMAGE/",
-        finalImages: "FINAL IMAGE WEIGHT/",
-        pickupImages: "PICKUPPERSONIMAGE/",
       };
+
       const allImages = {};
       for (const folder of mainFolders) {
         allImages[folder] = {};
@@ -72,27 +87,67 @@ export const ClientInfo = () => {
     setIsModalVisible(false);
     setSelectedImage(null);
   };
-  
-  console.log(imageUrls);
+
+  // Filter the images based on AWB number
+  useEffect(() => {
+    const filtered = awbNumber
+      ? Object.fromEntries(
+          Object.entries(imageUrls).filter(([folder]) =>
+            folder.includes(awbNumber)
+          )
+        )
+      : imageUrls; // Reset to all images if no AWB number
+    setFilteredData(filtered);
+    console.log("AWB Number:", awbNumber); // This will log the updated value
+  }, [awbNumber, imageUrls]);
 
   return (
     <SafeAreaView style={{ flex: 1, padding: 10, position: "relative" }}>
-      <ScrollView>
-        {Object.keys(imageUrls).map((folder) => (
-          <ClientImageRender
-            key={folder}
-            loading={loading}
-            imageUrls={imageUrls[folder]} // Pass images for this folder
-            selectedImage={selectedImage}
-            isModalVisible={isModalVisible}
-            openModal={openModal}
-            closeModal={closeModal}
-            awbnumber={folder}
-          />
-        ))}
-      </ScrollView>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#6200EA" />
+          <Text style={styles.loadingText}>Loading images...</Text>
+        </View>
+      ) : (
+        <ScrollView style={{ marginTop: 100 }}>
+          {Object.keys(filteredData).length > 0 ? (
+            Object.keys(filteredData).map((folder) => (
+              <ClientImageRender
+                key={folder}
+                loading={loading}
+                imageUrls={filteredData[folder]} // Pass images for this folder
+                selectedImage={selectedImage}
+                isModalVisible={isModalVisible}
+                openModal={openModal}
+                closeModal={closeModal}
+                awbnumber={folder}
+              />
+            ))
+          ) : (
+            <Text style={styles.noResultsText}>
+              No images found for the given AWB number.
+            </Text>
+          )}
+        </ScrollView>
+      )}
       <View style={styles.buttonContainer}>
-        <Button title="Go Back" onPress={() => navigation.goBack()} />
+        <AntDesign
+          style={{ display: "flex", alignSelf: "flex-start", marginBottom: 10 }}
+          name="arrowleft"
+          size={24}
+          color="black"
+          onPress={() => navigation.goBack()}
+        />
+        <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
+          <TouchableOpacity style={styles.datePickerInput}>
+            <TextInput
+              style={styles.datePickerText}
+              onChangeText={(text) => setAwbNumber(text)} // Set the state with the input value
+              placeholder="Enter AWB Number" // Set placeholder
+              value={awbNumber} // Bind the input to awbNumber state
+            />
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -104,9 +159,50 @@ const styles = StyleSheet.create({
     top: 10, // Adjust top position as needed
     left: 10, // Adjust left position as needed
     zIndex: 10, // Ensure the button is on top
-    backgroundColor: "#fff", // Optional: Add background color to the button container
     padding: 10, // Optional: Add padding
     borderRadius: 5, // Optional: Add border radius
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#6200EA",
+  },
+  noResultsText: {
+    textAlign: "center",
+    fontSize: 16,
+    color: "gray",
+    marginTop: 20,
+  },
+  datePickerInput: {
+    borderWidth: 1,
+    borderColor: "#8647D3",
+    borderRadius: 5,
+    backgroundColor: "#fff",
+    display: "flex",
+    alignSelf: "flex-start",
+  },
+  datePickerText: {
+    color: "black",
+    fontSize: 16,
+    height: 40,
+    padding: 10,
+  },
+  clearButton: {
+    backgroundColor: "#6200ea", // Purple button background
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  clearButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

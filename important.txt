@@ -7,7 +7,7 @@ testing
 
 pickup admin :
 
-    dhanush@gmail.com
+    dhanush@gmail.comexpo upgrade
     dhanush@admin_shiphit
 
 pickup :

@@ -25,7 +25,7 @@ import Allshipments from "./Allshipments";
 import { collection, onSnapshot } from "firebase/firestore"; // Import Firestore functions
 import ModalDatePicker from "react-native-modal-datetime-picker";
 import { useNavigation } from "@react-navigation/native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -295,11 +295,15 @@ export default function Admin() {
           </View>
           <View>
             <TouchableOpacity
-            onPress={() => {
-              navigation.navigate("ClientInfo");
-            }}
+              onPress={() => {
+                navigation.navigate("ClientInfo");
+              }}
             >
-              <MaterialCommunityIcons name="account-details" size={32} color="black" />
+              <MaterialCommunityIcons
+                name="account-details"
+                size={32}
+                color="black"
+              />
             </TouchableOpacity>
           </View>
         </View>
