@@ -285,7 +285,7 @@ if(!finalWeightImage){
                   errors.vendorAwbnumber ? styles.inputError : null,
                 ]}
                 placeholder="Enter Vendor AWB number"
-                keyboardType="numeric"
+                keyboardType="default"
                 value={value}
                 onChangeText={onChange}
               />

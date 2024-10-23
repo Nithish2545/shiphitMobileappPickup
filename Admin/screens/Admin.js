@@ -185,7 +185,7 @@ export default function Admin() {
     );
 
   const currentItems = userData
-    .filter((user) => user.status === "RUN SHEET")
+    .filter((user) => user.status === "LIST SHIPMENTS")
     .sort(
       (a, b) =>
         parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)

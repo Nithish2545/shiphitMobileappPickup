@@ -10,13 +10,13 @@ import PaymentPending from "./Admin/screens/PaymentPending";
 import { FIREBASE_AUTH } from "./FirebaseConfig";
 import { useEffect, useState } from "react";
 import Pickup from "./Pickup/screens/Pickup";
-import PickupDetails from  "./Pickup/screens/PickupDetails";
+import PickupDetails from "./Pickup/screens/PickupDetails";
 import VendorDetails from "./Admin/screens/VendorDetails";
 import CardDetails from "./Admin/screens/CardDetails";
 import ShipmentConnected from "./Admin/screens/ShipmentConnected";
 import ClientInfo from "./Admin/screens/ClientInfo";
-export default function App() {
 
+export default function App() {
   const Stack = createStackNavigator();
   const auth = FIREBASE_AUTH;
   const [currentUserRole, setCurrentUserRole] = useState(null); // Change to null initially
@@ -48,7 +48,7 @@ export default function App() {
     return null; // Or a loading spinner, etc.
   }
 
-  console.log(currentUserRole)
+  console.log(currentUserRole);
 
   return (
     <NavigationContainer>
@@ -61,19 +61,22 @@ export default function App() {
           <>
             <Stack.Screen name="Admin" component={Admin} />
             <Stack.Screen name="Runsheet" component={Runsheet} />
-            <Stack.Screen name="IncomingManifest" component={IncomingManifest} />
+            <Stack.Screen
+              name="IncomingManifest"
+              component={IncomingManifest}
+            />
             <Stack.Screen
               name="IncomingManifestDetails"
               component={IncomingManifestDetails}
             />
-               <Stack.Screen
-              name="CardDetails"
-              component={CardDetails}
-            />
+            <Stack.Screen name="CardDetails" component={CardDetails} />
             <Stack.Screen name="PaymentPending" component={PaymentPending} />
             <Stack.Screen name="PaymentDone" component={PaymentDone} />
             <Stack.Screen name="VendorDetails" component={VendorDetails} />
-            <Stack.Screen name="Shipmentconnected" component={ShipmentConnected} />
+            <Stack.Screen
+              name="Shipmentconnected"
+              component={ShipmentConnected}
+            />
             <Stack.Screen name="ClientInfo" component={ClientInfo} />
           </>
         ) : currentUserRole === "pickup" ? (
@@ -82,8 +85,7 @@ export default function App() {
             <Stack.Screen name="Pickup" component={Pickup} />
             <Stack.Screen name="PickupDetails" component={PickupDetails} />
           </>
-        ) : null
-        }
+        ) : null}
       </Stack.Navigator>
     </NavigationContainer>
   );

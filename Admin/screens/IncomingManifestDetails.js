@@ -7,12 +7,19 @@ import {
   ActivityIndicator,
   StyleSheet,
   ScrollView,
-  Image
+  Image,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
-import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
-import { db , storage } from "../../FirebaseConfig";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { db, storage } from "../../FirebaseConfig";
 import * as ImagePicker from "expo-image-picker"; // Import ImagePicker
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
@@ -32,9 +39,10 @@ function IncomingManifestDetails() {
   const [selectedCountry, setSelectedCountry] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState(false);
   const [errors, setErrors] = useState({ country: false, vendor: false });
-  const [finalWeightImage, setFinalWeightImage] = useState(null); // State for final weight image
+  const [finalWeightImage, setFinalWeightImage] = useState([]); // State for final weight image
   const [weighterror, setweighterror] = useState("");
-const [weightiimageerror, setweightiimageerror] = useState("")
+  const [weightiimageerror, setweightiimageerror] = useState("");
+
   const fetchRowByAWB = async () => {
     try {
       const q = query(
@@ -51,51 +59,52 @@ const [weightiimageerror, setweightiimageerror] = useState("")
       // console.log("awbnumber" ,awbnumber)
       // console.log("final_result" , final_result[0]);
       setUser(final_result[0]);
-      return final_result[0]
+      return final_result[0];
     } catch (error) {
       console.error("Error fetching row by AWB number:", error);
       return null; // Return null in case of an error
     }
   };
 
-  
-
-  const removeImage = () => {
-    setFinalWeightImage(null); // Clear the image
+  const removeImage = (index) => {
+    const updatedImages = finalWeightImage.filter((_, i) => i !== index); // Remove image by index
+    setFinalWeightImage(updatedImages);
   };
-
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
+      allowsMultipleSelection: true, // Allow multiple image selection
+      // quality: 2,
     });
 
     if (!result.canceled) {
-      setFinalWeightImage(result.assets[0].uri); // Set the image URI
+      const selectedImages = result.assets.map((asset) => asset.uri); // Get URIs of selected images
+      setFinalWeightImage([...finalWeightImage, ...selectedImages]); // Add new images to the existing array
     }
   };
 
-  const uploadImage = async (imageUri) => {
-    if (!imageUri) return null; // Return null if no image selected
+  const uploadImage = async () => {
+    const uploadPromises = finalWeightImage.map(async (imageUri) => {
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const storageRef = ref(
+        storage,
+        `${awbnumber}/FINAL IMAGE WEIGHT/${Date.now()}.jpg`
+      ); // Reference for each image
 
-    const response = await fetch(imageUri);
-    const blob = await response.blob();
-    const storageRef = ref(
-      storage,
-      `${awbnumber}/FINAL IMAGE WEIGHT/${Date.now()}.jpg`
-    ); // Create a reference in the specified folder
+      await uploadBytes(storageRef, blob); // Upload image
 
-    await uploadBytes(storageRef, blob); // Upload the image
+      const downloadURL = await getDownloadURL(storageRef); // Get download URL
+      return downloadURL; // Return the URL after upload
+    });
 
-    const downloadURL = await getDownloadURL(storageRef);
-    // Get the download URL
-    return downloadURL; // Return the URL
+    const uploadedURLs = await Promise.all(uploadPromises); // Wait for all uploads to finish
+    return uploadedURLs; // Return all download URLs
   };
-
   useEffect(() => {
     const fetchUserData = async () => {
       const matchedUser = await fetchRowByAWB(awbnumber);
-      console.log("matchedUser",matchedUser)
+      console.log("matchedUser", matchedUser);
       if (matchedUser) {
         setUser(matchedUser);
       } else {
@@ -107,15 +116,15 @@ const [weightiimageerror, setweightiimageerror] = useState("")
   }, []);
 
   const handleSubmit = async () => {
-    if(!actualWeight){
-      setweighterror("Final weight is required!")
-      return
+    if (!actualWeight) {
+      setweighterror("Final weight is required!");
+      return;
     }
-    
-    if(!finalWeightImage){
-      setweighterror("")
-      setweightiimageerror("Final weight image is required!")
-      return
+
+    if (!finalWeightImage) {
+      setweighterror("");
+      setweightiimageerror("Final weight image is required!");
+      return;
     }
 
     setErrors({ country: false, vendor: false });
@@ -135,7 +144,7 @@ const [weightiimageerror, setweightiimageerror] = useState("")
       actualNoOfPackages: actualNumPackages,
       status: "PAYMENT PENDING",
       rtoIfAny: rto,
-      finalWeightImage: await uploadImage(finalWeightImage)
+      finalWeightImage: await uploadImage(finalWeightImage),
     };
 
     const q = query(
@@ -166,178 +175,176 @@ const [weightiimageerror, setweightiimageerror] = useState("")
 
   return (
     <View style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollViewContent1} style={{display:"flex", width:"100%"}} >
-      <View style={styles.card}>
-        <Text style={styles.title}>WAREHOUSE</Text>
-        <View style={styles.info}>
-          <Text style={styles.label}>AWB Number:</Text>
-          <Text style={styles.value}>{user.awbNumber}</Text>
-        </View>
-
-        <View style={styles.info}>
-          <Text style={styles.label}>Name:</Text>
-          <Text style={styles.value}>{user.consignorname}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Weight (Approx):</Text>
-          <Text style={styles.value}>{user.weightapx}</Text>
-          <FontAwesome
-            name="check-circle"
-            size={20}
-            color="green"
-            style={styles.icon}
-          />
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Post Pickup Weight:</Text>
-          <Text style={styles.value}>{user.postPickupWeight}</Text>
-          <FontAwesome
-            name="check-circle"
-            size={20}
-            color="green"
-            style={styles.icon}
-          />
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Post Pickup Packages:</Text>
-          <Text style={styles.value}>{user.postNumberOfPackages}</Text>
-          <FontAwesome
-            name="check-circle"
-            size={20}
-            color="green"
-            style={styles.icon}
-          />
-        </View>
-
-        <View style={styles.infoRowFromTo}>
-          <Text style={styles.label}>From address:</Text>
-          <Text style={styles.valueFromTo}>{user.consignorlocation}</Text>
-        </View>
-
-        <View style={styles.infoRowFromTo}>
-          <Text style={styles.label}>To address:</Text>
-          <Text style={styles.valueFromTo}>
-            {user.consigneelocation != "" ? user.consigneelocation : "N/A"}
-          </Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Destination:</Text>
-          <Text style={styles.valueFromTo}>{user.destination}</Text>
-          <FontAwesome
-            name="check-circle"
-            size={20}
-            color="green"
-            style={styles.icon}
-          />
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Vendor:</Text>
-          <Text style={styles.valueFromTo}>{user.vendorName}</Text>
-          <FontAwesome
-            name="check-circle"
-            size={20}
-            color="green"
-            style={styles.icon}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Final Weight:</Text>
-          <TextInput
-            value={actualWeight}
-            onChangeText={setActualWeight}
-            placeholder="Enter actual weight"
-            keyboardType="numeric"
-            style={styles.finalWeightInput}
-          />
-          {weighterror ? <Text style={{color:"red"}}>{weighterror}</Text> : <Text></Text>}
-        </View>
-
-        <View style={styles.imageUploadContainer}>
-          {finalWeightImage && (
-            <View style={styles.imagePreview}>
-              <Image source={{ uri: finalWeightImage }} style={styles.image} />
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContent1}
+        style={{ display: "flex", width: "100%" }}
+      >
+        <View style={styles.card}>
+          <Text style={styles.title}>WAREHOUSE</Text>
+          <View style={styles.info}>
+            <Text style={styles.label}>AWB Number:</Text>
+            <Text style={styles.value}>{user.awbNumber}</Text>
+          </View>
+          <View style={styles.info}>
+            <Text style={styles.label}>Name:</Text>
+            <Text style={styles.value}>{user.consignorname}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Weight (Approx):</Text>
+            <Text style={styles.value}>{user.weightapx}</Text>
+            <FontAwesome
+              name="check-circle"
+              size={20}
+              color="green"
+              style={styles.icon}
+            />
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Post Pickup Weight:</Text>
+            <Text style={styles.value}>{user.postPickupWeight}</Text>
+            <FontAwesome
+              name="check-circle"
+              size={20}
+              color="green"
+              style={styles.icon}
+            />
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Post Pickup Packages:</Text>
+            <Text style={styles.value}>{user.postNumberOfPackages}</Text>
+            <FontAwesome
+              name="check-circle"
+              size={20}
+              color="green"
+              style={styles.icon}
+            />
+          </View>
+          <View style={styles.infoRowFromTo}>
+            <Text style={styles.label}>From address:</Text>
+            <Text style={styles.valueFromTo}>{user.consignorlocation}</Text>
+          </View>
+          <View style={styles.infoRowFromTo}>
+            <Text style={styles.label}>To address:</Text>
+            <Text style={styles.valueFromTo}>
+              {user.consigneelocation != "" ? user.consigneelocation : "N/A"}
+            </Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Destination:</Text>
+            <Text style={styles.valueFromTo}>{user.destination}</Text>
+            <FontAwesome
+              name="check-circle"
+              size={20}
+              color="green"
+              style={styles.icon}
+            />
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Vendor:</Text>
+            <Text style={styles.valueFromTo}>{user.vendorName}</Text>
+            <FontAwesome
+              name="check-circle"
+              size={20}
+              color="green"
+              style={styles.icon}
+            />
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Final Weight:</Text>
+            <TextInput
+              value={actualWeight}
+              onChangeText={setActualWeight}
+              placeholder="Enter actual weight"
+              keyboardType="numeric"
+              style={styles.finalWeightInput}
+            />
+            {weighterror ? (
+              <Text style={{ color: "red" }}>{weighterror}</Text>
+            ) : (
+              <Text></Text>
+            )}
+          </View>
+          <View style={styles.imageUploadContainer}>
+            {finalWeightImage.map((imageUri, index) => (
+              <View key={index} style={styles.imagePreview}>
+                <Image source={{ uri: imageUri }} style={styles.image} />
+                <TouchableOpacity
+                  onPress={() => removeImage(index)}
+                  style={styles.removeButton}
+                >
+                  <Text style={styles.removeButtonText}>Remove</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+            <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
+              <Text style={styles.uploadButtonText}>
+                {finalWeightImage.length > 0
+                  ? "Add More Final Weight Images"
+                  : "Upload Final Weight Images"}
+              </Text>
+            </TouchableOpacity>
+            {weightiimageerror ? (
+              <Text style={{ color: "red" }}>{weightiimageerror}</Text>
+            ) : (
+              <Text></Text>
+            )}
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Final Number of Packages:</Text>
+            <View style={styles.increDecreContainer}>
               <TouchableOpacity
-                onPress={removeImage}
-                style={styles.removeButton}
+                style={styles.increDecreButton}
+                onPress={() =>
+                  setActualNumPackages((prev) =>
+                    Math.max(1, parseInt(prev, 10) - 1)
+                  )
+                }
               >
-                <Text style={styles.removeButtonText}>Remove</Text>
+                <Text style={styles.buttonText}>-</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.value}>{actualNumPackages}</Text>
+
+              <TouchableOpacity
+                style={styles.increDecreButton}
+                onPress={() =>
+                  setActualNumPackages((prev) => parseInt(prev, 10) + 1)
+                }
+              >
+                <Text style={styles.buttonText}>+</Text>
               </TouchableOpacity>
             </View>
-          )}
-          <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
-            <Text style={styles.uploadButtonText}>
-              {finalWeightImage
-                ? "Change Final Weight Image"
-                : "Upload Final Weight Image"}
-            </Text>
-          </TouchableOpacity>
-          {weightiimageerror ? <Text style={{color:"red"}}>{weightiimageerror}</Text> : <Text></Text>}
-
-        </View>
-
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Final Number of Packages:</Text>
-          <View style={styles.increDecreContainer}>
-            <TouchableOpacity
-              style={styles.increDecreButton}
-              onPress={() =>
-                setActualNumPackages((prev) =>
-                  Math.max(1, parseInt(prev, 10) - 1)
-                )
-              }
-            >
-              <Text style={styles.buttonText}>-</Text>
-            </TouchableOpacity>
-
-            <Text style={styles.value}>{actualNumPackages}</Text>
-
-            <TouchableOpacity
-              style={styles.increDecreButton}
-              onPress={() =>
-                setActualNumPackages((prev) => parseInt(prev, 10) + 1)
-              }
-            >
-              <Text style={styles.buttonText}>+</Text>
-            </TouchableOpacity>
           </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>RTO:</Text>
+            <TextInput
+              value={rto}
+              onChangeText={setrto}
+              placeholder="Enter RTO"
+              keyboardType="default"
+              style={styles.finalWeightInput}
+            />
+          </View>
+          {/* Submit Button with Loading Indicator */}
+          <TouchableOpacity
+            onPress={handleSubmit}
+            style={styles.button}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Submit</Text>
+            )}
+          </TouchableOpacity>
         </View>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>RTO:</Text>
-          <TextInput
-            value={rto}
-            onChangeText={setrto}
-            placeholder="Enter RTO"
-            keyboardType="default"
-            style={styles.finalWeightInput}
-          />
-        </View>
-        {/* Submit Button with Loading Indicator */}
-        <TouchableOpacity
-          onPress={handleSubmit}
-          style={styles.button}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Submit</Text>
-          )}
-        </TouchableOpacity>
-      </View>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-uploadButton: {
+  uploadButton: {
     backgroundColor: "#6B21A8",
     borderRadius: 8,
     padding: 12,
@@ -378,12 +385,12 @@ uploadButton: {
   scrollViewContent1: {
     paddingTop: 50, // Adjust padding as needed
     paddingBottom: 30, // Adjust padding as needed
-    marginLeft:15,
-    marginRight:15
+    marginLeft: 15,
+    marginRight: 15,
   },
   container: {
     flex: 1,
-    width:"100%",
+    width: "100%",
     backgroundColor: "#F3F4F6",
     alignItems: "center",
     justifyContent: "center",
