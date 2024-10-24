@@ -37,6 +37,7 @@ export default function Admin() {
   const [selectedDate, setSelectedDate] = useState("");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [tofilterDate, settofilterdate] = useState("");
+  
   const handleDatePicked = (date) => {
     const day = date.getDate(); // Get day without leading zero
     const month = date.getMonth() + 1; // Get month (0-based index) without leading zero
@@ -53,6 +54,7 @@ export default function Admin() {
     "sathish",
     "praven",
     "jaga",
+    "haman",
   ];
 
   // LIST SHIPMENTS
@@ -184,8 +186,8 @@ export default function Admin() {
         parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
     );
 
-  const currentItems = userData
-    .filter((user) => user.status === "LIST SHIPMENTS")
+  const runsheet = userData
+    .filter((user) => user.status === "RUN SHEET")
     .sort(
       (a, b) =>
         parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
@@ -374,7 +376,7 @@ export default function Admin() {
           }
         >
           {currentTab === "RUN SHEET" ? (
-            <Runsheet pickupPersons={pickupPersons} datetime={tofilterDate} />
+            <Runsheet pickupPersons={pickupPersons} datetime={tofilterDate} userData={runsheet}/>
           ) : currentTab === "INCOMING MANIFEST" ? (
             <Incomingmanifest
               userData={incomingManifestItems}

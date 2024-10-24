@@ -109,7 +109,7 @@ export const ClientInfo = () => {
           <Text style={styles.loadingText}>Loading images...</Text>
         </View>
       ) : (
-        <ScrollView style={{ marginTop: 60 }}>
+        <ScrollView style={{ marginTop: 120 }}>
           {Object.keys(filteredData).length > 0 ? (
             Object.keys(filteredData).map((folder) => (
               <ClientImageRender

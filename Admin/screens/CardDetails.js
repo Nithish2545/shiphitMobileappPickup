@@ -10,10 +10,10 @@ import {
   StatusBar,
   Image,
   Modal,
+  TouchableOpacity,
 } from "react-native";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
-import { TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 
@@ -26,10 +26,11 @@ function CardDetails() {
   const navigation = useNavigation(); // Access navigation prop
 
   // Function to handle image click
-  const handleImageClick = (imageUri) => {
+  function handleImageClick(imageUri) {
+    console.log("imageUri", imageUri);
     setSelectedImage(imageUri); // Set the clicked image URI to state
     setModalVisible(true); // Show the modal
-  };
+  }
 
   // Function to close the modal
   const closeModal = () => {
@@ -68,17 +69,40 @@ function CardDetails() {
     fetchData(); // Call the fetchData function on component mount
   }, [awbnumber]); // Add awbnumber as a dependency
 
+  const downloadImage = async (imageUri) => {
+    const fileName = imageUri.split("/").pop(); // Get the image file name from the URL
+    const downloadDest = `${FileSystem.documentDirectory}${fileName}`; // Destination path
+
+    try {
+      const response = await FileSystem.downloadAsync(imageUri, downloadDest);
+
+      if (response.status === 200) {
+        Alert.alert("Success", "Image downloaded successfully!");
+      } else {
+        Alert.alert("Error", "Failed to download image.");
+      }
+    } catch (error) {
+      console.error("Download error: ", error);
+      Alert.alert("Error", "An error occurred while downloading the image.");
+    }
+  };
+
   if (!details) return <ActivityIndicator size="large" color="#6200EE" />;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
       <ScrollView contentContainerStyle={styles.container}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <AntDesign name="arrowleft" size={32} color="black" />
+        <TouchableOpacity>
+          <AntDesign
+            name="arrowleft"
+            size={32}
+            color="black"
+            onPress={() => navigation.goBack()}
+          />
+          <Text style={styles.title}>Card Details</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Card Details</Text>
-        {/* <View style={styles.card}>
+        <View style={styles.card}>
           <Text style={styles.sectionTitle}>Consignor Details</Text>
           <Text style={styles.item}>
             <Text style={styles.label}>Name: </Text>
@@ -143,6 +167,7 @@ function CardDetails() {
             {details.pickupDatetime}
           </Text>
         </View>
+
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Post Pickup Details</Text>
           <Text style={styles.item}>
@@ -181,6 +206,7 @@ function CardDetails() {
             {details.status}
           </Text>
         </View>
+
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Additional Information</Text>
           <Text style={styles.item}>
@@ -199,34 +225,221 @@ function CardDetails() {
             <Text style={styles.label}>RTO (If Any): </Text>
             {details.rtoIfAny}
           </Text>
-          {console.log(details)}
         </View>
-         */}
         <View style={styles.card}>
           <Text style={styles.cardtext}>KYC</Text>
-          <TouchableOpacity onPress={() => handleImageClick(details.KycImage)}>
-            <Image source={{ uri: details.KycImage }} style={styles.image} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.card}>
-          <Text style={styles.cardtext}>PRODUCTSIMAGE</Text>
-          {details.PRODUCTSIMAGE.map((d, index) => (
-            <TouchableOpacity key={index} onPress={() => handleImageClick(d)}>
-              <Image source={{ uri: d }} style={styles.image} />
+          {typeof details.KycImage === "string" ? (
+            <TouchableOpacity
+              onPress={() => handleImageClick(details.KycImage)}
+            >
+              <Image source={{ uri: details.KycImage }} style={styles.image} />
             </TouchableOpacity>
-          ))}
+          ) : details.KycImage.length > 0 ? (
+            <View style={styles.imageGrid}>
+              {console.log("testing")}
+              {details.KycImage.map((imageUri, index) => (
+                <>
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => handleImageClick(imageUri)}
+                  >
+                    <Image source={{ uri: imageUri }} style={styles.image} />
+                  </TouchableOpacity>
+                  {/* <TouchableOpacity onPress={() => downloadImage(imageUri)}>
+                    <Text style={styles.downloadButton}>Download</Text>
+                  </TouchableOpacity> */}
+                </>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.imageGrid}>
+              <Text style={styles.placeholderText}>No KYC Image Available</Text>
+            </View>
+          )}
         </View>
-        {/* Package Weight Images Section */}
         <View style={styles.card}>
-          <Text style={styles.cardtext}>PACKAGEWEIGHTIMAGES</Text>
+          <Text style={styles.cardtext}>PRODUCTS IMAGE</Text>
+          {typeof details.PRODUCTSIMAGE === "string" ? (
+            <TouchableOpacity
+              onPress={() => handleImageClick(details.PRODUCTSIMAGE)}
+            >
+              <Image
+                source={{ uri: details.PRODUCTSIMAGE }}
+                style={styles.image}
+              />
+            </TouchableOpacity>
+          ) : typeof details.PRODUCTSIMAGE === "object" ? (
+            <View style={styles.imageGrid}>
+              {details.PRODUCTSIMAGE.map((imageUri, index) => (
+                <TouchableOpacity onPress={() => handleImageClick(imageUri)}>
+                  <Image
+                    key={index}
+                    source={{ uri: imageUri }}
+                    style={styles.image}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.placeholderText}>
+              No PRODUCTS IMAGE Available
+            </Text>
+          )}
+        </View>
+        <View style={styles.card}>
+          <Text style={styles.cardtext}>PACKAGE WEIGHT IMAGES</Text>
+          {typeof details.PACKAGEWEIGHTIMAGES === "string" ? (
+            <TouchableOpacity
+              onPress={() => handleImageClick(details.PACKAGEWEIGHTIMAGES)}
+            >
+              <Image
+                source={{ uri: details.PACKAGEWEIGHTIMAGES }}
+                style={styles.image}
+              />
+            </TouchableOpacity>
+          ) : typeof details.PACKAGEWEIGHTIMAGES === "object" ? (
+            <View style={styles.imageGrid}>
+              {details.PACKAGEWEIGHTIMAGES.map((imageUri, index) => (
+                <TouchableOpacity onPress={() => handleImageClick(imageUri)}>
+                  <Image
+                    key={index}
+                    source={{ uri: imageUri }}
+                    style={styles.image}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.placeholderText}>
+              No PACKAGE WEIGHT IMAGES Available
+            </Text>
+          )}
+        </View>
+        <View style={styles.card}>
+          <Text style={styles.cardtext}>FORM IMAGES</Text>
           <View style={styles.imagegrid}>
-            {details.PACKAGEWEIGHTIMAGES.map((d, index) => (
-              <TouchableOpacity key={index} onPress={() => handleImageClick(d)}>
-                <Image source={{ uri: d }} style={styles.image} />
+            {typeof details.FORMIMAGES === "string" ? (
+              <TouchableOpacity
+                onPress={() => handleImageClick(details.FORMIMAGES)}
+              >
+                <Image
+                  source={{ uri: details.FORMIMAGES }}
+                  style={styles.image}
+                />
               </TouchableOpacity>
-            ))}
+            ) : typeof details.FORMIMAGES === "object" ? (
+              <View style={styles.imageGrid}>
+                {details.FORMIMAGES.map((imageUri, index) => (
+                  <TouchableOpacity onPress={() => handleImageClick(imageUri)}>
+                    <Image
+                      onPress={() => handleImageClick(imageUri)}
+                      key={index}
+                      source={{ uri: imageUri }}
+                      style={styles.image}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.placeholderText}>
+                No FORM IMAGES Available
+              </Text>
+            )}
           </View>
         </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardtext}>FINAL WEIGHT IMAGE</Text>
+          <View style={styles.imagegrid}>
+            {typeof details.finalWeightImage === "string" ? (
+              <TouchableOpacity
+                onPress={() => handleImageClick(details.finalWeightImage)}
+              >
+                <Image
+                  source={{ uri: details.finalWeightImage }}
+                  style={styles.image}
+                />
+              </TouchableOpacity>
+            ) : typeof details.finalWeightImage === "object" ? (
+              <View style={styles.imageGrid}>
+                {details.finalWeightImage.map((imageUri, index) => (
+                  <TouchableOpacity onPress={() => handleImageClick(imageUri)}>
+                    <Image
+                      key={index}
+                      source={{ uri: imageUri }}
+                      style={styles.image}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <Text style={{ backgroundColor: "red" }}>
+                No FINAL WEIGHT Available
+              </Text>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardtext}>PAYMENT PROOF IMAGE</Text>
+          <View style={styles.imagegrid}>
+            {typeof details.paymentProof === "string" ? (
+              <TouchableOpacity
+                onPress={() => handleImageClick(details.paymentProof)}
+              >
+                <Image
+                  source={{ uri: details.paymentProof }}
+                  style={styles.image}
+                />
+              </TouchableOpacity>
+            ) : typeof details.paymentProof === "object" ? (
+              <View style={styles.imageGrid}>
+                {details.paymentProof.map((imageUri, index) => (
+                  <TouchableOpacity onPress={() => handleImageClick(imageUri)}>
+                    <Image
+                      key={index}
+                      source={{ uri: imageUri }}
+                      style={styles.image}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <Text>No PAYMENT PROOF Available</Text>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardtext}>AWB NUMBER IMAGE</Text>
+          <View style={styles.imagegrid}>
+            {typeof details.AWbNumberImage === "string" ? (
+              <TouchableOpacity
+                onPress={() => handleImageClick(details.AWbNumberImage)}
+              >
+                <Image
+                  source={{ uri: details.AWbNumberImage }}
+                  style={styles.image}
+                />
+              </TouchableOpacity>
+            ) : typeof details.AWbNumberImage === "object" ? (
+              <View style={styles.imageGrid}>
+                {details.AWbNumberImage.map((imageUri, index) => (
+                  <TouchableOpacity onPress={() => handleImageClick(imageUri)}>
+                    <Image
+                      key={index}
+                      source={{ uri: imageUri }}
+                      style={styles.image}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <Text>No AWB Number Image Available</Text>
+            )}
+          </View>
+        </View>
+
         <Modal visible={modalVisible} transparent={true} animationType="fade">
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
@@ -249,7 +462,7 @@ function CardDetails() {
 
 const styles = StyleSheet.create({
   cardtext: {
-    fontSize: "20",
+    fontSize: 20,
     fontWeight: "700",
     marginBottom: 15,
   },
@@ -259,6 +472,9 @@ const styles = StyleSheet.create({
     objectFit: "cover",
     borderRadius: 10,
   },
+  imageGrid:{
+    gap:30
+  },
   safeArea: {
     flex: 1,
     backgroundColor: "#f5f5f5",
@@ -267,6 +483,8 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 20,
     backgroundColor: "#f5f5f5",
+    flexGrow: 1,
+    minHeight: "100%",
   },
   title: {
     fontSize: 26,
@@ -327,7 +545,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "#fff",
-    padding: 20,
+    // padding: 20,
     borderRadius: 10,
     alignItems: "center",
   },
@@ -336,9 +554,10 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   modalImage: {
-    width: 300,
-    height: 300,
+    width: 350,
+    height: 500,
     borderRadius: 10,
+    objectFit: "contain",
   },
   testing: {
     position: "absolute", // Absolute positioning

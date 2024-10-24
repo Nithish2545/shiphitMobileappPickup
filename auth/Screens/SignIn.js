@@ -50,8 +50,11 @@ const SignIn = ({ navigation }) => {
             case "jaga@gmail.com":
               return "jaga";
             case "praven@gmail.com":
-              console.log("praven@gmail.com")
+              console.log("praven@gmail.com");
               return "praven";
+            case "haman@gmail.com":
+              console.log("haman@gmail.com");
+              return "haman";
             default:
               return response.user.email;
           }

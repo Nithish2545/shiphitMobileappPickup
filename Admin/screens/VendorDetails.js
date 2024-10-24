@@ -124,7 +124,7 @@ if(!finalWeightImage){
       vendorAwbnumber: data.vendorAwbnumber,
       status: "SHIPMENT CONNECTED",
       packageConnectedDataTime: PickupCompletedDate(),
-      finalWeightImage: await uploadImage(finalWeightImage), // Upload image and store URL
+      AWbNumberImage: await uploadImage(finalWeightImage), // Upload image and store URL
     };
 
     const q = query(

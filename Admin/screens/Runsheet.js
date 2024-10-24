@@ -14,34 +14,34 @@ import {
 } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 
-const Runsheet = ({ pickupPersons , datetime }) => {
+const Runsheet = ({ pickupPersons , datetime , userData }) => {
   console.log(typeof datetime)
-  const [userData, setUserData] = useState([]);
+  // const [userData, setUserData] = useState([]);
   const navigation = useNavigation();
-  const fetchData = () => {
-    console.log("Fetching data...");
-    const unsubscribe = onSnapshot(
-      collection(db, "pickup"),
-      (querySnapshot) => {
-        // Filter documents where status is "RUN SHEET"
-        const sortedData = querySnapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
-          .filter((data) => data.status === "RUN SHEET" && data.pickupDatetime.includes(datetime)); // Filter based on status
-        setUserData(sortedData);
-        console.log(sortedData);
-        // If you have a function named parsePickupDateTime, call it here
-      },
-      (error) => {
-        console.error(`Error fetching data: ${error.message}`); // Log error if any
-      }
-    );
-    // Cleanup the listener on component unmount
-    return () => unsubscribe();
-  };
+  // const fetchData = () => {
+  //   console.log("Fetching data...");
+  //   const unsubscribe = onSnapshot(
+  //     collection(db, "pickup"),
+  //     (querySnapshot) => {
+  //       // Filter documents where status is "RUN SHEET"
+  //       const sortedData = querySnapshot.docs
+  //         .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
+  //         .filter((data) => data.status === "RUN SHEET" && data.pickupDatetime.includes(datetime)); // Filter based on status
+  //       setUserData(sortedData);
+  //       console.log(sortedData);
+  //       // If you have a function named parsePickupDateTime, call it here
+  //     },
+  //     (error) => {
+  //       console.error(`Error fetching data: ${error.message}`); // Log error if any
+  //     }
+  //   );
+  //   // Cleanup the listener on component unmount
+  //   return () => unsubscribe();
+  // };
 
-  useEffect(() => {
-    fetchData(); // Fetch data initially
-  }, [datetime]);
+  // useEffect(() => {
+  //   fetchData(); // Fetch data initially
+  // }, [datetime]);
 
   const handleOpenMap = (latitude, longitude) => {
     const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
