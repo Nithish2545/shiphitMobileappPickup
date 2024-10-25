@@ -1,37 +1,40 @@
 import { useNavigation } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Linking } from "react-native";
-// Removed Picker import since it is commented out
-import {db} from "../../FirebaseConfig"
-import { collection, onSnapshot } from "firebase/firestore";
-const ShipmentConnected = () => {
-  const [userData, setuserData] = useState([]);
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Linking,
+} from "react-native";
+
+const ShipmentConnected = ({ userData }) => {
+  // const [userData, setuserData] = useState([]);
   const navigation = useNavigation();
+  // const fetchData = () => {
+  //   console.log("Fetching data...");
+  //   const unsubscribe = onSnapshot(
+  //     collection(db, "pickup"),
+  //     (querySnapshot) => {
+  //       // Filter documents where status is "RUN SHEET"
+  //       const sortedData = querySnapshot.docs
+  //         .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
+  //         .filter((data) => data.status === "SHIPMENT CONNECTED"); // Filter based on status
+  //       setuserData(sortedData);
+  //       console.log(sortedData);
+  //       // If you have a function named parsePickupDateTime, call it here
+  //     },
+  //     (error) => {
+  //       console.error(`Error fetching data: ${error.message}`); // Log error if any
+  //     }
+  //   );
+  //   // Cleanup the listener on component unmount
+  //   return () => unsubscribe();
+  // };
 
-  const fetchData = () => {
-    console.log("Fetching data...");
-    const unsubscribe = onSnapshot(
-      collection(db, "pickup"),
-      (querySnapshot) => {
-        // Filter documents where status is "RUN SHEET"
-        const sortedData = querySnapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
-          .filter((data) => data.status === "SHIPMENT CONNECTED"); // Filter based on status
-        setuserData(sortedData);
-        console.log(sortedData);
-        // If you have a function named parsePickupDateTime, call it here
-      },
-      (error) => {
-        console.error(`Error fetching data: ${error.message}`); // Log error if any
-      }
-    );
-    // Cleanup the listener on component unmount
-    return () => unsubscribe();
-  };
-
-  useEffect(() => {
-    fetchData(); // Fetch data initially
-  }, []);
+  // useEffect(() => {
+  //   fetchData(); // Fetch data initially
+  // }, []);
 
   const makeCall = (number) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
@@ -51,10 +54,7 @@ const ShipmentConnected = () => {
         </View>
       ) : (
         userData.map((user, index) => (
-          <View
-            key={index}
-            style={styles.card}
-          >
+          <View key={index} style={styles.card}>
             <View style={styles.statusContainer}>
               <View
                 style={[
@@ -106,18 +106,26 @@ const ShipmentConnected = () => {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Final weight:</Text>
-              <Text style={styles.value}>{user.actualWeight + " " + "KG" || "N/A"}</Text>
+              <Text style={styles.value}>
+                {user.actualWeight + " " + "KG" || "N/A"}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Vendor:</Text>
               <Text style={styles.value}>{user.vendorName || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Pickup Connected:</Text>
-              <Text style={styles.value}>{user.packageConnectedDataTime || "N/A"}</Text>
+              <Text style={styles.label}>Pickup DateTime:</Text>
+              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
             </View>
-       
-            <View style={{display:"flex" , flexDirection:"row" , gap:20,  position:"relative"}}>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: 20,
+                position: "relative",
+              }}
+            >
               <TouchableOpacity
                 style={styles.mapButton}
                 onPress={() => makeCall(user.consignorphonenumber)}
@@ -139,7 +147,6 @@ const ShipmentConnected = () => {
                 <Text style={styles.mapButtonText}>Details</Text>
               </TouchableOpacity>
             </View>
-
           </View>
         ))
       )}
@@ -157,11 +164,11 @@ const styles = StyleSheet.create({
     fontSize: 16, // Added font size for better readability
   },
   card: {
-    borderWidth: 1,          // Adds border width
-    borderColor: '#D1D5DB', // Sets the color of the border
-    borderRadius: 10,        // Adds rounded corners to the border
-    padding: 10,  
-    marginBottom:20
+    borderWidth: 1, // Adds border width
+    borderColor: "#D1D5DB", // Sets the color of the border
+    borderRadius: 10, // Adds rounded corners to the border
+    padding: 10,
+    marginBottom: 20,
   },
   statusContainer: {
     marginBottom: 12,
@@ -178,9 +185,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#D1FAE5", // Light green background for completed status
   },
   statusDefault: {
-    display:"flex",
-    justifyContent:"space-between",
-    flexDirection:"row",
+    display: "flex",
+    justifyContent: "space-between",
+    flexDirection: "row",
     backgroundColor: "#E2E8F0", // Light gray background for default status
   },
   statusText: {

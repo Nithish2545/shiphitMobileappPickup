@@ -11,32 +11,32 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 // Removed Picker import since it is commented out
 
-const PaymentDone = () => {
-  const [userData, setuserData] = useState([]);
-  const fetchData = () => {
-    console.log("Fetching data...");
-    const unsubscribe = onSnapshot(
-      collection(db, "pickup"),
-      (querySnapshot) => {
-        // Filter documents where status is "RUN SHEET"
-        const sortedData = querySnapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
-          .filter((data) => data.status === "PAYMENT DONE"); // Filter based on status
-        setuserData(sortedData);
-        console.log(sortedData);
-        // If you have a function named parsePickupDateTime, call it here
-      },
-      (error) => {
-        console.error(`Error fetching data: ${error.message}`); // Log error if any
-      }
-    );
-    // Cleanup the listener on component unmount
-    return () => unsubscribe();
-  };
+const PaymentDone = ({ userData }) => {
+  // const [userData, setuserData] = useState([]);
+  // const fetchData = () => {
+  //   console.log("Fetching data...");
+  //   const unsubscribe = onSnapshot(
+  //     collection(db, "pickup"),
+  //     (querySnapshot) => {
+  //       // Filter documents where status is "RUN SHEET"
+  //       const sortedData = querySnapshot.docs
+  //         .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
+  //         .filter((data) => data.status === "PAYMENT DONE"); // Filter based on status
+  //       setuserData(sortedData);
+  //       console.log(sortedData);
+  //       // If you have a function named parsePickupDateTime, call it here
+  //     },
+  //     (error) => {
+  //       console.error(`Error fetching data: ${error.message}`); // Log error if any
+  //     }
+  //   );
+  //   // Cleanup the listener on component unmount
+  //   return () => unsubscribe();
+  // };
 
-  useEffect(() => {
-    fetchData(); // Fetch data initially
-  }, []);
+  // useEffect(() => {
+  //   fetchData(); // Fetch data initially
+  // }, []);
 
   const navigation = useNavigation();
 
@@ -51,7 +51,6 @@ const PaymentDone = () => {
 
   const CardDetails = (awbNumber) => {
     // Handle card press action
-    console.log(awbNumber);
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 
@@ -130,12 +129,10 @@ const PaymentDone = () => {
                 {user.actualWeight + " " + "KG" || "N/A"}
               </Text>
             </View>
-
             <View style={styles.infoRow}>
-              <Text style={styles.label}>PickUp Person:</Text>
-              <Text style={styles.value}>{user.pickUpPersonName || "N/A"}</Text>
+              <Text style={styles.label}>Pickup DateTime:</Text>
+              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
             </View>
-
             <View
               style={{
                 display: "flex",

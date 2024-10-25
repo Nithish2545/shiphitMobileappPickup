@@ -6,7 +6,6 @@ const PickupCompleted = ({ userData }) => {
   const handleCardPress = (awbNumber) => {
     // Handle card press action
   };
-  console.log(userData);
 
   return (
     <View>

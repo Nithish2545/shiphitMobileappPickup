@@ -2,6 +2,7 @@ import { useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
   View,
+  Share,
   Text,
   StyleSheet,
   ActivityIndicator,
@@ -16,7 +17,9 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 import { useNavigation } from "@react-navigation/native";
 import AntDesign from "@expo/vector-icons/AntDesign";
-
+import { Linking } from "react-native";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import Entypo from "@expo/vector-icons/Entypo";
 function CardDetails() {
   const route = useRoute();
   const { awbnumber } = route.params;
@@ -27,7 +30,6 @@ function CardDetails() {
 
   // Function to handle image click
   function handleImageClick(imageUri) {
-    console.log("imageUri", imageUri);
     setSelectedImage(imageUri); // Set the clicked image URI to state
     setModalVisible(true); // Show the modal
   }
@@ -69,21 +71,15 @@ function CardDetails() {
     fetchData(); // Call the fetchData function on component mount
   }, [awbnumber]); // Add awbnumber as a dependency
 
-  const downloadImage = async (imageUri) => {
-    const fileName = imageUri.split("/").pop(); // Get the image file name from the URL
-    const downloadDest = `${FileSystem.documentDirectory}${fileName}`; // Destination path
-
+  const handleShare = async (pdfUrl) => {
     try {
-      const response = await FileSystem.downloadAsync(imageUri, downloadDest);
-
-      if (response.status === 200) {
-        Alert.alert("Success", "Image downloaded successfully!");
-      } else {
-        Alert.alert("Error", "Failed to download image.");
-      }
+      await Share.share({
+        message: `Check out this document: ${pdfUrl}`,
+        url: pdfUrl, // The PDF URL you want to share
+        title: "KYC PDF Document",
+      });
     } catch (error) {
-      console.error("Download error: ", error);
-      Alert.alert("Error", "An error occurred while downloading the image.");
+      console.log("Error sharing:", error);
     }
   };
 
@@ -167,7 +163,6 @@ function CardDetails() {
             {details.pickupDatetime}
           </Text>
         </View>
-
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Post Pickup Details</Text>
           <Text style={styles.item}>
@@ -206,7 +201,6 @@ function CardDetails() {
             {details.status}
           </Text>
         </View>
-
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Additional Information</Text>
           <Text style={styles.item}>
@@ -226,34 +220,31 @@ function CardDetails() {
             {details.rtoIfAny}
           </Text>
         </View>
+
         <View style={styles.card}>
           <Text style={styles.cardtext}>KYC</Text>
-          {typeof details.KycImage === "string" ? (
-            <TouchableOpacity
-              onPress={() => handleImageClick(details.KycImage)}
-            >
-              <Image source={{ uri: details.KycImage }} style={styles.image} />
-            </TouchableOpacity>
-          ) : details.KycImage.length > 0 ? (
-            <View style={styles.imageGrid}>
-              {console.log("testing")}
-              {details.KycImage.map((imageUri, index) => (
-                <>
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() => handleImageClick(imageUri)}
-                  >
-                    <Image source={{ uri: imageUri }} style={styles.image} />
-                  </TouchableOpacity>
-                  {/* <TouchableOpacity onPress={() => downloadImage(imageUri)}>
-                    <Text style={styles.downloadButton}>Download</Text>
-                  </TouchableOpacity> */}
-                </>
-              ))}
+          {details.KycImage ? (
+            <View style={{ display: "flex", gap: 20 }}>
+              <TouchableOpacity
+                style={styles.pdfContainer}
+                onPress={() => Linking.openURL(details.KycImage)}
+              >
+                <FontAwesome6 name="file-pdf" size={24} color="white" />
+                <Text style={styles.buttonText}>View PDF</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.shareButton}
+                onPress={() => handleShare(details.KycImage)}
+              >
+                <Entypo name="share" size={24} color="white" />
+                <Text style={styles.buttonText}>Share</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.imageGrid}>
-              <Text style={styles.placeholderText}>No KYC Image Available</Text>
+              <Text style={styles.placeholderText}>
+                No KYC Document Available
+              </Text>
             </View>
           )}
         </View>
@@ -347,7 +338,6 @@ function CardDetails() {
             )}
           </View>
         </View>
-
         <View style={styles.card}>
           <Text style={styles.cardtext}>FINAL WEIGHT IMAGE</Text>
           <View style={styles.imagegrid}>
@@ -373,13 +363,10 @@ function CardDetails() {
                 ))}
               </View>
             ) : (
-              <Text style={{ backgroundColor: "red" }}>
-                No FINAL WEIGHT Available
-              </Text>
+              <Text>No FINAL WEIGHT Available</Text>
             )}
           </View>
         </View>
-
         <View style={styles.card}>
           <Text style={styles.cardtext}>PAYMENT PROOF IMAGE</Text>
           <View style={styles.imagegrid}>
@@ -409,7 +396,6 @@ function CardDetails() {
             )}
           </View>
         </View>
-
         <View style={styles.card}>
           <Text style={styles.cardtext}>AWB NUMBER IMAGE</Text>
           <View style={styles.imagegrid}>
@@ -439,7 +425,6 @@ function CardDetails() {
             )}
           </View>
         </View>
-
         <Modal visible={modalVisible} transparent={true} animationType="fade">
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
@@ -472,8 +457,8 @@ const styles = StyleSheet.create({
     objectFit: "cover",
     borderRadius: 10,
   },
-  imageGrid:{
-    gap:30
+  imageGrid: {
+    gap: 30,
   },
   safeArea: {
     flex: 1,
@@ -575,6 +560,34 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: "purple",
     margin: 20,
+  },
+  pdfContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#d9534f", // Bootstrap danger color for PDF button
+    padding: 10,
+    borderRadius: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+    flex: 1,
+    justifyContent: "center", // Center icon and text
+  },
+  shareButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#5bc0de", // Bootstrap info color for Share button
+    padding: 10,
+    borderRadius: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+    flex: 1,
+    justifyContent: "center", // Center icon and text
   },
 });
 

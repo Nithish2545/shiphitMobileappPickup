@@ -66,7 +66,6 @@ function VendorDetails() {
       }
 
       const data = await response.json();
-      console.log("Row updated successfully", data);
     } catch (error) {
       console.error("Error updating row:", error);
     }

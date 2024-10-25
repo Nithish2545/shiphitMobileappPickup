@@ -37,7 +37,7 @@ export default function Admin() {
   const [selectedDate, setSelectedDate] = useState("");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [tofilterDate, settofilterdate] = useState("");
-  
+
   const handleDatePicked = (date) => {
     const day = date.getDate(); // Get day without leading zero
     const month = date.getMonth() + 1; // Get month (0-based index) without leading zero
@@ -104,7 +104,6 @@ export default function Admin() {
   const handleSignOut = () => {
     signOut(FIREBASE_AUTH)
       .then(() => {
-        console.log("Sign-out successful.");
       })
       .catch((error) => {
         console.error("Error signing out:", error);
@@ -138,19 +137,7 @@ export default function Admin() {
     };
     fetchUserRole();
   }, []);
-
-  const parsePickupDateTime = (dateTimeString) => {
-    console.log(dateTimeString);
-    const [datePart, timePart] = dateTimeString.split("&"); // Split date and time
-    const [year, month, day] = datePart.split("-"); // Get year, month, day
-    const [hour, minute] = timePart.split(" ")[0].split(":"); // Get hour and minute
-
-    // Convert hour to 24-hour format if it's PM
-    const isPM = timePart.includes("PM") && hour !== "12";
-    const adjustedHour = isPM ? parseInt(hour, 10) + 12 : hour;
-    const date = new Date(year, month - 1, day, adjustedHour, minute || 0); // Create Date object
-    return date;
-  };
+ 
   const fetchData = () => {
     const unsubscribe = onSnapshot(
       collection(db, "pickup"),
@@ -185,9 +172,12 @@ export default function Admin() {
       (a, b) =>
         parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
     );
-
   const runsheet = userData
-    .filter((user) => user.status === "RUN SHEET")
+    .filter(
+      (user) =>
+        user.status === "RUN SHEET" &&
+        user.pickupDatetime.includes(tofilterDate)
+    )
     .sort(
       (a, b) =>
         parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
@@ -203,23 +193,34 @@ export default function Admin() {
       (a, b) =>
         parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
     );
-
   const paymentPending = userData
-    .filter((user) => user.status === "PAYMENT PENDING")
+    .filter(
+      (user) =>
+        user.status === "PAYMENT PENDING" &&
+        user.pickupDatetime.includes(tofilterDate)
+    )
     .sort(
       (a, b) =>
         parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
     );
 
   const paymentDone = userData
-    .filter((user) => user.status === "PAYMENT DONE")
+    .filter(
+      (user) =>
+        user.status === "PAYMENT DONE" &&
+        user.pickupDatetime.includes(tofilterDate)
+    )
     .sort(
       (a, b) =>
         parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
     );
 
   const shipmentconnected = userData
-    .filter((user) => user.status === "SHIPMENT CONNECTED")
+    .filter(
+      (user) =>
+        (user.status === "SHIPMENT CONNECTED") &
+        user.pickupDatetime.includes(tofilterDate)
+    )
     .sort(
       (a, b) =>
         parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
@@ -376,7 +377,11 @@ export default function Admin() {
           }
         >
           {currentTab === "RUN SHEET" ? (
-            <Runsheet pickupPersons={pickupPersons} datetime={tofilterDate} userData={runsheet}/>
+            <Runsheet
+              pickupPersons={pickupPersons}
+              datetime={tofilterDate}
+              userData={runsheet}
+            />
           ) : currentTab === "INCOMING MANIFEST" ? (
             <Incomingmanifest
               userData={incomingManifestItems}
@@ -394,12 +399,6 @@ export default function Admin() {
           ) : currentTab === "LIST SHIPMENTS" ? (
             <Allshipments userData={AllShipments} datetime={tofilterDate} />
           ) : null}
-          {/* 
-          {currentTab === "RUN SHEET" ? (
-            <Incomingmanifest userData={incomingManifestItems} />
-          ) : currentTab === "INCOMING MANIFEST" ? (
-            <Runsheet pickupPersons={pickupPersons} />
-          ) : null} */}
         </ScrollView>
       )}
     </View>

@@ -32,7 +32,6 @@ const Allshipments = ({ userData }) => {
   // }, [datetime]);
 
   const navigation = useNavigation();
-  console.log("AllShipments" , userData)
 
   const makeCall = (number) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
@@ -40,7 +39,6 @@ const Allshipments = ({ userData }) => {
 
   const handleCardPress = (awbNumber) => {
     // Handle card press action
-    console.log(awbNumber);
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 

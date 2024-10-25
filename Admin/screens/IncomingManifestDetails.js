@@ -56,8 +56,6 @@ function IncomingManifestDetails() {
       querySnapshot.forEach((doc) => {
         final_result.push({ id: doc.id, ...doc.data() });
       });
-      // console.log("awbnumber" ,awbnumber)
-      // console.log("final_result" , final_result[0]);
       setUser(final_result[0]);
       return final_result[0];
     } catch (error) {
@@ -104,7 +102,6 @@ function IncomingManifestDetails() {
   useEffect(() => {
     const fetchUserData = async () => {
       const matchedUser = await fetchRowByAWB(awbnumber);
-      console.log("matchedUser", matchedUser);
       if (matchedUser) {
         setUser(matchedUser);
       } else {

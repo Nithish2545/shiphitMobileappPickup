@@ -71,7 +71,6 @@ const Runsheet = ({ pickupPersons , datetime , userData }) => {
       const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
 
       // Update the document with the new pickUpPersonName
-      console.log(docRef);
 
       await updateDoc(docRef, {
         pickUpPersonName: value,

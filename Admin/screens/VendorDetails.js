@@ -37,7 +37,6 @@ function VendorDetails() {
   } = useForm();
 
   const fetchRowByAWB = async (awbNumber) => {
-    console.log(typeof awbNumber);
     try {
       const q = query(
         collection(db, "pickup"),
@@ -50,7 +49,6 @@ function VendorDetails() {
       querySnapshot.forEach((doc) => {
         final_result.push({ id: doc.id, ...doc.data() });
       });
-      console.log(final_result);
       setUser(final_result[0]);
       return final_result[0];
     } catch (error) {

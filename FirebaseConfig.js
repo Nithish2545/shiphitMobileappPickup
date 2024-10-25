@@ -29,7 +29,6 @@ if (Platform.OS === 'web') {
   // Optionally, set the persistence to localStorage or sessionStorage
   FIREBASE_AUTH.setPersistence(browserLocalPersistence)  // You can also use browserSessionPersistence here
     .then(() => {
-      console.log("Web auth persistence set to local storage");
     })
     .catch((error) => {
       console.error("Error setting auth persistence on web: ", error);

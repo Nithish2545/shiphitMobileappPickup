@@ -51,7 +51,6 @@ export const ClientInfo = () => {
         paymentProof: "PAYMENT PROOF/",
         awbImages: "AWB NUMBER IMAGE/",
       };
-
       const allImages = {};
       for (const folder of mainFolders) {
         allImages[folder] = {};
@@ -98,7 +97,6 @@ export const ClientInfo = () => {
         )
       : imageUrls; // Reset to all images if no AWB number
     setFilteredData(filtered);
-    console.log("AWB Number:", awbNumber); // This will log the updated value
   }, [awbNumber, imageUrls]);
 
   return (
