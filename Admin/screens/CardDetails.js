@@ -220,14 +220,17 @@ function CardDetails() {
             {details.rtoIfAny}
           </Text>
         </View>
-
         <View style={styles.card}>
           <Text style={styles.cardtext}>KYC</Text>
-          {details.KycImage ? (
+          {details.KycImage != "" ? (
             <View style={{ display: "flex", gap: 20 }}>
               <TouchableOpacity
                 style={styles.pdfContainer}
-                onPress={() => Linking.openURL(details.KycImage)}
+                onPress={() => {
+                  details.KycImage == ""
+                    ? ""
+                    : Linking.openURL(details.KycImage);
+                }}
               >
                 <FontAwesome6 name="file-pdf" size={24} color="white" />
                 <Text style={styles.buttonText}>View PDF</Text>
