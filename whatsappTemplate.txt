@@ -1,0 +1,12 @@
+key_z6hIuLo8GC
+
+package_collected
+ 	
+	templateName : package_collected
+	language : en
+	Header Text : Your Pickup is Completed
+ 	from :  +919087786986
+ 	to :  +919042489612
+	Template Category : utility	
+	wabaNumbers : +919087786986
+	body : Hello Customer,\n\nGreat news! Your items have been picked up and securely packed by our team. They're now ready for safe transit.\n\nThank you for trusting ShipHit for your shipping needs. We’ll keep you updated on the journey of your package.\n\nWarm regards,\nShipHit Team
