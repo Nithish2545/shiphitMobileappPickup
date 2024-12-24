@@ -181,13 +181,6 @@ export default function Admin() {
         parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
     );
 
-  const currentItems = userData
-    .filter((user) => user.status === "RUN SHEET")
-    .sort(
-      (a, b) =>
-        parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
-    );
-
   const incomingManifestItems = userData
     .filter(
       (user) =>
@@ -369,12 +362,6 @@ export default function Admin() {
           ) : currentTab === "LIST SHIPMENTS" ? (
             <Allshipments userData={AllShipments} datetime={tofilterDate} />
           ) : null}
-          {/* 
-          {currentTab === "RUN SHEET" ? (
-            <Incomingmanifest userData={incomingManifestItems} />
-          ) : currentTab === "INCOMING MANIFEST" ? (
-            <Runsheet pickupPersons={pickupPersons} />
-          ) : null} */}
         </ScrollView>
       )}
     </View>
@@ -442,13 +429,13 @@ const styles = StyleSheet.create({
   },
   nav: {
     backgroundColor: "white",
-    position: "absolute",
+    // position: "absolute",
     height: 80,
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    bottom: 0,
+    // bottom: 0,
     zIndex: 10,
     left: 0,
     right: 0,

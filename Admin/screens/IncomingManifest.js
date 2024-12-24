@@ -12,7 +12,7 @@ import { db } from "../../FirebaseConfig";
 
 const Runsheet = ({ datetime }) => {
   const [userData, setuserData] = useState([]);
-
+console.log("datetime+",datetime=="")
   const fetchData = () => {
     // Create a query to filter documents where status is "INCOMING MANIFEST"
     const q = query(
@@ -25,9 +25,9 @@ const Runsheet = ({ datetime }) => {
       (querySnapshot) => {
         const sortedData = querySnapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter((data) => data.pickupCompletedDatatime.includes(datetime)); // Filter based on status; // Map through documents to get data
+          .filter((data) => data.pickupCompletedDatatime?.includes(datetime)  ); // Filter based on status; // Map through documents to get data
         setuserData(sortedData);
-        console.log(sortedData);
+        console.log("sortedData" , sortedData);
         // You can call a function here if needed
         // fetchAssignments(); // Fetch assignments
       },
@@ -39,6 +39,8 @@ const Runsheet = ({ datetime }) => {
     // Cleanup the listener on component unmount
     return () => unsubscribe();
   };
+
+  console.log(userData)
 
   useEffect(() => {
     fetchData(); // Fetch data initially
