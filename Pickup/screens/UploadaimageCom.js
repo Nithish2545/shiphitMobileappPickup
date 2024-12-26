@@ -69,8 +69,6 @@ const UploadImageCom = () => {
     }
   };
 
-  console.log("setTimestamp", formatToIST(timestamp));
-
   const uploadImage = async (uri) => {
     if (!uri) {
       Alert.alert("No Image Selected", "Please select an image to upload.");

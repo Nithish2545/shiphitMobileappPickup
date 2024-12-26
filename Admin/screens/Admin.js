@@ -106,19 +106,6 @@ export default function Admin() {
       });
   };
 
-  // const fetchAssignments = async () => {
-  //   try {
-  //     const result = await axios.get(API_URL);
-  //     const assignmentsData = result.data.sheet1.reduce((acc, item) => {
-  //       acc[item.AWB_NUMBER] = item.PickUpPersonName;
-  //       return acc;
-  //     }, {});
-  //     setAssignments(assignmentsData);
-  //   } catch (error) {
-  //     console.error("Error fetching assignments from Google Sheets:", error);
-  //   }
-  // };
-
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
@@ -134,18 +121,6 @@ export default function Admin() {
     fetchUserRole();
   }, []);
 
-  const parsePickupDateTime = (dateTimeString) => {
-    console.log(dateTimeString);
-    const [datePart, timePart] = dateTimeString.split("&"); // Split date and time
-    const [year, month, day] = datePart.split("-"); // Get year, month, day
-    const [hour, minute] = timePart.split(" ")[0].split(":"); // Get hour and minute
-
-    // Convert hour to 24-hour format if it's PM
-    const isPM = timePart.includes("PM") && hour !== "12";
-    const adjustedHour = isPM ? parseInt(hour, 10) + 12 : hour;
-    const date = new Date(year, month - 1, day, adjustedHour, minute || 0); // Create Date object
-    return date;
-  };
   const fetchData = () => {
     const unsubscribe = onSnapshot(
       collection(db, "pickup"),
@@ -429,13 +404,13 @@ const styles = StyleSheet.create({
   },
   nav: {
     backgroundColor: "white",
-    // position: "absolute",
+    position: "absolute",
     height: 80,
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    // bottom: 0,
+    bottom: 0,
     zIndex: 10,
     left: 0,
     right: 0,

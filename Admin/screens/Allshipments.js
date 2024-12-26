@@ -6,41 +6,13 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 
 const Allshipments = ({ userData }) => {
-  // const [userData , setUserData] = useState([])
-  // const fetchData = () => {
-  //   console.log("Fetching data...");
-  //   const unsubscribe = onSnapshot(
-  //     collection(db, "pickup"),
-  //     (querySnapshot) => {
-  //       // Filter documents where status is "RUN SHEET"
-  //       const sortedData = querySnapshot.docs
-  //         .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
-  //         .filter((data) => data.pickupDatetime.includes(datetime)); // Filter based on status
-  //       setUserData(sortedData);
-  //       // If you have a function named parsePickupDateTime, call it here
-  //     },
-  //     (error) => {
-  //       console.error(`Error fetching data: ${error.message}`); // Log error if any
-  //     }
-  //   );
-  //   // Cleanup the listener on component unmount
-  //   return () => unsubscribe();
-  // };
-
-  // useEffect(() => {
-  //   fetchData(); // Fetch data initially
-  // }, [datetime]);
-
   const navigation = useNavigation();
-  console.log("AllShipments" , userData)
-
   const makeCall = (number) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
   };
 
   const handleCardPress = (awbNumber) => {
     // Handle card press action
-    console.log(awbNumber);
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 

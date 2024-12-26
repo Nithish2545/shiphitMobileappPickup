@@ -14,21 +14,22 @@ import {
 } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 
-const Runsheet = ({ pickupPersons , datetime }) => {
-  console.log(typeof datetime)
+const Runsheet = ({ pickupPersons, datetime }) => {
   const [userData, setUserData] = useState([]);
   const navigation = useNavigation();
   const fetchData = () => {
-    console.log("Fetching data...");
     const unsubscribe = onSnapshot(
       collection(db, "pickup"),
       (querySnapshot) => {
         // Filter documents where status is "RUN SHEET"
         const sortedData = querySnapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
-          .filter((data) => data.status === "RUN SHEET" && data.pickupDatetime.includes(datetime)); // Filter based on status
+          .filter(
+            (data) =>
+              data.status === "RUN SHEET" &&
+              data.pickupDatetime.includes(datetime)
+          ); // Filter based on status
         setUserData(sortedData);
-        console.log(sortedData);
         // If you have a function named parsePickupDateTime, call it here
       },
       (error) => {
@@ -58,7 +59,7 @@ const Runsheet = ({ pickupPersons , datetime }) => {
     try {
       const q = query(
         collection(db, "pickup"),
-        where("awbNumber", "==", awbNumber),
+        where("awbNumber", "==", awbNumber)
       );
 
       const querySnapshot = await getDocs(q);
@@ -71,21 +72,9 @@ const Runsheet = ({ pickupPersons , datetime }) => {
       const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
 
       // Update the document with the new pickUpPersonName
-      console.log(docRef);
-
       await updateDoc(docRef, {
         pickUpPersonName: value,
       });
-
-      // console.log("Document updated successfully",value);
-      // // Update the local state to reflect the new pickUpPersonName
-      // setUserData((prevData) =>
-      //   prevData.map((user) =>
-      //     user.awbNumber === awbNumber
-      //       ? { ...user, pickUpPersonName: value }
-      //       : user
-      //   )
-      // );
     } catch (error) {
       console.error("Error updating document:", error);
     }
@@ -93,7 +82,6 @@ const Runsheet = ({ pickupPersons , datetime }) => {
 
   const handleCardPress = (awbNumber) => {
     // Handle card press action
-    console.log(awbNumber);
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 

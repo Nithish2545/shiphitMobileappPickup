@@ -53,8 +53,6 @@ function IncomingManifestDetails() {
       querySnapshot.forEach((doc) => {
         final_result.push({ id: doc.id, ...doc.data() });
       });
-      // console.log("awbnumber" ,awbnumber)
-       // console.log("final_result" ,  
 
       setUser(final_result[0]);
       return final_result[0];
@@ -95,7 +93,6 @@ function IncomingManifestDetails() {
   useEffect(() => {
     const fetchUserData = async () => {
       const matchedUser = await fetchRowByAWB(awbnumber);
-      console.log("matchedUser", matchedUser);
       if (matchedUser) {
         setUser(matchedUser);
       } else {
@@ -107,21 +104,27 @@ function IncomingManifestDetails() {
   }, []);
 
   const handleSubmit = async () => {
+    setkmerror("");
+    setweighterror("");
+    setweightiimageerror("");
+
     if (!actualWeight) {
+      setkmerror("");
       setweighterror("Final weight is required!");
+      return;
+    }
+
+    if (!KmDriven) {
+      setweighterror("");
+      setkmerror("Distance Traveled (KM) required!");
       return;
     }
 
     if (!finalWeightImage) {
       setweighterror("");
+      setkmerror("");
       setweightiimageerror("Final weight image is required!");
       return;
-    }
-
-    if (!KmDriven) {
-      setweightiimageerror("");
-      setweighterror("");
-      setkmerror("Distance Traveled (KM) required!");
     }
 
     setErrors({ country: false, vendor: false });
@@ -141,7 +144,7 @@ function IncomingManifestDetails() {
       actualNoOfPackages: actualNumPackages,
       status: "PAYMENT PENDING",
       rtoIfAny: rto,
-      KmDriven: KmDriven,
+      KmDriven: parseInt(KmDriven),
       finalWeightImage: await uploadImage(finalWeightImage),
     };
 
@@ -184,12 +187,10 @@ function IncomingManifestDetails() {
             <Text style={styles.label}>AWB Number:</Text>
             <Text style={styles.value}>{user.awbNumber}</Text>
           </View>
-
           <View style={styles.info}>
             <Text style={styles.label}>Name:</Text>
             <Text style={styles.value}>{user.consignorname}</Text>
           </View>
-
           <View style={styles.infoRow}>
             <Text style={styles.label}>Weight (Approx):</Text>
             <Text style={styles.value}>{user.weightapx}</Text>
@@ -200,7 +201,6 @@ function IncomingManifestDetails() {
               style={styles.icon}
             />
           </View>
-
           <View style={styles.infoRow}>
             <Text style={styles.label}>Post Pickup Weight:</Text>
             <Text style={styles.value}>{user.postPickupWeight}</Text>
@@ -211,7 +211,6 @@ function IncomingManifestDetails() {
               style={styles.icon}
             />
           </View>
-
           <View style={styles.infoRow}>
             <Text style={styles.label}>Post Pickup Packages:</Text>
             <Text style={styles.value}>{user.postNumberOfPackages}</Text>
@@ -222,19 +221,16 @@ function IncomingManifestDetails() {
               style={styles.icon}
             />
           </View>
-
           <View style={styles.infoRowFromTo}>
             <Text style={styles.label}>From address:</Text>
             <Text style={styles.valueFromTo}>{user.consignorlocation}</Text>
           </View>
-
           <View style={styles.infoRowFromTo}>
             <Text style={styles.label}>To address:</Text>
             <Text style={styles.valueFromTo}>
               {user.consigneelocation != "" ? user.consigneelocation : "N/A"}
             </Text>
           </View>
-
           <View style={styles.infoRow}>
             <Text style={styles.label}>Destination:</Text>
             <Text style={styles.valueFromTo}>{user.destination}</Text>
@@ -245,7 +241,6 @@ function IncomingManifestDetails() {
               style={styles.icon}
             />
           </View>
-
           <View style={styles.infoRow}>
             <Text style={styles.label}>Vendor:</Text>
             <Text style={styles.valueFromTo}>{user.vendorName}</Text>
@@ -256,7 +251,6 @@ function IncomingManifestDetails() {
               style={styles.icon}
             />
           </View>
-
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Final Weight:</Text>
             <TextInput
@@ -317,7 +311,6 @@ function IncomingManifestDetails() {
               <Text></Text>
             )}
           </View>
-
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Final Number of Packages:</Text>
             <View style={styles.increDecreContainer}>
@@ -331,9 +324,7 @@ function IncomingManifestDetails() {
               >
                 <Text style={styles.buttonText}>-</Text>
               </TouchableOpacity>
-
               <Text style={styles.value}>{actualNumPackages}</Text>
-
               <TouchableOpacity
                 style={styles.increDecreButton}
                 onPress={() =>

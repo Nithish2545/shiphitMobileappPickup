@@ -122,8 +122,6 @@ const PickupDetails = () => {
       await uploadBytes(storageRef, blob); // Upload the Blob
       const url = await getDownloadURL(storageRef);
       // Alert.alert("Success", "Image uploaded successfully!");
-      console.log("Upload successful");
-
       return url;
     } catch (error) {
       console.error("Upload failed:", error);
@@ -158,7 +156,7 @@ const PickupDetails = () => {
           setNumberOfPackages(userDetails?.numberOfPackages || 1);
         } else {
           console.log("No data found for the provided awbNumber and status.");
-                }
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -227,7 +225,6 @@ const PickupDetails = () => {
       setFormError("You must upload between 1 to 2 form images.");
       return false;
     }
-console.log("PickupersonImage" , PickupersonImage)
     if (PickupersonImage.length === 0 || PickupersonImage.length > 1) {
       setFormError("Picture Is Required!");
       return false;
@@ -262,7 +259,6 @@ console.log("PickupersonImage" , PickupersonImage)
   };
 
   const handleSubmit = async () => {
-
     if (!validateForm()) return;
     setSubmitLoading(true);
 
@@ -299,7 +295,6 @@ console.log("PickupersonImage" , PickupersonImage)
         PickupImageTakenTime: timestamp,
         PickupPersonImageURL: await uploadImage(PickupersonImage),
       };
-      console.log("formImageUrls", formImageUrls);
       const q = query(
         collection(db, "pickup"),
         where("awbNumber", "==", awbnumber)

@@ -40,7 +40,6 @@ export default function Admin() {
     setDatePickerVisibility(false);
   };
 
-
   const handleSignOut = () => {
     signOut(FIREBASE_AUTH)
       .then(() => {
@@ -144,7 +143,6 @@ export default function Admin() {
       user.pickupCompletedDatatime?.includes(tofilterDate)
   );
 
-  console.log(incomingManifestItems);
   const handleTabChange = (tab) => {
     setcurrentTab(tab);
   };

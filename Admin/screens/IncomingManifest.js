@@ -12,7 +12,6 @@ import { db } from "../../FirebaseConfig";
 
 const Runsheet = ({ datetime }) => {
   const [userData, setuserData] = useState([]);
-console.log("datetime+",datetime=="")
   const fetchData = () => {
     // Create a query to filter documents where status is "INCOMING MANIFEST"
     const q = query(
@@ -27,7 +26,6 @@ console.log("datetime+",datetime=="")
           .map((doc) => ({ id: doc.id, ...doc.data() }))
           .filter((data) => data.pickupCompletedDatatime?.includes(datetime)  ); // Filter based on status; // Map through documents to get data
         setuserData(sortedData);
-        console.log("sortedData" , sortedData);
         // You can call a function here if needed
         // fetchAssignments(); // Fetch assignments
       },
@@ -40,8 +38,6 @@ console.log("datetime+",datetime=="")
     return () => unsubscribe();
   };
 
-  console.log(userData)
-
   useEffect(() => {
     fetchData(); // Fetch data initially
   }, [datetime]);
@@ -50,13 +46,11 @@ console.log("datetime+",datetime=="")
 
   const handleCardPress = (awbNumber) => {
     // Handle card press action
-    console.log(awbNumber);
     navigation.navigate("IncomingManifestDetails", { awbnumber: awbNumber });
   };
 
   const CardDetails = (awbNumber) => {
     // Handle card press action
-    console.log(awbNumber);
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 

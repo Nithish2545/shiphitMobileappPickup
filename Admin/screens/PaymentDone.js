@@ -14,7 +14,6 @@ import { db } from "../../FirebaseConfig";
 const PaymentDone = () => {
   const [userData, setuserData] = useState([]);
   const fetchData = () => {
-    console.log("Fetching data...");
     const unsubscribe = onSnapshot(
       collection(db, "pickup"),
       (querySnapshot) => {
@@ -23,7 +22,6 @@ const PaymentDone = () => {
           .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
           .filter((data) => data.status === "PAYMENT DONE"); // Filter based on status
         setuserData(sortedData);
-        console.log(sortedData);
         // If you have a function named parsePickupDateTime, call it here
       },
       (error) => {
@@ -51,11 +49,9 @@ const PaymentDone = () => {
 
   const CardDetails = (awbNumber) => {
     // Handle card press action
-    console.log(awbNumber);
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 
-  console.log(userData);
   return (
     <View>
       {userData.length === 0 ? (

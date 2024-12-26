@@ -11,7 +11,6 @@ const PaymentPending = () => {
   const navigation = useNavigation();
 
   const fetchData = () => {
-    console.log("Fetching data...");
     const unsubscribe = onSnapshot(
       collection(db, "pickup"),
       (querySnapshot) => {
@@ -20,7 +19,6 @@ const PaymentPending = () => {
           .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
           .filter((data) => data.status === "PAYMENT PENDING"); // Filter based on status
         setuserData(sortedData);
-        console.log(sortedData);
         // If you have a function named parsePickupDateTime, call it here
       },
       (error) => {
@@ -42,7 +40,6 @@ const PaymentPending = () => {
 
   const CardDetails = (awbNumber) => {
     // Handle card press action
-    console.log(awbNumber);
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 

@@ -2,12 +2,10 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 // Removed Picker import since it is commented out
 
-const PickupCompleted = ({ userData}) => {
-  
+const PickupCompleted = ({ userData }) => {
   const handleCardPress = (awbNumber) => {
     // Handle card press action
   };
-  console.log(userData);
 
   return (
     <View>
@@ -45,7 +43,9 @@ const PickupCompleted = ({ userData}) => {
                 >
                   PICKUP COMPLETED
                 </Text>
-                <Text style={{ color: "green", fontWeight: "700" , fontSize:17}}>
+                <Text
+                  style={{ color: "green", fontWeight: "700", fontSize: 17 }}
+                >
                   {user.pickuparea}
                 </Text>
               </View>
@@ -68,7 +68,9 @@ const PickupCompleted = ({ userData}) => {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup Completed:</Text>
-              <Text style={styles.value}>{user.pickupCompletedDatatime || "N/A"}</Text>
+              <Text style={styles.value}>
+                {user.pickupCompletedDatatime || "N/A"}
+              </Text>
             </View>
           </TouchableOpacity>
         ))
@@ -111,9 +113,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#D1FAE5", // Light green background for completed status
   },
   statusDefault: {
-    display:"flex",
-    flexDirection:"row",
-    justifyContent:"space-between",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
     backgroundColor: "#E2E8F0", // Light gray background for default status
   },
   statusText: {

@@ -9,7 +9,6 @@ const ShipmentConnected = () => {
   const navigation = useNavigation();
 
   const fetchData = () => {
-    console.log("Fetching data...");
     const unsubscribe = onSnapshot(
       collection(db, "pickup"),
       (querySnapshot) => {
@@ -18,7 +17,6 @@ const ShipmentConnected = () => {
           .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
           .filter((data) => data.status === "SHIPMENT CONNECTED"); // Filter based on status
         setuserData(sortedData);
-        console.log(sortedData);
         // If you have a function named parsePickupDateTime, call it here
       },
       (error) => {
@@ -39,7 +37,6 @@ const ShipmentConnected = () => {
 
   const CardDetails = (awbNumber) => {
     // Handle card press action
-    console.log(awbNumber);
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 

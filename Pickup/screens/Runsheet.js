@@ -6,7 +6,6 @@ const Runsheet = ({ userData }) => {
   const navigation = useNavigation(); // Use useNavigation hook to access navigation
 
   const handleCardPress = (awbNumber) => {
-    console.log(awbNumber);
     // Navigate to PickupDetails screen with AWB number as a parameter
     navigation.navigate("PickupDetails", { awbnumber: awbNumber });
   };

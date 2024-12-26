@@ -41,25 +41,19 @@ const SignIn = ({ navigation }) => {
       let userData = {
         name: (() => {
           switch (response.user.email) {
-            case "dhanush@gmail.com":
-              return "dhanush";
             case "sathish@gmail.com":
               return "sathish";
-            case "sangeetha@gmail.com":
-              return "sangeetha";
             case "jaga@gmail.com":
               return "jaga";
             case "praven@gmail.com":
-              console.log("praven@gmail.com")
               return "praven";
             default:
               return response.user.email;
           }
         })(),
         email: response.user.email,
-        role: response.user.email === "dhanush@gmail.com" ? "admin" : "pickup",
+        role: response.user.email === "jaga@gmail.com" ? "admin" : "pickup",
       };
-
       await AsyncStorage.setItem("userData", JSON.stringify(userData));
       setLoading(false);
     } catch (error) {
