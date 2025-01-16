@@ -24,6 +24,7 @@ import {
   where,
 } from "firebase/firestore";
 import * as MediaLibrary from "expo-media-library";
+import NotificationService from "../../Utility/NotificationService";
 
 const PickupDetails = () => {
   const route = useRoute();
@@ -261,28 +262,23 @@ const PickupDetails = () => {
   const handleSubmit = async () => {
     if (!validateForm()) return;
     setSubmitLoading(true);
-
     try {
       if (!details) {
         throw new Error("User details not found");
       }
-
       const productImageUrls = await Promise.all(
         productImages.map((file) =>
           uploadFileToFirebase(file, "PRODUCT IMAGES")
         )
       );
-
       const packageWeightImageUrls = await Promise.all(
         packageWeightImages.map((file) =>
           uploadFileToFirebase(file, "PACKAGE WEIGHT")
         )
       );
-
       const formImageUrls = await Promise.all(
         formImages.map((file) => uploadFileToFirebase(file, "FORM IMAGES"))
       );
-
       const updatedFields = {
         postPickupWeight: `${pickupWeight} KG`,
         postNumberOfPackages: numberOfPackages,
@@ -299,18 +295,16 @@ const PickupDetails = () => {
         collection(db, "pickup"),
         where("awbNumber", "==", awbnumber)
       );
-
       const querySnapshot = await getDocs(q);
       let final_result = [];
-
       querySnapshot.forEach((doc) => {
         final_result.push({ id: doc.id, ...doc.data() });
       });
-
       const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
-
       updateDoc(docRef, updatedFields);
-
+      await NotificationService.sendNotification_pickupCompleted(
+        details.pickUpPersonName
+      );
       navigation.navigate("Pickup");
     } catch (error) {
       handleError(error);
@@ -361,6 +355,7 @@ const PickupDetails = () => {
   const handleGoBack = () => {
     navigation.goBack(); // Go back one step in the navigation stack
   };
+
   return (
     <View>
       <ScrollView contentContainerStyle={styles.container}>

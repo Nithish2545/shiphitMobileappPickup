@@ -15,6 +15,7 @@
       "supportsTablet": true
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "android": {
         "permissions": [
           "READ_EXTERNAL_STORAGE",
@@ -26,7 +27,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.nithishshiphit_25.shiphitMobileappPickup"
+      "package": "com.nithishshiphit_25.shiphitMobileappPickupTEST"
     },
     "web": {
       "favicon": "./assets/favicon.png"

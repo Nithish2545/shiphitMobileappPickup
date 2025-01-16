@@ -24,10 +24,8 @@ const Allshipments = ({ userData }) => {
         </View>
       ) : (
         userData?.map((user, index) => (
-          <View
-          // onPress={( ) =>  handleCardPress(user.awbNumber)}
-          >
-            <View style={styles.card} key={index}>
+          <View key={user.awbNumber}>
+            <View style={styles.card}>
               <View style={styles.statusContainer}>
                 <View
                   style={[

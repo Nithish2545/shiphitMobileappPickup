@@ -40,14 +40,15 @@ export default function Admin() {
     setDatePickerVisibility(false);
   };
 
-  const handleSignOut = () => {
-    signOut(FIREBASE_AUTH)
+  const handleSignOut = async () => {
+    await signOut(FIREBASE_AUTH)
       .then(() => {
         console.log("Sign-out successful.");
       })
       .catch((error) => {
         console.error("Error signing out:", error);
       });
+    await AsyncStorage.removeItem("userData");
   };
 
   useEffect(() => {

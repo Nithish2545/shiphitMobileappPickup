@@ -1,5 +1,11 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Linking } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Linking,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 const Runsheet = ({ userData }) => {
@@ -12,13 +18,14 @@ const Runsheet = ({ userData }) => {
 
   const handleOpenMap = (latitude, longitude) => {
     const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-    Linking.openURL(url).catch(err => console.error("Failed to open URL:", err));
+    Linking.openURL(url).catch((err) =>
+      console.error("Failed to open URL:", err)
+    );
   };
 
   const makeCall = (number) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
   };
-
   return (
     <View>
       {userData.length === 0 ? (
@@ -55,7 +62,9 @@ const Runsheet = ({ userData }) => {
                 >
                   RUN SHEET
                 </Text>
-                <Text style={{ color: "green", fontWeight: "700" , fontSize:17}}>
+                <Text
+                  style={{ color: "green", fontWeight: "700", fontSize: 17 }}
+                >
                   {user.pickuparea}
                 </Text>
               </View>
@@ -84,12 +93,14 @@ const Runsheet = ({ userData }) => {
               <Text style={styles.label}>Pickup DateTime:</Text>
               <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
             </View>
-               <View style={styles.infoRow}>
+            <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup Address:</Text>
-              <Text style={styles.conLocation}>{user.consignorlocation || "N/A"}</Text>
+              <Text style={styles.conLocation}>
+                {user.consignorlocation || "N/A"}
+              </Text>
             </View>
             <View style={styles.infoRow}>
-            <TouchableOpacity
+              <TouchableOpacity
                 style={styles.mapButton}
                 onPress={() => makeCall(user.consignorphonenumber)}
               >
@@ -143,9 +154,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#D1FAE5", // Light green background for completed status
   },
   statusDefault: {
-    display:"flex",
-    flexDirection:"row",
-    justifyContent:"space-between",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
     backgroundColor: "#E2E8F0", // Light gray background for default status
   },
   statusText: {
@@ -175,11 +186,11 @@ const styles = StyleSheet.create({
     color: "#1F2937", // Updated color for values
     fontSize: 16, // Updated font size for values
   },
-  conLocation:{
+  conLocation: {
     color: "#1F2937", // Updated color for values
     fontSize: 16,
-    width:"70%",
-    textAlign:"right"
+    width: "70%",
+    textAlign: "right",
   },
   picker: {
     height: 50,

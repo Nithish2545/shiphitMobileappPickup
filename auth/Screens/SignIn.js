@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
   Image,
+  Button,
   ActivityIndicator,
 } from "react-native";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
@@ -14,6 +15,8 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { useForm, Controller } from "react-hook-form";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Feather from "@expo/vector-icons/Feather";
+import * as Notifications from "expo-notifications";
+import NotificationService from "../../Utility/NotificationService";
 
 const SignIn = ({ navigation }) => {
   const auth = FIREBASE_AUTH;
@@ -43,7 +46,7 @@ const SignIn = ({ navigation }) => {
           switch (response.user.email) {
             case "sathish@gmail.com":
               return "sathish";
-            case "jaga@gmail.com":
+            case "jaga.opshead@gmail.com":
               return "jaga";
             case "praven@gmail.com":
               return "praven";
@@ -52,13 +55,15 @@ const SignIn = ({ navigation }) => {
           }
         })(),
         email: response.user.email,
-        role: response.user.email === "jaga@gmail.com" ? "admin" : "pickup",
+        role:
+          response.user.email === "jaga.opshead@gmail.com" ? "admin" : "pickup",
       };
+      console.log("userData", userData);
       await AsyncStorage.setItem("userData", JSON.stringify(userData));
+      await NotificationService.fetchAndStoreToken(response.user.email);
       setLoading(false);
     } catch (error) {
       setLoading(false);
-
       // Map Firebase errors to custom messages
       switch (error.code) {
         case "auth/invalid-email":
@@ -81,6 +86,7 @@ const SignIn = ({ navigation }) => {
       <Image source={require("../.././assets/logo.png")} style={styles.logo} />
       <Text style={styles.title}>Sign In</Text>
       <View style={styles.form}>
+        {/* <Button title="Send Notification" onPress={sendNotification} /> */}
         <View style={styles.inputContainer}>
           <Controller
             control={control}
