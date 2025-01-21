@@ -84,6 +84,7 @@ const Runsheet = ({ pickupPersons, datetime }) => {
       });
 
       await NotificationService.sendNotification(
+        pickupPerson,
         consignorname,
         pickuparea,
         pickupDatetime

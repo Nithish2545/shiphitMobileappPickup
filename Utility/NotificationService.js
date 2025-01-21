@@ -94,15 +94,19 @@ async function fetchNotificationToken(userEmail) {
   }
 }
 
-async function sendNotification(consignorname, pickuparea, pickupDatetime) {
-  const token = await fetchNotificationToken(await fetchLoginedUserEmail());
-  console.log("token", token);
+async function sendNotification(
+  pickupPerson,
+  consignorname,
+  pickuparea,
+  pickupDatetime
+) {
+  const token = await fetchNotificationToken(`${pickupPerson}@gmail.com`);
   axios
     .post("https://shiphit-backend.onrender.com/sendNotification", {
       to: token,
       title: "New Pickup Request",
       body: `🚨 You have a new pickup request:\n\n📍 Location: ${pickuparea}\n👤 Client: ${consignorname}\n🕒 Time: ${pickupDatetime}\n\n➡️ Please review the details and proceed.`,
-      image: "https://www.shiphit.in/images/logo.png",
+      image: "",
       link: "",
     })
     .then((result) => {
@@ -114,15 +118,13 @@ async function sendNotification(consignorname, pickuparea, pickupDatetime) {
 }
 
 async function sendNotification_pickupCompleted(pickupPersonName) {
-  console.log("pickupPersonName", pickupPersonName);
   const userdata = await LoginCredentials();
-  console.log("token", await fetchNotificationToken(userdata[0].email));
   axios
     .post("https://shiphit-backend.onrender.com/sendNotification", {
       to: await fetchNotificationToken(userdata[0].email), // Token for the Ops head
       title: "Pickup Completed",
       body: `The pickup has been successfully completed.\n\n👷 Pickup Person: ${pickupPersonName}\n\nPlease review the details in the app. Thank you.`,
-      image: "https://www.shiphit.in/images/logo.png",
+      image: "",
       link: "",
     })
     .then((result) => {
