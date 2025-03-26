@@ -12,7 +12,7 @@ ops head:
 
 pickup :
 
-    sangeetha@gmail.com
+    sathish@gmail.com
     sangeethaShiphit_23
 
     praven@gmail.com
