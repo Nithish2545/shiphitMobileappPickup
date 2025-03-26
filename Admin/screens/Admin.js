@@ -356,7 +356,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-
   datePickerInput: {
     borderWidth: 1,
     borderColor: "#8647D3",

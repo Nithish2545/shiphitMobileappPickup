@@ -5,14 +5,14 @@ sana@gmail.com
 sanashiphit_25
 testing
 
-pickup admin :
+ops head:
 
-    dhanush@gmail.com
-    dhanush@admin_shiphit
+    jaga.opshead@gmail.com
+    opshead_03052001
 
 pickup :
 
-    sangeetha@gmail.com
+    sathish@gmail.com
     sangeethaShiphit_23
 
     praven@gmail.com

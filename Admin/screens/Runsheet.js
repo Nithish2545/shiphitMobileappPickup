@@ -13,6 +13,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
+import NotificationService from "../../Utility/NotificationService";
 
 const Runsheet = ({ pickupPersons, datetime }) => {
   const [userData, setUserData] = useState([]);
@@ -55,7 +56,13 @@ const Runsheet = ({ pickupPersons, datetime }) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
   };
 
-  const handleAssignmentChange = async (awbNumber, value) => {
+  const handleAssignmentChange = async (
+    awbNumber,
+    pickupPerson,
+    consignorname,
+    pickuparea,
+    pickupDatetime
+  ) => {
     try {
       const q = query(
         collection(db, "pickup"),
@@ -73,8 +80,15 @@ const Runsheet = ({ pickupPersons, datetime }) => {
 
       // Update the document with the new pickUpPersonName
       await updateDoc(docRef, {
-        pickUpPersonName: value,
+        pickUpPersonName: pickupPerson,
       });
+
+      await NotificationService.sendNotification(
+        pickupPerson,
+        consignorname,
+        pickuparea,
+        pickupDatetime
+      );
     } catch (error) {
       console.error("Error updating document:", error);
     }
@@ -85,6 +99,7 @@ const Runsheet = ({ pickupPersons, datetime }) => {
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 
+  // ok
   return (
     <View>
       {userData.length === 0 ? (
@@ -93,10 +108,8 @@ const Runsheet = ({ pickupPersons, datetime }) => {
         </View>
       ) : (
         userData.map((user, index) => (
-          <View
-          // onPress={( ) =>  handleCardPress(user.awbNumber)}
-          >
-            <View style={styles.card} key={index}>
+          <View>
+            <View style={styles.card} key={user.awbNumber}>
               <View style={styles.statusContainer}>
                 <View
                   style={[
@@ -134,8 +147,6 @@ const Runsheet = ({ pickupPersons, datetime }) => {
                   </Text>
                 </View>
               </View>
-
-              {/* Wrap all text inside <Text> */}
               <View style={styles.infoRow}>
                 <Text style={styles.label}>AWB No:</Text>
                 <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
@@ -144,7 +155,6 @@ const Runsheet = ({ pickupPersons, datetime }) => {
                 <Text style={styles.label}>Consignor:</Text>
                 <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
               </View>
-
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Pickup Person:</Text>
                 <Picker
@@ -156,8 +166,14 @@ const Runsheet = ({ pickupPersons, datetime }) => {
                   //     ? true
                   //     : false
                   // }
-                  onValueChange={(value) =>
-                    handleAssignmentChange(user.awbNumber, value, user.id)
+                  onValueChange={(pickupPerson) =>
+                    handleAssignmentChange(
+                      user.awbNumber,
+                      pickupPerson,
+                      user.consignorname,
+                      user.pickuparea,
+                      user.pickupDatetime
+                    )
                   }
                 >
                   {pickupPersons?.map((person, index) => (
@@ -165,20 +181,14 @@ const Runsheet = ({ pickupPersons, datetime }) => {
                   ))}
                 </Picker>
               </View>
-
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Destination</Text>
                 <Text style={styles.value}>{user.destination || "N/A"}</Text>
               </View>
-
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Weight APX:</Text>
                 <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
               </View>
-              {/* <View style={styles.infoRow}>
-              <Text style={styles.label}>Pickup Area</Text>
-              <Text style={styles.value}>{user.pickuparea || "N/A"}</Text>
-            </View> */}
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Pickup DateTime:</Text>
                 <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
