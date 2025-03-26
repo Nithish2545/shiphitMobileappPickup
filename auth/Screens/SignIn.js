@@ -111,7 +111,6 @@ const SignIn = ({ navigation }) => {
           />
           <Text style={styles.errorText}>{errors.email?.message || " "}</Text>
         </View>
-
         <Controller
           control={control}
           name="password"

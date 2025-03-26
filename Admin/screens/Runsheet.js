@@ -107,9 +107,7 @@ const Runsheet = ({ pickupPersons, datetime }) => {
         </View>
       ) : (
         userData.map((user, index) => (
-          <View
-          // onPress={( ) =>  handleCardPress(user.awbNumber)}
-          >
+          <View>
             <View style={styles.card} key={user.awbNumber}>
               <View style={styles.statusContainer}>
                 <View
@@ -148,7 +146,6 @@ const Runsheet = ({ pickupPersons, datetime }) => {
                   </Text>
                 </View>
               </View>
-              {/* Wrap all text inside <Text> */}
               <View style={styles.infoRow}>
                 <Text style={styles.label}>AWB No:</Text>
                 <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
@@ -191,10 +188,6 @@ const Runsheet = ({ pickupPersons, datetime }) => {
                 <Text style={styles.label}>Weight APX:</Text>
                 <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
               </View>
-              {/* <View style={styles.infoRow}>
-              <Text style={styles.label}>Pickup Area</Text>
-              <Text style={styles.value}>{user.pickuparea || "N/A"}</Text>
-            </View> */}
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Pickup DateTime:</Text>
                 <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
