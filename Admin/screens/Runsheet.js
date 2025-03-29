@@ -13,7 +13,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
-import NotificationService from "../../Utility/NotificationService";
+// import NotificationService from "../../Utility/NotificationService";
 
 const Runsheet = ({ pickupPersons, datetime }) => {
   const [userData, setUserData] = useState([]);
@@ -83,12 +83,12 @@ const Runsheet = ({ pickupPersons, datetime }) => {
         pickUpPersonName: pickupPerson,
       });
 
-      await NotificationService.sendNotification(
-        pickupPerson,
-        consignorname,
-        pickuparea,
-        pickupDatetime
-      );
+      // await NotificationService.sendNotification(
+      //   pickupPerson,
+      //   consignorname,
+      //   pickuparea,
+      //   pickupDatetime
+      // );
     } catch (error) {
       console.error("Error updating document:", error);
     }
@@ -99,7 +99,6 @@ const Runsheet = ({ pickupPersons, datetime }) => {
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 
-  // ok
   return (
     <View>
       {userData.length === 0 ? (
@@ -207,10 +206,16 @@ const Runsheet = ({ pickupPersons, datetime }) => {
                   <Text style={styles.mapButtonText}>Details</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.mapButton}
-                  onPress={() => handleOpenMap(user.latitude, user.longitude)}
+                  style={{
+                    backgroundColor: "red",
+                    borderRadius: 30,
+                    paddingHorizontal: 10,
+                    justifyContent: "center",
+                    alignContent: "center",
+                  }}
+                  // onPress={() => handleOpenMap(user.latitude, user.longitude)}
                 >
-                  <Text style={styles.mapButtonText}>View on Map</Text>
+                  <Text style={styles.mapButtonText}>Reschedule</Text>
                 </TouchableOpacity>
               </View>
             </View>
