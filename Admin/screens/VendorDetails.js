@@ -24,6 +24,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
+import axios from "axios";
 
 function VendorDetails() {
   const route = useRoute();
@@ -64,7 +65,7 @@ function VendorDetails() {
   const [isSubmitting, setIsSubmitting] = useState(false); // New state for submit loading
   const [finalWeightImage, setFinalWeightImage] = useState(null); // State for final weight image
   const [error, seterror] = useState(""); // State for final weight image
-  
+
   const PickupCompletedDate = () => {
     const now = new Date();
     const istDate = now.toLocaleDateString("en-IN", {
@@ -97,12 +98,11 @@ function VendorDetails() {
   }, [awbnumber]);
 
   const onSubmit = async (data) => {
-if(!finalWeightImage){
-  seterror("AWB Bar code image is required!")
-  return
-}
+    if (!finalWeightImage) {
+      seterror("AWB Bar code image is required!");
+      return;
+    }
     setIsSubmitting(true); // Start loading
-
 
     // Function to upload the image to Firebase
     const uploadImage = async (imageUri) => {
@@ -136,14 +136,51 @@ if(!finalWeightImage){
     querySnapshot.forEach((doc) => {
       final_result.push({ id: doc.id, ...doc.data() });
     });
-
     const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
-
     updateDoc(docRef, updatedFields);
+    try {
+      const options = {
+        method: "POST",
+        url: "https://public.doubletick.io/whatsapp/message/template",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          Authorization: "key_z6hIuLo8GC",
+        },
+        data: {
+          messages: [
+            {
+              content: {
+                language: "en",
+                templateData: {
+                  body: {
+                    placeholders: [
+                      String(user.consignorname),
+                      String(user.service),
+                      "3 - 4 days",
+                      String(user.destination),
+                      String(user.awbNumber),
+                    ],
+                  },
+                },
+                templateName: "shipment_connected",
+              },
+              from: "+919600690881",
+              to: `+91${user.consignorphonenumber}`,
+            },
+          ],
+        },
+      };
+      const response = await axios.post(options.url, options.data, {
+        headers: options.headers,
+      });
+      console.log(response);
+    } catch (error) {
+      console.log("Error", error);
+    }
     setVendorAwbnumber("");
     setFinalWeightImage(null); // Reset the image
     setIsSubmitting(false); // Stop loading
-
     navigation.navigate("Admin");
   };
 
@@ -177,17 +214,14 @@ if(!finalWeightImage){
           <Text style={styles.label}>Name:</Text>
           <Text style={styles.value}>{user.consignorname}</Text>
         </View>
-
         <View style={styles.info}>
           <Text style={styles.label}>Consignor Phone Number:</Text>
           <Text style={styles.value}>{user.consignorphonenumber}</Text>
         </View>
-
         <View style={styles.info}>
           <Text style={styles.label}>Shiphit AWB Number:</Text>
           <Text style={styles.value}>{user.awbNumber}</Text>
         </View>
-
         <View style={styles.infoRow}>
           <Text style={styles.label}>Final weight:</Text>
           <Text style={styles.value}>{user.actualWeight}</Text>
@@ -208,7 +242,6 @@ if(!finalWeightImage){
             style={styles.icon}
           />
         </View>
-        
         <View style={styles.infoRow}>
           <Text style={styles.label}>Vendor:</Text>
           <Text style={styles.value}>{user.vendorName}</Text>
@@ -267,7 +300,6 @@ if(!finalWeightImage){
             )}
           </View>
         </View>
-
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Enter Vendor AWB Number:</Text>
           <Controller
@@ -295,7 +327,6 @@ if(!finalWeightImage){
             </Text>
           )}
         </View>
-
         {/* Final Weight Image Upload */}
         <View style={styles.imageUploadContainer}>
           {finalWeightImage && (
@@ -317,7 +348,7 @@ if(!finalWeightImage){
             </Text>
           </TouchableOpacity>
         </View>
-        {error? (<Text style={{color:"red"}}>{error}</Text>) : (<></>)}
+        {error ? <Text style={{ color: "red" }}>{error}</Text> : <></>}
         <TouchableOpacity
           onPress={handleSubmit(onSubmit)}
           style={styles.button}
@@ -339,37 +370,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 40,
     paddingBottom: 40,
-    flexGrow: 1 
-    
+    flexGrow: 1,
   },
-
   imageUploadContainer: {
     marginTop: 16,
   },
-
   imagePreview: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 8,
   },
-
   image: {
     width: 100,
     height: 100,
     borderRadius: 8,
     marginRight: 8,
   },
-
   removeButton: {
     backgroundColor: "red",
     borderRadius: 8,
     padding: 8,
   },
-
   removeButtonText: {
     color: "#fff",
   },
-
   uploadButton: {
     backgroundColor: "#6B21A8",
     borderRadius: 8,
@@ -378,15 +402,13 @@ const styles = StyleSheet.create({
     marginTop: 20,
     alignItems: "center",
   },
-
   uploadButtonText: {
     color: "#fff",
     fontWeight: "bold",
   },
-
   card: {
     width: "90%",
-    height:"100%",
+    height: "100%",
     borderWidth: 1,
     borderColor: "#D1D5DB",
     borderRadius: 10,

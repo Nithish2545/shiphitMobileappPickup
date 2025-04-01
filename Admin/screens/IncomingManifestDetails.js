@@ -22,6 +22,7 @@ import {
 import { db, storage } from "../../FirebaseConfig";
 import * as ImagePicker from "expo-image-picker"; // Import ImagePicker
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import axios from "axios";
 
 function IncomingManifestDetails() {
   const navigation = useNavigation();
@@ -163,6 +164,45 @@ function IncomingManifestDetails() {
     const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
 
     updateDoc(docRef, updatedFields);
+
+    try {
+      const options = {
+        method: "POST",
+        url: "https://public.doubletick.io/whatsapp/message/template",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          Authorization: "key_z6hIuLo8GC",
+        },
+        data: {
+          messages: [
+            {
+              content: {
+                language: "en",
+                templateData: {
+                  body: {
+                    placeholders: [
+                      String(user.consignorname),
+                      String(actualWeight),
+                    ],
+                  },
+                },
+                templateName: "weight_confirmation",
+              },
+              from: "+919600690881",
+              to: `+91${user.awbNumber}`,
+            },
+          ],
+        },
+      };
+      const response = await axios.post(options.url, options.data, {
+        headers: options.headers,
+      });
+      console.log(response);
+    } catch (error) {
+      console.log("Error", error);
+    }
+
     setActualWeight("");
     setActualNumPackages(1);
     setKmDriven("");

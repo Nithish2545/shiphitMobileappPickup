@@ -13,11 +13,26 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
+import RescheduleModel from "./RescheduleModel";
 // import NotificationService from "../../Utility/NotificationService";
 
 const Runsheet = ({ pickupPersons, datetime }) => {
   const [userData, setUserData] = useState([]);
   const navigation = useNavigation();
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [selectedHour, setSelectedHour] = useState("1");
+  const [selectedPeriod, setSelectedPeriod] = useState("AM");
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [awbnumber, setawbnumber] = useState();
+  function toggleModal(awbNumber) {
+    setawbnumber(awbNumber);
+    if (isModalVisible == false) {
+      setSelectedHour("1");
+      setSelectedPeriod("AM");
+      setSelectedDate(null);
+    }
+    setModalVisible(!isModalVisible);
+  }
   const fetchData = () => {
     const unsubscribe = onSnapshot(
       collection(db, "pickup"),
@@ -213,7 +228,7 @@ const Runsheet = ({ pickupPersons, datetime }) => {
                     justifyContent: "center",
                     alignContent: "center",
                   }}
-                  // onPress={() => handleOpenMap(user.latitude, user.longitude)}
+                  onPress={() => toggleModal(user.awbNumber)}
                 >
                   <Text style={styles.mapButtonText}>Reschedule</Text>
                 </TouchableOpacity>
@@ -222,6 +237,18 @@ const Runsheet = ({ pickupPersons, datetime }) => {
           </View>
         ))
       )}
+      <RescheduleModel
+        isModalVisible={isModalVisible}
+        setModalVisible={setModalVisible}
+        selectedHour={selectedHour}
+        setSelectedHour={setSelectedHour}
+        selectedPeriod={selectedPeriod}
+        setSelectedPeriod={setSelectedPeriod}
+        toggleModal={toggleModal}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        awbNumber={awbnumber}
+      />
     </View>
   );
 };
