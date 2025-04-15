@@ -18,12 +18,11 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { signOut } from "firebase/auth";
-import { db, FIREBASE_AUTH } from "../../FirebaseConfig";
+import { db } from "../../FirebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Allshipments from "./Allshipments";
 import { collection, onSnapshot } from "firebase/firestore"; // Import Firestore functions
 import ModalDatePicker from "react-native-modal-datetime-picker";
+import Signout from "./Signout";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -35,6 +34,8 @@ export default function Admin() {
   const [selectedDate, setSelectedDate] = useState("");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [tofilterDate, settofilterdate] = useState("");
+  const [awbnumber, setawbnumber] = useState("");
+  const [FromNumber, setFromNumber] = useState("");
   const handleDatePicked = (date) => {
     const day = date.getDate(); // Get day without leading zero
     const month = date.getMonth() + 1; // Get month (0-based index) without leading zero
@@ -45,65 +46,39 @@ export default function Admin() {
     setDatePickerVisibility(false);
   };
 
-  const pickupPersons = [
-    "Unassigned",
-    "sangeetha",
-    "sathish",
-    "praven",
-    "jaga",
-  ];
+  const pickupPersons = ["Unassigned", "sathish", "jaga"];
 
-  // LIST SHIPMENTS
+  // ALL SHIPMENTS
 
-  const [currentTab, setcurrentTab] = useState("LIST SHIPMENTS");
+  const [currentTab, setcurrentTab] = useState("RUN SHEET");
 
   function parseDateTime(pickupDatetime) {
-    // Remove "&" and any extra spaces
-    const formattedDatetime = pickupDatetime.replace("&", "").trim();
+    // Remove "&" and extra spaces
+    const cleaned = pickupDatetime.replace("&", "").trim();
 
-    // Split date part and time part
-    const [datePart, timePart] = formattedDatetime.split(/\s+/);
-    const [day, month] = datePart.split("-").map(Number);
+    // Match pattern like "11-4-2025 1 PM"
+    const parts = cleaned.split(/\s+/);
 
-    // Check if time part is present and valid
-    if (!timePart || !/\d+/.test(timePart)) {
-      return new Date(2024, month - 1, day); // Only date part is available, return date with default time
-    }
+    if (parts.length < 3) return new Date(0); // Fallback for bad formats
 
-    // Extract the hour and AM/PM, with a fallback
-    const match = timePart.match(/(\d+)\s*(AM|PM)/);
-    if (!match) {
-      return new Date(2024, month - 1, day); // No valid time, return date without time
-    }
+    const [dayStr, monthStr, yearStr] = parts[0].split("-");
+    const [hourStr, ampm] = [parts[1], parts[2]];
 
-    let [hour, modifier] = match.slice(1);
-    hour = parseInt(hour, 10);
+    const day = parseInt(dayStr, 10);
+    const month = parseInt(monthStr, 10);
+    const year = parseInt(yearStr, 10);
+    let hour = parseInt(hourStr, 10);
 
-    // Convert to 24-hour format
-    if (modifier === "PM" && hour !== 12) {
-      hour += 12;
-    } else if (modifier === "AM" && hour === 12) {
-      hour = 0;
-    }
+    if (ampm === "PM" && hour !== 12) hour += 12;
+    if (ampm === "AM" && hour === 12) hour = 0;
 
-    // Assuming all data is for the year 2024
-    return new Date(2024, month - 1, day, hour);
+    return new Date(year, month - 1, day, hour);
   }
 
   const onRefresh = async () => {
     setRefreshing(true); // Start refreshing
     await fetchData(); // Fetch new data
     setRefreshing(false); // Stop refreshing
-  };
-
-  const handleSignOut = () => {
-    signOut(FIREBASE_AUTH)
-      .then(() => {
-        console.log("Sign-out successful.");
-      })
-      .catch((error) => {
-        console.error("Error signing out:", error);
-      });
   };
 
   useEffect(() => {
@@ -150,10 +125,26 @@ export default function Admin() {
 
   // Filter data based on STATUS
   const AllShipments = userData
-    .filter((data) => data.pickupDatetime.includes(tofilterDate))
+    .filter((data) => {
+      // If the awbnumber is empty, return all data without filtering by awbNumber
+      if (awbnumber === "") {
+        return true; // This will return all data
+      }
+      // Otherwise, filter by awbnumber
+      return String(data.awbNumber || "").startsWith(awbnumber);
+    })
+    .filter((data) => {
+      // If the awbnumber is empty, return all data without filtering by awbNumber
+      if (FromNumber === "") {
+        return true; // This will return all data
+      }
+      // Otherwise, filter by awbnumber
+      return String(data.consignorphonenumber || "").startsWith(FromNumber);
+    })
+    .filter((data) => data.pickupDatetime.startsWith(tofilterDate)) // Apply the date filter
     .sort(
       (a, b) =>
-        parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
+        parseDateTime(b.pickupDatetime) - parseDateTime(a.pickupDatetime)
     );
 
   const incomingManifestItems = userData
@@ -202,56 +193,87 @@ export default function Admin() {
             justifyContent: "space-between",
           }}
         >
+          <Signout />
           <Text style={{ color: "black", fontWeight: "600", fontSize: 18 }}>
             {currentTab == "INCOMING MANIFEST" ? "WAREHOUSE" : currentTab}
           </Text>
-          <Text
+          <TextInput
+            value={FromNumber}
+            onChangeText={(text) => {
+              // Allow only digits
+              const numericText = text.replace(/[^0-9]/g, "");
+              setFromNumber(numericText);
+            }}
+            placeholder="Search By Number"
+            keyboardType="numeric"
+            maxLength={12} // optional: limit AWB number length
             style={{
-              paddingVertical: 10,
-              paddingHorizontal: 20,
-              backgroundColor: "#8647D3", // The primary purple color
-              color: "white",
-              fontWeight: "bold",
-              borderRadius: 8, // Rounded corners
-              textAlign: "center",
-              borderWidth: 2,
-              borderColor: "#5A2E91", // Darker purple for the border
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.3,
-              shadowRadius: 4,
-              elevation: 5, // Elevation for Android shadow
+              borderColor: "purple",
+              borderWidth: 1,
+              borderRadius: 7,
+              padding: 6,
+              fontSize: 14,
+              backgroundColor: "#f9f9f9",
+              color: "#333",
             }}
-            onPress={handleSignOut}
-          >
-            Sign out
-          </Text>
+          />
         </View>
+        <View
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginTop: 8,
+          }}
+        >
+          <View style={{ flexDirection: "row", gap: 20 }}>
+            <TouchableOpacity
+              onPress={() => setDatePickerVisibility(true)}
+              style={[styles.datePickerInput, { flexDirection: "row" }]}
+            >
+              <TextInput
+                style={styles.datePickerText}
+                value={selectedDate}
+                editable={false} // Prevent user input
+                placeholder="dd/mm/yyyy" // Set placeholder
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={() => {
+                settofilterdate("");
+                setSelectedDate(null); // Clear selected date
+                setDatePickerVisibility(false); // Close the modal
+              }}
+            >
+              <Text style={[styles.clearButtonText, { paddingHorizontal: 5 }]}>
+                x
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-        <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
-          <TouchableOpacity
-            onPress={() => setDatePickerVisibility(true)}
-            style={styles.datePickerInput}
-          >
-            <TextInput
-              style={styles.datePickerText}
-              value={selectedDate}
-              editable={false} // Prevent user input
-              placeholder="dd/mm/yyyy" // Set placeholder
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.clearButton}
-            onPress={() => {
-              settofilterdate("");
-              setSelectedDate(null); // Clear selected date
-              setDatePickerVisibility(false); // Close the modal
+          <TextInput
+            value={awbnumber}
+            onChangeText={(text) => {
+              // Allow only digits
+              const numericText = text.replace(/[^0-9]/g, "");
+              console.log(typeof numericText);
+              setawbnumber(numericText);
             }}
-          >
-            <Text style={styles.clearButtonText}>Clear Date</Text>
-          </TouchableOpacity>
+            placeholder="Search by AWB Number"
+            keyboardType="numeric"
+            maxLength={12} // optional: limit AWB number length
+            style={{
+              borderColor: "purple",
+              borderWidth: 1,
+              borderRadius: 7,
+              padding: 6,
+              fontSize: 14,
+              backgroundColor: "#f9f9f9",
+              color: "#333",
+            }}
+          />
         </View>
-
         <ModalDatePicker
           isVisible={isDatePickerVisible}
           mode="date"
@@ -260,16 +282,16 @@ export default function Admin() {
         />
       </View>
       <View style={styles.nav}>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.buttonSpace}
-          onPress={() => handleTabChange("LIST SHIPMENTS")}
+          onPress={() => handleTabChange("ALL SHIPMENTS")}
         >
           <MaterialCommunityIcons
             name="view-list"
             size={32}
-            color={currentTab === "LIST SHIPMENTS" ? "#8647D3" : "#A985D4"}
+            color={currentTab === "ALL SHIPMENTS" ? "#8647D3" : "#A985D4"}
           />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity onPress={() => handleTabChange("RUN SHEET")}>
           <FontAwesome5
             name="running"
@@ -319,24 +341,43 @@ export default function Admin() {
           }
         >
           {currentTab === "RUN SHEET" ? (
-            <Runsheet pickupPersons={pickupPersons} datetime={tofilterDate} />
+            <Runsheet
+              pickupPersons={pickupPersons}
+              datetime={tofilterDate}
+              awbnumberSearch={awbnumber}
+              FromNumber={FromNumber}
+            />
           ) : currentTab === "INCOMING MANIFEST" ? (
             <Incomingmanifest
               userData={incomingManifestItems}
               datetime={tofilterDate}
+              awbnumberSearch={awbnumber}
+              FromNumber={FromNumber}
             />
           ) : currentTab === "PAYMENT PENDING" ? (
-            <PaymentPending userData={paymentPending} datetime={tofilterDate} />
+            <PaymentPending
+              userData={paymentPending}
+              datetime={tofilterDate}
+              awbnumberSearch={awbnumber}
+              FromNumber={FromNumber}
+            />
           ) : currentTab === "PAYMENT DONE" ? (
-            <PaymentDone userData={paymentDone} datetime={tofilterDate} />
+            <PaymentDone
+              userData={paymentDone}
+              datetime={tofilterDate}
+              awbnumberSearch={awbnumber}
+              FromNumber={FromNumber}
+            />
           ) : currentTab === "SHIPMENT CONNECTED" ? (
             <ShipmentConnected
               userData={shipmentconnected}
               datetime={tofilterDate}
+              awbnumberSearch={awbnumber}
+              FromNumber={FromNumber}
             />
-          ) : currentTab === "LIST SHIPMENTS" ? (
-            <Allshipments userData={AllShipments} datetime={tofilterDate} />
           ) : null}
+          {/* : currentTab === "ALL SHIPMENTS" ? (
+  <Allshipments userData={AllShipments} datetime={tofilterDate} /> */}
         </ScrollView>
       )}
     </View>

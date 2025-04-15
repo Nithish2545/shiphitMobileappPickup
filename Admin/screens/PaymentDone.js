@@ -11,8 +11,30 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 // Removed Picker import since it is commented out
 
-const PaymentDone = () => {
+const PaymentDone = ({ datetime, awbnumberSearch, FromNumber }) => {
   const [userData, setuserData] = useState([]);
+  function parseDateTime(pickupDatetime) {
+    // Remove "&" and extra spaces
+    const cleaned = pickupDatetime.replace("&", "").trim();
+
+    // Match pattern like "11-4-2025 1 PM"
+    const parts = cleaned.split(/\s+/);
+
+    if (parts.length < 3) return new Date(0); // Fallback for bad formats
+
+    const [dayStr, monthStr, yearStr] = parts[0].split("-");
+    const [hourStr, ampm] = [parts[1], parts[2]];
+
+    const day = parseInt(dayStr, 10);
+    const month = parseInt(monthStr, 10);
+    const year = parseInt(yearStr, 10);
+    let hour = parseInt(hourStr, 10);
+
+    if (ampm === "PM" && hour !== 12) hour += 12;
+    if (ampm === "AM" && hour === 12) hour = 0;
+
+    return new Date(year, month - 1, day, hour);
+  }
   const fetchData = () => {
     const unsubscribe = onSnapshot(
       collection(db, "pickup"),
@@ -20,7 +42,31 @@ const PaymentDone = () => {
         // Filter documents where status is "RUN SHEET"
         const sortedData = querySnapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
-          .filter((data) => data.status === "PAYMENT DONE"); // Filter based on status
+          .filter((data) => data.status === "PAYMENT DONE")
+          .filter((data) => {
+            // If the awbnumber is empty, return all data without filtering by awbNumber
+            if (awbnumberSearch === "") {
+              return true; // This will return all data
+            }
+            // Otherwise, filter by awbnumber
+            return String(data.awbNumber || "").startsWith(awbnumberSearch);
+          })
+          .filter((data) => {
+            // If the awbnumber is empty, return all data without filtering by awbNumber
+            if (FromNumber === "") {
+              return true; // This will return all data
+            }
+            // Otherwise, filter by awbnumber
+            return String(data.consignorphonenumber || "").startsWith(
+              FromNumber
+            );
+          })
+          .filter((data) => data.pickupDatetime?.includes(datetime))
+          .sort((a, b) => {
+            const dateA = parseDateTime(a.pickupDatetime);
+            const dateB = parseDateTime(b.pickupDatetime);
+            return dateB - dateA; // Ascending
+          }); // Filter based on status
         setuserData(sortedData);
         // If you have a function named parsePickupDateTime, call it here
       },
@@ -34,7 +80,7 @@ const PaymentDone = () => {
 
   useEffect(() => {
     fetchData(); // Fetch data initially
-  }, []);
+  }, [datetime, awbnumberSearch, FromNumber]);
 
   const navigation = useNavigation();
 
@@ -128,8 +174,8 @@ const PaymentDone = () => {
             </View>
 
             <View style={styles.infoRow}>
-              <Text style={styles.label}>PickUp Person:</Text>
-              <Text style={styles.value}>{user.pickUpPersonName || "N/A"}</Text>
+              <Text style={styles.label}>Pickup Datetime</Text>
+              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
             </View>
 
             <View

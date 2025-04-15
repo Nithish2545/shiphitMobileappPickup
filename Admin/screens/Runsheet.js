@@ -14,9 +14,11 @@ import {
 } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 import RescheduleModel from "./RescheduleModel";
+import SwipeToConfirm from "./SwipeToConfirm";
+import axios from "axios";
 // import NotificationService from "../../Utility/NotificationService";
 
-const Runsheet = ({ pickupPersons, datetime }) => {
+const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
   const [userData, setUserData] = useState([]);
   const navigation = useNavigation();
   const [isModalVisible, setModalVisible] = useState(false);
@@ -24,6 +26,7 @@ const Runsheet = ({ pickupPersons, datetime }) => {
   const [selectedPeriod, setSelectedPeriod] = useState("AM");
   const [selectedDate, setSelectedDate] = useState(null);
   const [awbnumber, setawbnumber] = useState();
+
   function toggleModal(awbNumber) {
     setawbnumber(awbNumber);
     if (isModalVisible == false) {
@@ -33,6 +36,29 @@ const Runsheet = ({ pickupPersons, datetime }) => {
     }
     setModalVisible(!isModalVisible);
   }
+  function parseDateTime(pickupDatetime) {
+    // Remove "&" and extra spaces
+    const cleaned = pickupDatetime.replace("&", "").trim();
+
+    // Match pattern like "11-4-2025 1 PM"
+    const parts = cleaned.split(/\s+/);
+
+    if (parts.length < 3) return new Date(0); // Fallback for bad formats
+
+    const [dayStr, monthStr, yearStr] = parts[0].split("-");
+    const [hourStr, ampm] = [parts[1], parts[2]];
+
+    const day = parseInt(dayStr, 10);
+    const month = parseInt(monthStr, 10);
+    const year = parseInt(yearStr, 10);
+    let hour = parseInt(hourStr, 10);
+
+    if (ampm === "PM" && hour !== 12) hour += 12;
+    if (ampm === "AM" && hour === 12) hour = 0;
+
+    return new Date(year, month - 1, day, hour);
+  }
+
   const fetchData = () => {
     const unsubscribe = onSnapshot(
       collection(db, "pickup"),
@@ -40,11 +66,37 @@ const Runsheet = ({ pickupPersons, datetime }) => {
         // Filter documents where status is "RUN SHEET"
         const sortedData = querySnapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
+          .filter((data) => {
+            // If the awbnumber is empty, return all data without filtering by awbNumber
+            if (awbnumber === "") {
+              return true; // This will return all data
+            }
+            // Otherwise, filter by awbnumber
+            return String(data.awbNumber || "").startsWith(awbnumberSearch);
+          })
+          .filter((data) => {
+            // If the awbnumber is empty, return all data without filtering by awbNumber
+            if (FromNumber === "") {
+              return true; // This will return all data
+            }
+            // Otherwise, filter by awbnumber
+            return String(data.consignorphonenumber || "").startsWith(
+              FromNumber
+            );
+          })
           .filter(
             (data) =>
               data.status === "RUN SHEET" &&
-              data.pickupDatetime.includes(datetime)
-          ); // Filter based on status
+              data.pickupDatetime.startsWith(datetime)
+          )
+          .sort((a, b) => {
+            const dateA = parseDateTime(a.pickupDatetime);
+            const dateB = parseDateTime(b.pickupDatetime);
+            return dateB - dateA; // Ascending
+          });
+
+        // Filter based on status
+
         setUserData(sortedData);
         // If you have a function named parsePickupDateTime, call it here
       },
@@ -58,14 +110,7 @@ const Runsheet = ({ pickupPersons, datetime }) => {
 
   useEffect(() => {
     fetchData(); // Fetch data initially
-  }, [datetime]);
-
-  const handleOpenMap = (latitude, longitude) => {
-    const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-    Linking.openURL(url).catch((err) =>
-      console.error("Failed to open URL:", err)
-    );
-  };
+  }, [datetime, awbnumberSearch, FromNumber]);
 
   const makeCall = (number) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
@@ -114,6 +159,52 @@ const Runsheet = ({ pickupPersons, datetime }) => {
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 
+  async function sendPickupArrivedMessage(
+    consignorname,
+    awb_number,
+    consignorphonenumber
+  ) {
+    try {
+      const response = await axios.post(
+        "https://public.doubletick.io/whatsapp/message/template",
+        {
+          messages: [
+            {
+              content: {
+                language: "en",
+                templateName: "pickuparrivedatwarehouse_final",
+                templateData: {
+                  body: {
+                    placeholders: [consignorname],
+                  },
+                  buttons: [
+                    {
+                      type: "URL",
+                      parameter: awb_number, // Replace with dynamic AWB if needed
+                    },
+                  ],
+                },
+              },
+              from: "+919600690881",
+              to: `+91${consignorphonenumber}`,
+            },
+          ],
+        },
+        {
+          headers: {
+            Authorization: "key_z6hIuLo8GC",
+            accept: "application/json",
+            "content-type": "application/json",
+          },
+        }
+      );
+
+      console.log("✅ Response:", response.data);
+    } catch (error) {
+      console.error("❌ Error:", error.response?.data || error.message);
+    }
+  }
+
   return (
     <View>
       {userData.length === 0 ? (
@@ -157,7 +248,9 @@ const Runsheet = ({ pickupPersons, datetime }) => {
                     {user.pickupBookedBy}
                   </Text>
                   <Text style={{ color: "green", fontWeight: "700" }}>
-                    {user.pickuparea}
+                    {user.pickuparea.length > 14
+                      ? `${user.pickuparea.slice(0, 14)}...`
+                      : user.pickuparea}
                   </Text>
                 </View>
               </View>
@@ -207,6 +300,10 @@ const Runsheet = ({ pickupPersons, datetime }) => {
                 <Text style={styles.label}>Pickup DateTime:</Text>
                 <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
               </View>
+              {/* {["Pondy", "Coimbatore", "Others"].includes(user.City) && (
+                <SwipeToConfirm onSwipe={() => console.log("Swiped!")} />
+              )} */}
+
               <View style={styles.infoRow}>
                 <TouchableOpacity
                   style={styles.mapButton}
@@ -233,6 +330,17 @@ const Runsheet = ({ pickupPersons, datetime }) => {
                   <Text style={styles.mapButtonText}>Reschedule</Text>
                 </TouchableOpacity>
               </View>
+              {["Pondy", "Coimbatore", "Others"].includes(user.City) && (
+                <SwipeToConfirm
+                  onSwipe={() => {
+                    sendPickupArrivedMessage(
+                      user.consignorname,
+                      String(user.awbNumber),
+                      user.consignorphonenumber
+                    );
+                  }}
+                />
+              )}
             </View>
           </View>
         ))

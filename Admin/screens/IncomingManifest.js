@@ -10,8 +10,32 @@ import {
 } from "react-native";
 import { db } from "../../FirebaseConfig";
 
-const Runsheet = ({ datetime }) => {
+const Runsheet = ({ datetime, awbnumberSearch, FromNumber }) => {
   const [userData, setuserData] = useState([]);
+
+  function parseDateTime(pickupDatetime) {
+    // Remove "&" and extra spaces
+    const cleaned = pickupDatetime.replace("&", "").trim();
+
+    // Match pattern like "11-4-2025 1 PM"
+    const parts = cleaned.split(/\s+/);
+
+    if (parts.length < 3) return new Date(0); // Fallback for bad formats
+
+    const [dayStr, monthStr, yearStr] = parts[0].split("-");
+    const [hourStr, ampm] = [parts[1], parts[2]];
+
+    const day = parseInt(dayStr, 10);
+    const month = parseInt(monthStr, 10);
+    const year = parseInt(yearStr, 10);
+    let hour = parseInt(hourStr, 10);
+
+    if (ampm === "PM" && hour !== 12) hour += 12;
+    if (ampm === "AM" && hour === 12) hour = 0;
+
+    return new Date(year, month - 1, day, hour);
+  }
+
   const fetchData = () => {
     // Create a query to filter documents where status is "INCOMING MANIFEST"
     const q = query(
@@ -24,7 +48,30 @@ const Runsheet = ({ datetime }) => {
       (querySnapshot) => {
         const sortedData = querySnapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter((data) => data.pickupCompletedDatatime?.includes(datetime)  ); // Filter based on status; // Map through documents to get data
+          .filter((data) => data.pickupDatetime?.startsWith(datetime))
+          .filter((data) => {
+            // If the awbnumber is empty, return all data without filtering by awbNumber
+            if (awbnumberSearch === "") {
+              return true; // This will return all data
+            }
+            // Otherwise, filter by awbnumber
+            return String(data.awbNumber || "").startsWith(awbnumberSearch);
+          })
+          .filter((data) => {
+            // If the awbnumber is empty, return all data without filtering by awbNumber
+            if (FromNumber === "") {
+              return true; // This will return all data
+            }
+            // Otherwise, filter by awbnumber
+            return String(data.consignorphonenumber || "").startsWith(
+              FromNumber
+            );
+          })
+          .sort((a, b) => {
+            const dateA = parseDateTime(a.pickupDatetime);
+            const dateB = parseDateTime(b.pickupDatetime);
+            return dateB - dateA; // Ascending
+          }); // Filter based on status; // Map through documents to get data
         setuserData(sortedData);
         // You can call a function here if needed
         // fetchAssignments(); // Fetch assignments
@@ -40,7 +87,7 @@ const Runsheet = ({ datetime }) => {
 
   useEffect(() => {
     fetchData(); // Fetch data initially
-  }, [datetime]);
+  }, [datetime, awbnumberSearch, FromNumber]);
 
   const navigation = useNavigation();
 
@@ -129,18 +176,9 @@ const Runsheet = ({ datetime }) => {
               <Text style={styles.value}>{user.postPickupWeight || "N/A"}</Text>
             </View>
 
-            {/* <View style={styles.infoRow}>
-              <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>
-                {user.consignorphonenumber || "N/A"}
-              </Text>
-            </View> */}
-
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Pickup completed:</Text>
-              <Text style={styles.value}>
-                {user.pickupCompletedDatatime || "N/A"}
-              </Text>
+              <Text style={styles.label}>Pickup Datetime:</Text>
+              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
             </View>
             <View
               style={{

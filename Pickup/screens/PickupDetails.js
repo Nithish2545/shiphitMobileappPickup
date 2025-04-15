@@ -25,6 +25,7 @@ import {
 } from "firebase/firestore";
 import * as MediaLibrary from "expo-media-library";
 import NotificationService from "../../Utility/NotificationService";
+import axios from "axios";
 
 const PickupDetails = () => {
   const route = useRoute();
@@ -259,6 +260,56 @@ const PickupDetails = () => {
     return `${day}-${month} &${istTime}`;
   };
 
+  async function check(consignorname, awbNumber, consignorphonenumber) {
+    console.log("Check called!");
+    const url = "https://public.doubletick.io/whatsapp/message/template";
+    try {
+      const data = {
+        messages: [
+          {
+            content: {
+              language: "en",
+              templateData: {
+                body: {
+                  placeholders: [consignorname, awbNumber],
+                },
+                buttons: [
+                  {
+                    type: "URL",
+                    parameter: String(awbNumber),
+                  },
+                ],
+              },
+              templateName: "pickupcompleted__final",
+            },
+            from: "+919600690881",
+            to: `+91${consignorphonenumber}`,
+          },
+        ],
+      };
+
+      const headers = {
+        Authorization: "key_z6hIuLo8GC",
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      };
+
+      await axios
+        .post(url, data, { headers })
+        .then((response) => {
+          console.log("✅ Message sent:", response.data);
+        })
+        .catch((error) => {
+          console.error(
+            "❌ Error sending message:",
+            error.response ? error.response.data : error.message
+          );
+        });
+    } catch (error) {
+      console.log("error", error);
+    }
+  }
+
   const handleSubmit = async () => {
     if (!validateForm()) return;
     setSubmitLoading(true);
@@ -302,9 +353,12 @@ const PickupDetails = () => {
       });
       const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
       updateDoc(docRef, updatedFields);
-      await NotificationService.sendNotification_pickupCompleted(
-        details.pickUpPersonName
-      );
+
+      // await check(details.consignorname, details.awbNumber, 9042489612);
+
+      // await NotificationService.sendNotification_pickupCompleted(
+      //   details.pickUpPersonName
+      // );
       navigation.navigate("Pickup");
     } catch (error) {
       handleError(error);
@@ -363,7 +417,16 @@ const PickupDetails = () => {
           <Text style={styles.backButton} onPress={handleGoBack}>
             Back
           </Text>
+          <Button
+            title="Check"
+            onPress={() => {
+              check(details.consignorname, details.awbNumber, 9042489612);
+            }}
+          >
+            <Text>Check</Text>
+          </Button>
         </View>
+
         {details ? (
           <View>
             <Text style={styles.title}>Pickup Details</Text>
