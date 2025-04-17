@@ -9,6 +9,7 @@ import {
   Linking,
 } from "react-native";
 import { db } from "../../FirebaseConfig";
+import DB from "../../Utility/DB";
 
 const Runsheet = ({ datetime, awbnumberSearch, FromNumber }) => {
   const [userData, setuserData] = useState([]);
@@ -39,7 +40,7 @@ const Runsheet = ({ datetime, awbnumberSearch, FromNumber }) => {
   const fetchData = () => {
     // Create a query to filter documents where status is "INCOMING MANIFEST"
     const q = query(
-      collection(db, "pickup"),
+      collection(db, DB.db_collection),
       where("status", "==", "INCOMING MANIFEST") // Add condition to filter by status
     );
 
@@ -92,6 +93,7 @@ const Runsheet = ({ datetime, awbnumberSearch, FromNumber }) => {
   const navigation = useNavigation();
 
   const handleCardPress = (awbNumber) => {
+    console.log("CardDetails", awbNumber);
     // Handle card press action
     navigation.navigate("IncomingManifestDetails", { awbnumber: awbNumber });
   };

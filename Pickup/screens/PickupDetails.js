@@ -24,8 +24,8 @@ import {
   where,
 } from "firebase/firestore";
 import * as MediaLibrary from "expo-media-library";
-import NotificationService from "../../Utility/NotificationService";
 import axios from "axios";
+import DB from "../../Utility/DB";
 
 const PickupDetails = () => {
   const route = useRoute();
@@ -142,7 +142,7 @@ const PickupDetails = () => {
       try {
         // Create Firestore query
         const q = query(
-          collection(db, "pickup"),
+          collection(db, DB.db_collection),
           where("status", "==", "RUN SHEET"),
           where("awbNumber", "==", awbnumber)
         );
@@ -263,51 +263,48 @@ const PickupDetails = () => {
   async function check(consignorname, awbNumber, consignorphonenumber) {
     console.log("Check called!");
     const url = "https://public.doubletick.io/whatsapp/message/template";
-    try {
-      const data = {
-        messages: [
-          {
-            content: {
-              language: "en",
-              templateData: {
-                body: {
-                  placeholders: [consignorname, awbNumber],
-                },
-                buttons: [
-                  {
-                    type: "URL",
-                    parameter: String(awbNumber),
-                  },
-                ],
+
+    const data = {
+      messages: [
+        {
+          content: {
+            language: "en",
+            templateData: {
+              body: {
+                placeholders: [consignorname, awbNumber],
               },
-              templateName: "pickupcompleted__final",
+              buttons: [
+                {
+                  type: "URL",
+                  parameter: awbNumber,
+                },
+              ],
             },
-            from: "+919600690881",
-            to: `+91${consignorphonenumber}`,
+            templateName: "pickupcompleted__final",
           },
-        ],
-      };
+          from: "+919600690881",
+          to: `+91${consignorphonenumber}`,
+        },
+      ],
+    };
 
-      const headers = {
-        Authorization: "key_z6hIuLo8GC",
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      };
+    const headers = {
+      Authorization: "key_z6hIuLo8GC",
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    };
 
-      await axios
-        .post(url, data, { headers })
-        .then((response) => {
-          console.log("✅ Message sent:", response.data);
-        })
-        .catch((error) => {
-          console.error(
-            "❌ Error sending message:",
-            error.response ? error.response.data : error.message
-          );
-        });
-    } catch (error) {
-      console.log("error", error);
-    }
+    axios
+      .post(url, data, { headers })
+      .then((response) => {
+        console.log("✅ Message sent:", response.data);
+      })
+      .catch((error) => {
+        console.error(
+          "❌ Error sending message:",
+          error.response ? error.response.data : error.message
+        );
+      });
   }
 
   const handleSubmit = async () => {
@@ -343,7 +340,7 @@ const PickupDetails = () => {
         PickupPersonImageURL: await uploadImage(PickupersonImage),
       };
       const q = query(
-        collection(db, "pickup"),
+        collection(db, DB.db_collection),
         where("awbNumber", "==", awbnumber)
       );
       const querySnapshot = await getDocs(q);
@@ -351,10 +348,13 @@ const PickupDetails = () => {
       querySnapshot.forEach((doc) => {
         final_result.push({ id: doc.id, ...doc.data() });
       });
-      const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
+      const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
       updateDoc(docRef, updatedFields);
-
-      // await check(details.consignorname, details.awbNumber, 9042489612);
+      await check(
+        details.consignorname,
+        String(details.awbNumber),
+        String(details.consignorphonenumber)
+      );
 
       // await NotificationService.sendNotification_pickupCompleted(
       //   details.pickUpPersonName
@@ -417,14 +417,18 @@ const PickupDetails = () => {
           <Text style={styles.backButton} onPress={handleGoBack}>
             Back
           </Text>
-          <Button
+          {/* <Button
             title="Check"
             onPress={() => {
-              check(details.consignorname, details.awbNumber, 9042489612);
+              check(
+                details.consignorname,
+                String(details.awbNumber),
+                String(9042489612)
+              );
             }}
           >
             <Text>Check</Text>
-          </Button>
+          </Button> */}
         </View>
 
         {details ? (
@@ -496,7 +500,7 @@ const PickupDetails = () => {
                 </TouchableOpacity>
               </View>
               <FileInput
-                label="Product Images (1-5)"
+                label="Customer Product Images (1-5)"
                 files={productImages}
                 onAddFiles={() =>
                   handleFileChange("PRODUCT IMAGES", setProductImages)
@@ -506,7 +510,7 @@ const PickupDetails = () => {
                 }
               />
               <FileInput
-                label="Package Weight Images (1-5)"
+                label="Box Weight Images (1-5)"
                 files={packageWeightImages}
                 onAddFiles={() =>
                   handleFileChange("PACKAGE WEIGHT", setPackageWeightImages)
@@ -516,7 +520,7 @@ const PickupDetails = () => {
                 }
               />
               <FileInput
-                label="Form Images (1-2)"
+                label="Acknowledgment Form Images (1-2)"
                 files={formImages}
                 onAddFiles={() =>
                   handleFileChange("FORM IMAGES", setFormImages)
@@ -540,7 +544,7 @@ const PickupDetails = () => {
                 ) : (
                   <View style={styles.buttonContainer2}>
                     <Text style={styles.subtitle}>
-                      Upload Your Image (taken now):
+                      Your Selify With T-shirt & ID Card
                     </Text>
                     <View style={styles.buttonContainer}>
                       <Text

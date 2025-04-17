@@ -23,6 +23,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, onSnapshot } from "firebase/firestore"; // Import Firestore functions
 import ModalDatePicker from "react-native-modal-datetime-picker";
 import Signout from "./Signout";
+import DB from "../../Utility/DB";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -98,7 +99,7 @@ export default function Admin() {
 
   const fetchData = () => {
     const unsubscribe = onSnapshot(
-      collection(db, "pickup"),
+      collection(db, DB.db_collection),
       (querySnapshot) => {
         const sortedData = querySnapshot.docs.map((doc) => ({
           id: doc.id,

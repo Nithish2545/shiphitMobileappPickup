@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
+import DB from "../../Utility/DB";
 
 function CardDetails() {
   const route = useRoute();
@@ -21,14 +22,20 @@ function CardDetails() {
     const fetchData = async () => {
       try {
         // Create a query to find the document with the matching awbNumber
-        const q = query(collection(db, "pickup"), where("awbNumber", "==", awbnumber));
-  
+        const q = query(
+          collection(db, DB.db_collection),
+          where("awbNumber", "==", awbnumber)
+        );
+
         // Fetch the query results from Firestore
         const querySnapshot = await getDocs(q);
-  
+
         // Assuming awbNumber is unique, we'll grab the first result
-        const result = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
+        const result = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
         if (result.length > 0) {
           setDetails(result[0]); // Set the details if a match is found
         } else {
@@ -38,7 +45,7 @@ function CardDetails() {
         console.error("Error fetching document from Firestore:", error);
       }
     };
-  
+
     fetchData(); // Call the fetchData function on component mount
   }, [awbnumber]); // Add awbnumber as a dependency
 
@@ -72,15 +79,19 @@ function CardDetails() {
           <Text style={styles.sectionTitle}>Consignee Details</Text>
           <Text style={styles.item}>
             <Text style={styles.label}>Name: </Text>
-            {details.consigneename != "" ? details.consigneename : "N/A" }
+            {details.consigneename != "" ? details.consigneename : "N/A"}
           </Text>
           <Text style={styles.item}>
             <Text style={styles.label}>Phone: </Text>
-            {details.consigneephonenumber != "" ? details.consigneephonenumber : "N/A" }
+            {details.consigneephonenumber != ""
+              ? details.consigneephonenumber
+              : "N/A"}
           </Text>
           <Text style={styles.item}>
             <Text style={styles.label}>Location: </Text>
-            {details.consigneelocation != "" ? details.consigneelocation :  "N/A"  }
+            {details.consigneelocation != ""
+              ? details.consigneelocation
+              : "N/A"}
           </Text>
         </View>
 
@@ -122,19 +133,23 @@ function CardDetails() {
           <Text style={styles.sectionTitle}>Post Pickup Details</Text>
           <Text style={styles.item}>
             <Text style={styles.label}>Post Packages: </Text>
-            {details.postNumberOfPackages != "" ?  details.postNumberOfPackages :"N/A"}
+            {details.postNumberOfPackages != ""
+              ? details.postNumberOfPackages
+              : "N/A"}
           </Text>
           <Text style={styles.item}>
             <Text style={styles.label}>Post Pickup Weight: </Text>
-            {details.postPickupWeight != "" ?  details.postPickupWeight : "N/A" }
+            {details.postPickupWeight != "" ? details.postPickupWeight : "N/A"}
           </Text>
           <Text style={styles.item}>
             <Text style={styles.label}>Actual Packages: </Text>
-            {details.actualNoOfPackages != "" ? details.actualNoOfPackages :"N/A" }
+            {details.actualNoOfPackages != ""
+              ? details.actualNoOfPackages
+              : "N/A"}
           </Text>
           <Text style={styles.item}>
             <Text style={styles.label}>Actual Weight: </Text>
-            {details.actualWeight != "" ?details.actualWeight : "N/A" }
+            {details.actualWeight != "" ? details.actualWeight : "N/A"}
           </Text>
         </View>
 
@@ -145,7 +160,9 @@ function CardDetails() {
             style={[
               styles.item,
               styles.status,
-              details.status === "PAYMENT PENDING" ? styles.pending : styles.done,
+              details.status === "PAYMENT PENDING"
+                ? styles.pending
+                : styles.done,
             ]}
           >
             <Text style={styles.label}>Status: </Text>

@@ -25,6 +25,7 @@ import {
   where,
 } from "firebase/firestore";
 import axios from "axios";
+import DB from "../../Utility/DB";
 
 function VendorDetails() {
   const route = useRoute();
@@ -40,7 +41,7 @@ function VendorDetails() {
   const fetchRowByAWB = async (awbNumber) => {
     try {
       const q = query(
-        collection(db, "pickup"),
+        collection(db, DB.db_collection),
         where("awbNumber", "==", awbnumber)
       );
 
@@ -84,6 +85,13 @@ function VendorDetails() {
     return `${istDate} &${formattedTime}`;
   };
 
+  function getTruncatedURL(fullUrl) {
+    const baseUrl =
+      "https://firebasestorage.googleapis.com/v0/b/shiphitmobileapppickup-4d0a1.appspot.com/o/";
+    const truncatedResult = fullUrl.replace(baseUrl, "");
+    return truncatedResult;
+  }
+
   useEffect(() => {
     const fetchUserData = async () => {
       const matchedUser = await fetchRowByAWB(awbnumber);
@@ -126,7 +134,7 @@ function VendorDetails() {
     };
 
     const q = query(
-      collection(db, "pickup"),
+      collection(db, DB.db_collection),
       where("awbNumber", "==", awbnumber)
     );
 
@@ -136,45 +144,63 @@ function VendorDetails() {
     querySnapshot.forEach((doc) => {
       final_result.push({ id: doc.id, ...doc.data() });
     });
-    const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
+    const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
     updateDoc(docRef, updatedFields);
     try {
-      const options = {
-        method: "POST",
-        url: "https://public.doubletick.io/whatsapp/message/template",
-        headers: {
-          accept: "application/json",
-          "content-type": "application/json",
-          Authorization: "key_z6hIuLo8GC",
-        },
-        data: {
-          messages: [
-            {
-              content: {
-                language: "en",
-                templateData: {
-                  body: {
-                    placeholders: [
-                      String(user.consignorname),
-                      String(user.service),
-                      "3 - 4 days",
-                      String(user.destination),
-                      String(user.awbNumber),
-                    ],
-                  },
+      const data = {
+        messages: [
+          {
+            content: {
+              language: "en",
+              templateData: {
+                body: {
+                  placeholders: [
+                    String(user.consignorname),
+                    String(user.awbNumber),
+                    String(user.service),
+                    String(user.destination),
+                    user.service === "Economy"
+                      ? "5 - 7 Working Days"
+                      : user.service === "Express"
+                      ? "3 - 4 Working Days"
+                      : user.service === "Duty Free"
+                      ? "10 - 14 Working Days"
+                      : "",
+                  ],
                 },
-                templateName: "shipment_connected",
+                buttons: [
+                  {
+                    type: "URL",
+                    parameter: getTruncatedURL(user.payment_Receipt_URL),
+                  },
+                  {
+                    type: "URL",
+                    parameter: String(user.awbNumber),
+                  },
+                ],
               },
-              from: "+919600690881",
-              to: `+91${user.consignorphonenumber}`,
+              templateName: "shipment_connectedtest_3",
             },
-          ],
-        },
+            from: "+919600690881",
+            to: `+91${user.consignorphonenumber}`,
+          },
+        ],
       };
-      const response = await axios.post(options.url, options.data, {
-        headers: options.headers,
-      });
-      console.log(response);
+
+      axios
+        .post("https://public.doubletick.io/whatsapp/message/template", data, {
+          headers: {
+            Authorization: "key_z6hIuLo8GC",
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        })
+        .then((response) => {
+          console.log("Success:", response.data);
+        })
+        .catch((error) => {
+          console.error("Error:", error.response?.data || error.message);
+        });
     } catch (error) {
       console.log("Error", error);
     }

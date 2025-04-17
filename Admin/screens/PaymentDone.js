@@ -9,6 +9,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
+import DB from "../../Utility/DB";
 // Removed Picker import since it is commented out
 
 const PaymentDone = ({ datetime, awbnumberSearch, FromNumber }) => {
@@ -37,7 +38,7 @@ const PaymentDone = ({ datetime, awbnumberSearch, FromNumber }) => {
   }
   const fetchData = () => {
     const unsubscribe = onSnapshot(
-      collection(db, "pickup"),
+      collection(db, DB.db_collection),
       (querySnapshot) => {
         // Filter documents where status is "RUN SHEET"
         const sortedData = querySnapshot.docs

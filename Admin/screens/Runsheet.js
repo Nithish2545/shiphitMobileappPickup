@@ -16,6 +16,7 @@ import { db } from "../../FirebaseConfig";
 import RescheduleModel from "./RescheduleModel";
 import SwipeToConfirm from "./SwipeToConfirm";
 import axios from "axios";
+import DB from "../../Utility/DB";
 // import NotificationService from "../../Utility/NotificationService";
 
 const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
@@ -26,6 +27,7 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
   const [selectedPeriod, setSelectedPeriod] = useState("AM");
   const [selectedDate, setSelectedDate] = useState(null);
   const [awbnumber, setawbnumber] = useState();
+  const [confirmed, setConfirmed] = useState(false);
 
   function toggleModal(awbNumber) {
     setawbnumber(awbNumber);
@@ -36,6 +38,64 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
     }
     setModalVisible(!isModalVisible);
   }
+
+  function convertToTimeOnly(input) {
+    const timePart = input.split("&")[1].trim().toUpperCase(); // "9 PM"
+
+    const [hourStr, meridiem] = timePart.split(" ");
+    let hour = parseInt(hourStr, 10);
+    let minutes = "00";
+
+    if (meridiem === "AM" || meridiem === "PM") {
+      const formattedHour = hour < 10 ? `0${hour}` : `${hour}`;
+      return `${formattedHour}:${minutes} ${meridiem}`;
+    } else {
+      return "Invalid Time Format";
+    }
+  }
+
+  async function PEassigned(PEname, pickupDatetime, consignorphonenumber) {
+    const options = {
+      method: "POST",
+      url: "https://public.doubletick.io/whatsapp/message/template",
+      headers: {
+        Authorization: "key_z6hIuLo8GC",
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      data: {
+        messages: [
+          {
+            content: {
+              language: "en_US",
+              templateData: {
+                body: {
+                  placeholders: [PEname, pickupDatetime],
+                },
+              },
+              templateName: "pickupassignedto_final",
+            },
+            to: `+91${consignorphonenumber}`,
+            from: `+919600690881`,
+          },
+        ],
+      },
+    };
+
+    axios
+      .request(options)
+      .then((response) => {
+        console.log("Success:", response.data);
+      })
+      .catch((error) => {
+        console.error("Error:", error.response?.data || error.message);
+      });
+  }
+
+  useEffect(() => {
+    convertToTimeOnly("16-4-2025 &1 AM");
+  }, []);
+
   function parseDateTime(pickupDatetime) {
     // Remove "&" and extra spaces
     const cleaned = pickupDatetime.replace("&", "").trim();
@@ -61,7 +121,7 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
 
   const fetchData = () => {
     const unsubscribe = onSnapshot(
-      collection(db, "pickup"),
+      collection(db, DB.db_collection),
       (querySnapshot) => {
         // Filter documents where status is "RUN SHEET"
         const sortedData = querySnapshot.docs
@@ -119,30 +179,37 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
   const handleAssignmentChange = async (
     awbNumber,
     pickupPerson,
-    consignorname,
-    pickuparea,
-    pickupDatetime
+    pickupDatetime,
+    consignorphonenumber
   ) => {
+    if (pickupPerson == "Unassigned") {
+      return;
+    }
     try {
       const q = query(
-        collection(db, "pickup"),
+        collection(db, DB.db_collection),
         where("awbNumber", "==", awbNumber)
       );
-
       const querySnapshot = await getDocs(q);
       let final_result = [];
-
       querySnapshot.forEach((doc) => {
         final_result.push({ id: doc.id, ...doc.data() });
       });
-
-      const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
-
+      const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
+      const Hour_min = convertToTimeOnly(pickupDatetime);
+      const pickupPersonCaps =
+        pickupPerson.charAt(0).toUpperCase() + pickupPerson.slice(1);
+      console.log("pickupDatetime", pickupDatetime);
+      console.log("Hour_min", Hour_min);
       // Update the document with the new pickUpPersonName
       await updateDoc(docRef, {
         pickUpPersonName: pickupPerson,
       });
-
+      await PEassigned(
+        pickupPersonCaps,
+        Hour_min,
+        String(consignorphonenumber)
+      );
       // await NotificationService.sendNotification(
       //   pickupPerson,
       //   consignorname,
@@ -165,14 +232,29 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
     consignorphonenumber
   ) {
     try {
+      const q = query(
+        collection(db, DB.db_collection),
+        where("awbNumber", "==", Number(awb_number))
+      );
+      const querySnapshot = await getDocs(q);
+      let final_result = [];
+      querySnapshot.forEach((doc) => {
+        final_result.push({ id: doc.id, ...doc.data() });
+      });
+      console.log(final_result);
+
+      const docRef = doc(db, DB.db_collection, final_result[0].id);
+      await updateDoc(docRef, {
+        WHReached: true,
+      });
       const response = await axios.post(
         "https://public.doubletick.io/whatsapp/message/template",
         {
           messages: [
             {
               content: {
-                language: "en",
-                templateName: "pickuparrivedatwarehouse_final",
+                language: "en_US",
+                templateName: "pickuparrivedatwarehouseffinal",
                 templateData: {
                   body: {
                     placeholders: [consignorname],
@@ -204,7 +286,6 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
       console.error("❌ Error:", error.response?.data || error.message);
     }
   }
-
   return (
     <View>
       {userData.length === 0 ? (
@@ -267,19 +348,18 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
                 <Picker
                   selectedValue={user.pickUpPersonName || ""}
                   style={styles.picker}
-                  // enabled={
-                  //   user.pickUpPersonName == "Unassigned" ||
-                  //   user.pickUpPersonName == ""
-                  //     ? true
-                  //     : false
-                  // }
+                  enabled={
+                    user.pickUpPersonName == "Unassigned" ||
+                    user.pickUpPersonName == ""
+                      ? true
+                      : false
+                  }
                   onValueChange={(pickupPerson) =>
                     handleAssignmentChange(
                       user.awbNumber,
                       pickupPerson,
-                      user.consignorname,
-                      user.pickuparea,
-                      user.pickupDatetime
+                      user.pickupDatetime,
+                      user.consignorphonenumber
                     )
                   }
                 >
@@ -339,6 +419,7 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
                       user.consignorphonenumber
                     );
                   }}
+                  confirmed={user.WHReached}
                 />
               )}
             </View>

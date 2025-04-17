@@ -10,6 +10,7 @@ import {
 // Removed Picker import since it is commented out
 import { db } from "../../FirebaseConfig";
 import { collection, onSnapshot } from "firebase/firestore";
+import DB from "../../Utility/DB";
 const ShipmentConnected = ({ datetime, FromNumber, awbnumberSearch }) => {
   const [userData, setuserData] = useState([]);
   const navigation = useNavigation();
@@ -39,7 +40,7 @@ const ShipmentConnected = ({ datetime, FromNumber, awbnumberSearch }) => {
 
   const fetchData = () => {
     const unsubscribe = onSnapshot(
-      collection(db, "pickup"),
+      collection(db, DB.db_collection),
       (querySnapshot) => {
         // Filter documents where status is "RUN SHEET"
         const sortedData = querySnapshot.docs

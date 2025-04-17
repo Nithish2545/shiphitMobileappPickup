@@ -12,6 +12,7 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
+import DB from "../../Utility/DB";
 
 const RescheduleModel = ({
   isModalVisible,
@@ -50,7 +51,7 @@ const RescheduleModel = ({
     console.log(newDatetime);
     try {
       const q = query(
-        collection(db, "pickup"),
+        collection(db, DB.db_collection),
         where("awbNumber", "==", awbNumber)
       );
       const querySnapshot = await getDocs(q);
@@ -58,7 +59,7 @@ const RescheduleModel = ({
       querySnapshot.forEach((doc) => {
         final_result.push({ id: doc.id, ...doc.data() });
       });
-      const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
+      const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
       // Update the document with the new pickUpPersonName
       await updateDoc(docRef, {
         pickupDatetime: newDatetime,

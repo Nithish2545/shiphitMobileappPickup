@@ -23,7 +23,7 @@ import { db, storage } from "../../FirebaseConfig";
 import * as ImagePicker from "expo-image-picker"; // Import ImagePicker
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import axios from "axios";
-
+import DB from "../../Utility/DB";
 function IncomingManifestDetails() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -43,11 +43,12 @@ function IncomingManifestDetails() {
   const [weightiimageerror, setweightiimageerror] = useState("");
   const [kmerror, setkmerror] = useState("");
 
+  console.log("Incoming awbnumber", typeof awbnumber);
   const fetchRowByAWB = async () => {
     try {
       const q = query(
-        collection(db, "pickup"),
-        where("awbNumber", "==", awbnumber)
+        collection(db, DB.db_collection),
+        where("awbNumber", "==", Number(awbnumber))
       );
       const querySnapshot = await getDocs(q);
       let final_result = [];
@@ -150,7 +151,7 @@ function IncomingManifestDetails() {
     };
 
     const q = query(
-      collection(db, "pickup"),
+      collection(db, DB.db_collection),
       where("awbNumber", "==", awbnumber)
     );
 
@@ -161,44 +162,53 @@ function IncomingManifestDetails() {
       final_result.push({ id: doc.id, ...doc.data() });
     });
 
-    const docRef = doc(db, "pickup", final_result[0].id); // db is your Firestore instance
+    const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
 
     updateDoc(docRef, updatedFields);
-
+    console.log(actualWeight);
+    console.log(user.consignorname);
     try {
-      const options = {
-        method: "POST",
-        url: "https://public.doubletick.io/whatsapp/message/template",
-        headers: {
-          accept: "application/json",
-          "content-type": "application/json",
-          Authorization: "key_z6hIuLo8GC",
-        },
-        data: {
-          messages: [
-            {
-              content: {
-                language: "en",
-                templateData: {
-                  body: {
-                    placeholders: [
-                      String(user.consignorname),
-                      String(actualWeight),
-                    ],
-                  },
+      const data = {
+        messages: [
+          {
+            content: {
+              language: "en",
+              templateData: {
+                body: {
+                  placeholders: [user.consignorname, actualWeight],
                 },
-                templateName: "weight_confirmation",
+                buttons: [
+                  {
+                    type: "URL",
+                    parameter: String(user.awbNumber),
+                  },
+                ],
               },
-              from: "+919600690881",
-              to: `+91${user.awbNumber}`,
+              templateName: "weight_confirmation_ffinal",
             },
-          ],
-        },
+            from: "+919600690881",
+            to: `+91${user.consignorphonenumber}`,
+          },
+        ],
       };
-      const response = await axios.post(options.url, options.data, {
-        headers: options.headers,
-      });
-      console.log(response);
+
+      axios
+        .post("https://public.doubletick.io/whatsapp/message/template", data, {
+          headers: {
+            Authorization: "key_z6hIuLo8GC",
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        })
+        .then((response) => {
+          console.log("Success:", response.data);
+        })
+        .catch((error) => {
+          console.error(
+            "Error:",
+            error.response ? error.response.data : error.message
+          );
+        });
     } catch (error) {
       console.log("Error", error);
     }

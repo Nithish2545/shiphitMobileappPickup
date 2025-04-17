@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,9 @@ import {
 import { FontAwesome } from "@expo/vector-icons";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.6;
+const RAIL_WIDTH = SCREEN_WIDTH - 120;
+const THUMB_SIZE = 48;
+const SWIPE_THRESHOLD = RAIL_WIDTH * 0.6;
 
 const SwipeToConfirm = ({
   onSwipe,
@@ -19,26 +21,32 @@ const SwipeToConfirm = ({
   thumbColor = "#6a1b9a",
   successColor = "#4caf50",
   disabled = false,
+  confirmed,
 }) => {
   const translateX = useRef(new Animated.Value(0)).current;
-  const [confirmed, setConfirmed] = useState(false);
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 10 && !confirmed;
+      onMoveShouldSetPanResponder: (_, gestureState) =>
+        Math.abs(gestureState.dx) > 10 && !confirmed && !disabled,
+
+      onPanResponderMove: (_, gestureState) => {
+        if (disabled || confirmed) return;
+
+        const dx = Math.max(
+          0,
+          Math.min(gestureState.dx, RAIL_WIDTH - THUMB_SIZE)
+        );
+        translateX.setValue(dx);
       },
-      onPanResponderMove: Animated.event([null, { dx: translateX }], {
-        useNativeDriver: false,
-      }),
+
       onPanResponderRelease: (_, gestureState) => {
         if (gestureState.dx > SWIPE_THRESHOLD) {
           Animated.timing(translateX, {
-            toValue: SCREEN_WIDTH - 80,
-            duration: 300,
+            toValue: RAIL_WIDTH - THUMB_SIZE,
+            duration: 250,
             useNativeDriver: false,
           }).start(() => {
-            setConfirmed(true);
             onSwipe && onSwipe();
           });
         } else {
@@ -74,8 +82,8 @@ const SwipeToConfirm = ({
             style={[
               styles.thumb,
               {
-                transform: [{ translateX }],
                 backgroundColor: disabled ? "#b0b0b0" : thumbColor,
+                transform: [{ translateX }],
               },
             ]}
           >
@@ -89,17 +97,16 @@ const SwipeToConfirm = ({
 
 const styles = StyleSheet.create({
   container: {
-    // paddingHorizontal: 20,
     alignItems: "center",
     marginVertical: 10,
     marginLeft: "auto",
   },
   rail: {
     borderRadius: 25,
-    height: 48,
+    height: THUMB_SIZE,
     justifyContent: "center",
     overflow: "hidden",
-    width: SCREEN_WIDTH - 120,
+    width: RAIL_WIDTH,
   },
   label: {
     position: "absolute",
@@ -108,15 +115,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   thumb: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    borderRadius: THUMB_SIZE / 2,
     justifyContent: "center",
     alignItems: "center",
     elevation: 4,
     shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowOffset: { width: 1, height: 2 },
+    position: "absolute",
+    left: 0,
+    zIndex: 2,
   },
 });
 

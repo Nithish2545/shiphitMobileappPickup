@@ -18,6 +18,7 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { collection, onSnapshot } from "firebase/firestore";
 import ModalDatePicker from "react-native-modal-datetime-picker";
+import DB from "../../Utility/DB";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -55,6 +56,7 @@ export default function Admin() {
     const fetchData = async () => {
       try {
         const local_S_userData = await AsyncStorage.getItem("userData");
+        console.log("local_S_userData", local_S_userData);
         if (local_S_userData) {
           setUserName(JSON.parse(local_S_userData).name);
         } else {
@@ -91,7 +93,7 @@ export default function Admin() {
 
   const fetchData = async () => {
     const unsubscribe = onSnapshot(
-      collection(db, "pickup"),
+      collection(db, DB.db_collection),
       (querySnapshot) => {
         const sortedData = querySnapshot.docs
           .map((doc) => ({
