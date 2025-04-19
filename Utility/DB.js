@@ -1,4 +1,4 @@
 export default {
   // pickuptestdata
-  db_collection: "pickuptestdata",
+  db_collection: "pickup",
 };

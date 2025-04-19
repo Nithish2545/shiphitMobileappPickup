@@ -117,7 +117,6 @@ export default function Admin() {
 
     return () => unsubscribe();
   };
-
   useEffect(() => {
     fetchData();
     setLoading(false);
@@ -149,6 +148,7 @@ export default function Admin() {
   const handleTabChange = (tab) => {
     setcurrentTab(tab);
   };
+  console.log(userData);
 
   return (
     <View style={styles.container}>
