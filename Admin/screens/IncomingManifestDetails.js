@@ -2,46 +2,25 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
   ScrollView,
-  Image,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
-import {
-  collection,
-  doc,
-  getDocs,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db, storage } from "../../FirebaseConfig";
 import * as ImagePicker from "expo-image-picker"; // Import ImagePicker
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import axios from "axios";
 import DB from "../../Utility/DB";
+import WeightTypeToggle from "./WeightTypeToggle";
 function IncomingManifestDetails() {
-  const navigation = useNavigation();
   const route = useRoute();
   const { awbnumber } = route.params;
   const [user, setUser] = useState(null);
-  const [actualWeight, setActualWeight] = useState("");
-  const [KmDriven, setKmDriven] = useState("");
-  const [rto, setrto] = useState("");
-  const [actualNumPackages, setActualNumPackages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState(false);
-  const [selectedVendor, setSelectedVendor] = useState(false);
-  const [errors, setErrors] = useState({ country: false, vendor: false });
-  const [finalWeightImage, setFinalWeightImage] = useState(null); // State for final weight image
-  const [weighterror, setweighterror] = useState("");
-  const [weightiimageerror, setweightiimageerror] = useState("");
-  const [kmerror, setkmerror] = useState("");
 
   console.log("Incoming awbnumber", typeof awbnumber);
   const fetchRowByAWB = async () => {
@@ -104,121 +83,6 @@ function IncomingManifestDetails() {
     };
     fetchUserData();
   }, []);
-
-  const handleSubmit = async () => {
-    setkmerror("");
-    setweighterror("");
-    setweightiimageerror("");
-
-    if (!actualWeight) {
-      setkmerror("");
-      setweighterror("Final weight is required!");
-      return;
-    }
-
-    if (!KmDriven) {
-      setweighterror("");
-      setkmerror("Distance Traveled (KM) required!");
-      return;
-    }
-
-    if (!finalWeightImage) {
-      setweighterror("");
-      setkmerror("");
-      setweightiimageerror("Final weight image is required!");
-      return;
-    }
-
-    setErrors({ country: false, vendor: false });
-
-    if (!selectedCountry) {
-      setErrors((prev) => ({ ...prev, country: true }));
-    }
-
-    if (!selectedVendor) {
-      setErrors((prev) => ({ ...prev, vendor: true }));
-    }
-
-    setIsSubmitting(true);
-
-    const updatedFields = {
-      actualWeight: actualWeight,
-      actualNoOfPackages: actualNumPackages,
-      status: "PAYMENT PENDING",
-      rtoIfAny: rto,
-      KmDriven: parseInt(KmDriven),
-      finalWeightImage: await uploadImage(finalWeightImage),
-    };
-
-    const q = query(
-      collection(db, DB.db_collection),
-      where("awbNumber", "==", awbnumber)
-    );
-
-    const querySnapshot = await getDocs(q);
-    let final_result = [];
-
-    querySnapshot.forEach((doc) => {
-      final_result.push({ id: doc.id, ...doc.data() });
-    });
-
-    const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
-
-    updateDoc(docRef, updatedFields);
-    console.log(actualWeight);
-    console.log(user.consignorname);
-    try {
-      const data = {
-        messages: [
-          {
-            content: {
-              language: "en",
-              templateData: {
-                body: {
-                  placeholders: [user.consignorname, actualWeight],
-                },
-                buttons: [
-                  {
-                    type: "URL",
-                    parameter: String(user.awbNumber),
-                  },
-                ],
-              },
-              templateName: "weight_confirmation_ffinal",
-            },
-            from: "+919600690881",
-            to: `+91${user.consignorphonenumber}`,
-          },
-        ],
-      };
-
-      axios
-        .post("https://public.doubletick.io/whatsapp/message/template", data, {
-          headers: {
-            Authorization: "key_z6hIuLo8GC",
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        })
-        .then((response) => {
-          console.log("Success:", response.data);
-        })
-        .catch((error) => {
-          console.error(
-            "Error:",
-            error.response ? error.response.data : error.message
-          );
-        });
-    } catch (error) {
-      console.log("Error", error);
-    }
-
-    setActualWeight("");
-    setActualNumPackages(1);
-    setKmDriven("");
-    setIsSubmitting(false);
-    navigation.navigate("Admin");
-  };
 
   if (loading)
     return (
@@ -301,7 +165,7 @@ function IncomingManifestDetails() {
               style={styles.icon}
             />
           </View>
-          <View style={styles.inputGroup}>
+          {/* <View style={styles.inputGroup}>
             <Text style={styles.label}>Final Weight:</Text>
             <TextInput
               value={actualWeight}
@@ -315,23 +179,10 @@ function IncomingManifestDetails() {
             ) : (
               <Text></Text>
             )}
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Pickup Person Distance Traveled</Text>
-            <TextInput
-              value={KmDriven}
-              onChangeText={setKmDriven}
-              placeholder="Enter Distance Traveled (KM):"
-              keyboardType="numeric"
-              style={styles.finalWeightInput}
-            />
-            {kmerror ? (
-              <Text style={{ color: "red" }}>{kmerror}</Text>
-            ) : (
-              <Text></Text>
-            )}
-          </View>
-          <View style={styles.imageUploadContainer}>
+          </View> */}
+
+          <WeightTypeToggle awbnumber={awbnumber} />
+          {/* <View style={styles.imageUploadContainer}>
             {finalWeightImage && (
               <View style={styles.imagePreview}>
                 <Image
@@ -360,8 +211,8 @@ function IncomingManifestDetails() {
             ) : (
               <Text></Text>
             )}
-          </View>
-          <View style={styles.inputGroup}>
+          </View> */}
+          {/* <View style={styles.inputGroup}>
             <Text style={styles.label}>Final Number of Packages:</Text>
             <View style={styles.increDecreContainer}>
               <TouchableOpacity
@@ -384,8 +235,8 @@ function IncomingManifestDetails() {
                 <Text style={styles.buttonText}>+</Text>
               </TouchableOpacity>
             </View>
-          </View>
-          <View style={styles.inputGroup}>
+          </View> */}
+          {/* <View style={styles.inputGroup}>
             <Text style={styles.label}>RTO:</Text>
             <TextInput
               value={rto}
@@ -394,19 +245,8 @@ function IncomingManifestDetails() {
               keyboardType="default"
               style={styles.finalWeightInput}
             />
-          </View>
+          </View> */}
           {/* Submit Button with Loading Indicator */}
-          <TouchableOpacity
-            onPress={handleSubmit}
-            style={styles.button}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Submit</Text>
-            )}
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>

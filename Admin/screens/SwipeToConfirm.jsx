@@ -100,6 +100,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 10,
     marginLeft: "auto",
+    position: "relative",
+    zIndex: 10,
   },
   rail: {
     borderRadius: 25,

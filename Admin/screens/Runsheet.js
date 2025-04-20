@@ -226,66 +226,6 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 
-  async function sendPickupArrivedMessage(
-    consignorname,
-    awb_number,
-    consignorphonenumber
-  ) {
-    try {
-      const q = query(
-        collection(db, DB.db_collection),
-        where("awbNumber", "==", Number(awb_number))
-      );
-      const querySnapshot = await getDocs(q);
-      let final_result = [];
-      querySnapshot.forEach((doc) => {
-        final_result.push({ id: doc.id, ...doc.data() });
-      });
-      console.log(final_result);
-
-      const docRef = doc(db, DB.db_collection, final_result[0].id);
-      await updateDoc(docRef, {
-        WHReached: true,
-      });
-      const response = await axios.post(
-        "https://public.doubletick.io/whatsapp/message/template",
-        {
-          messages: [
-            {
-              content: {
-                language: "en_US",
-                templateName: "pickuparrivedatwarehouseffinal",
-                templateData: {
-                  body: {
-                    placeholders: [consignorname],
-                  },
-                  buttons: [
-                    {
-                      type: "URL",
-                      parameter: awb_number, // Replace with dynamic AWB if needed
-                    },
-                  ],
-                },
-              },
-              from: "+919600690881",
-              to: `+91${consignorphonenumber}`,
-            },
-          ],
-        },
-        {
-          headers: {
-            Authorization: "key_z6hIuLo8GC",
-            accept: "application/json",
-            "content-type": "application/json",
-          },
-        }
-      );
-
-      console.log("✅ Response:", response.data);
-    } catch (error) {
-      console.error("❌ Error:", error.response?.data || error.message);
-    }
-  }
   return (
     <View>
       {userData.length === 0 ? (
@@ -410,18 +350,6 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
                   <Text style={styles.mapButtonText}>Reschedule</Text>
                 </TouchableOpacity>
               </View>
-              {["Pondy", "Coimbatore", "Others"].includes(user.City) && (
-                <SwipeToConfirm
-                  onSwipe={() => {
-                    sendPickupArrivedMessage(
-                      user.consignorname,
-                      String(user.awbNumber),
-                      user.consignorphonenumber
-                    );
-                  }}
-                  confirmed={user.WHReached}
-                />
-              )}
             </View>
           </View>
         ))

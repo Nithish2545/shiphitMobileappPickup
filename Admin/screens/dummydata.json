@@ -1,0 +1,16 @@
+[
+  {
+    "images": [
+      "file:///data/user/0/com.nithishshiphit_25.shiphitMobileappPickupTEST/cache/ImagePicker/b3fd3543-3a7d-42d8-8e46-64c2ffac0e7f.jpeg"
+    ],
+    "type": "actual"
+  },
+  {
+    "images": [
+      "file:///data/user/0/com.nithishshiphit_25.shiphitMobileappPickupTEST/cache/ImagePicker/b15eb2bf-2cf8-4632-938d-0a2d584d7356.jpeg",
+      "file:///data/user/0/com.nithishshiphit_25.shiphitMobileappPickupTEST/cache/ImagePicker/3ed340a8-7197-4b82-8555-68f003664c8e.jpeg",
+      "file:///data/user/0/com.nithishshiphit_25.shiphitMobileappPickupTEST/cache/ImagePicker/74cf7414-a7b4-4649-827c-5ae961450940.jpeg"
+    ],
+    "type": "volumetric"
+  }
+]
