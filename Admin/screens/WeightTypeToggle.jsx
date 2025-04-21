@@ -5,6 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
   StyleSheet,
   ScrollView,
 } from "react-native";
@@ -17,15 +18,14 @@ import {
   doc,
   getDocs,
   query,
-  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
-import axios from "axios";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import axios from "axios";
+import { useNavigation } from "@react-navigation/native";
 
-const WeightTypeToggle = ({ awbnumber }) => {
-  const [weightType, setWeightType] = useState("final");
+const WeightTypeToggle = ({ awbnumber, user }) => {
   const [customerWeight, setCustomerWeight] = useState("");
   const [internalWeight, setInternalWeight] = useState("");
   const [numBoxes, setNumBoxes] = useState("");
@@ -34,7 +34,8 @@ const WeightTypeToggle = ({ awbnumber }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [KmDriven, setKmDriven] = useState("");
   const [rto, setrto] = useState("");
-
+  const [images, setImages] = useState([]);
+  const navigation = useNavigation();
   const uploadImage = async (imageUri) => {
     if (!imageUri) return null; // Return null if no image selected
     const response = await fetch(imageUri);
@@ -47,6 +48,31 @@ const WeightTypeToggle = ({ awbnumber }) => {
     const downloadURL = await getDownloadURL(storageRef);
     // Get the download URL
     return downloadURL; // Return the URL
+  };
+  const uploadImage_rto = async (imageUri) => {
+    if (!imageUri) return null; // Return null if no image selected
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+    const storageRef = ref(storage, `${awbnumber}/RTOIMAGE/${Date.now()}.jpg`); // Create a reference in the specified folder
+    await uploadBytes(storageRef, blob); // Upload the image
+    const downloadURL = await getDownloadURL(storageRef);
+    // Get the download URL
+    return downloadURL; // Return the URL
+  };
+
+  const savertoimage = async (awbnumber, images) => {
+    try {
+      const imageUrls = [];
+
+      for (const uri of images) {
+        const url = await uploadImage(uri);
+        if (url) imageUrls.push(url);
+      }
+
+      return imageUrls;
+    } catch (error) {
+      console.error("Error saving RTO images:", error);
+    }
   };
 
   const saveImagesToFirestore = async (awbnumber, boxes) => {
@@ -73,80 +99,112 @@ const WeightTypeToggle = ({ awbnumber }) => {
     }
   };
   const handleSubmit = async () => {
-    //  actualNumPackages ,  rto ,  , awbnumber
-    // user.consignorphonenumber , user.consignorname , actualWeight , user.awbNumber
+    // ✅ Validate inputs
+    if (isNaN(KmDriven) || KmDriven <= 0) {
+      Alert.alert("Please enter a valid number for KM Driven.");
+      return;
+    }
+    if (isNaN(customerWeight) || customerWeight <= 0) {
+      Alert.alert("Please enter a valid number for Customer shipment weight.");
+      return;
+    }
+    if (isNaN(internalWeight) || internalWeight <= 0) {
+      Alert.alert("Please enter a valid number for Internal shipment weight.");
+      return;
+    }
+    if (isNaN(numBoxes) || numBoxes <= 0) {
+      Alert.alert("Please enter a valid Total Number of Boxes.");
+      return;
+    }
+    if (boxes.length !== parseInt(numBoxes)) {
+      Alert.alert(`Please add ${numBoxes} boxes`);
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      console.log("loading....");
+      // ✅ Upload images and prepare updatedFields
+      const volumaticImages = await saveImagesToFirestore(awbnumber, boxes);
+      const rtoImageUrls = await savertoimage(awbnumber, images);
+
       const updatedFields = {
+        KmDriven: parseInt(KmDriven),
         actualWeight: customerWeight,
         internalWeight: internalWeight,
         actualNoOfPackages: numBoxes,
-        status: "PAYMENT PENDING",
+        volumaticActualImages: volumaticImages,
         rtoIfAny: rto,
-        KmDriven: parseInt(KmDriven),
-        finalWeightImage: await saveImagesToFirestore(awbnumber, boxes),
+        rto_images: rtoImageUrls,
+        status: "PAYMENT PENDING",
       };
-      console.log("updatedFields", updatedFields);
-      console.log("loading completed....");
+
+      // ✅ Find and update Firestore document
+      const q = query(
+        collection(db, DB.db_collection),
+        where("awbNumber", "==", awbnumber)
+      );
+      const querySnapshot = await getDocs(q);
+      let final_result = [];
+      querySnapshot.forEach((doc) => {
+        final_result.push({ id: doc.id, ...doc.data() });
+      });
+
+      if (final_result.length === 0) {
+        Alert.alert("No matching record found.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const docRef = doc(db, DB.db_collection, final_result[0].id);
+      await updateDoc(docRef, updatedFields);
+
+      // ✅ Send WhatsApp message
+      const data = {
+        messages: [
+          {
+            content: {
+              language: "en",
+              templateData: {
+                body: {
+                  placeholders: [user.consignorname, customerWeight],
+                },
+                buttons: [
+                  {
+                    type: "URL",
+                    parameter: String(user.awbNumber),
+                  },
+                ],
+              },
+              templateName: "weight_confirmation_ffinal",
+            },
+            from: "+919600690881",
+            // to: `+91${user.consignorphonenumber}`,
+            to: `+91${"9042489612"}`,
+          },
+        ],
+      };
+
+      await axios.post(
+        "https://public.doubletick.io/whatsapp/message/template",
+        data,
+        {
+          headers: {
+            Authorization: "key_z6hIuLo8GC",
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // ✅ Navigate after everything is done
+      navigation.navigate("Admin");
     } catch (error) {
-      console.log(error);
+      console.error("Error during submission:", error);
+      Alert.alert("An error occurred during submission. Please try again.");
     }
-    // const q = query(
-    //   collection(db, DB.db_collection),
-    //   where("awbNumber", "==", awbnumber)
-    // );
-    // const querySnapshot = await getDocs(q);
-    // let final_result = [];
-    // querySnapshot.forEach((doc) => {
-    //   final_result.push({ id: doc.id, ...doc.data() });
-    // });
-    // const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
-    // updateDoc(docRef, updatedFields);
-    // try {
-    //   const data = {
-    //     messages: [
-    //       {
-    //         content: {
-    //           language: "en",
-    //           templateData: {
-    //             body: {
-    //               placeholders: [user.consignorname, actualWeight],
-    //             },
-    //             buttons: [
-    //               {
-    //                 type: "URL",
-    //                 parameter: String(user.awbNumber),
-    //               },
-    //             ],
-    //           },
-    //           templateName: "weight_confirmation_ffinal",
-    //         },
-    //         from: "+919600690881",
-    //         to: `+91${user.consignorphonenumber}`,
-    //       },
-    //     ],
-    //   };
-    //   axios
-    //     .post("https://public.doubletick.io/whatsapp/message/template", data, {
-    //       headers: {
-    //         Authorization: "key_z6hIuLo8GC",
-    //         Accept: "application/json",
-    //         "Content-Type": "application/json",
-    //       },
-    //     })
-    //     .then((response) => {
-    //       console.log("Success:", response.data);
-    //     })
-    //     .catch((error) => {
-    //       console.error(
-    //         "Error:",
-    //         error.response ? error.response.data : error.message
-    //       );
-    //     });
-    // } catch (error) {
-    //   console.log("Error", error);
-    // }
-    // navigation.navigate("Admin");
+
+    setIsSubmitting(false);
   };
 
   const handleAddBox = () => {
@@ -218,6 +276,19 @@ const WeightTypeToggle = ({ awbnumber }) => {
     setBoxes(updated);
   };
 
+  const pickImage_rto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+      allowsMultipleSelection: true, // only works on iOS 14+ and Web
+    });
+
+    if (!result.canceled) {
+      const selectedImages = result.assets.map((asset) => asset.uri);
+      setImages((prev) => [...prev, ...selectedImages]);
+    }
+  };
+
   return (
     <ScrollView
       style={styles.formContainer}
@@ -274,10 +345,14 @@ const WeightTypeToggle = ({ awbnumber }) => {
       <TouchableOpacity style={styles.addButton} onPress={handleAddBox}>
         <Text style={styles.addButtonText}>Add Box</Text>
       </TouchableOpacity>
-      <Text style={[styles.label, { fontSize: 18, marginTop: 10 }]}>
-        Boxes Added:
-      </Text>
-      <View style={{ paddingBottom: 60 }}>
+      {boxes.length > 0 ? (
+        <Text style={[styles.label, { fontSize: 18, marginTop: 10 }]}>
+          Boxes Added:
+        </Text>
+      ) : (
+        ""
+      )}
+      <View>
         {boxes.map((box, index) => {
           const isVolumetric = box.type === "volumetric";
           const limit = isVolumetric ? 3 : 1;
@@ -357,17 +432,6 @@ const WeightTypeToggle = ({ awbnumber }) => {
             </View>
           );
         })}
-        <TouchableOpacity
-          onPress={handleSubmit}
-          style={styles.button}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Submit</Text>
-          )}
-        </TouchableOpacity>
       </View>
       <View>
         <Text style={styles.label}>RTO:</Text>
@@ -379,6 +443,52 @@ const WeightTypeToggle = ({ awbnumber }) => {
           style={styles.finalWeightInput}
         />
       </View>
+      {/* Upload Image Section */}
+      <Text style={[styles.label, { marginTop: 10 }]}>Upload Image:</Text>
+      <TouchableOpacity
+        onPress={pickImage_rto}
+        style={[styles.uploadButton, { backgroundColor: "red" }]}
+      >
+        <Text style={styles.uploadButtonText}>Choose Image</Text>
+      </TouchableOpacity>
+      {images.length > 0 && (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 10 }}>
+          {images.map((uri, index) => (
+            <View key={index} style={{ margin: 5, alignItems: "center" }}>
+              <Image
+                source={{ uri }}
+                style={{ width: 100, height: 100, borderRadius: 8 }}
+              />
+              <TouchableOpacity
+                onPress={() => {
+                  const updatedImages = [...images];
+                  updatedImages.splice(index, 1);
+                  setImages(updatedImages);
+                }}
+                style={{
+                  marginTop: 5,
+                  backgroundColor: "#E53E3E",
+                  padding: 4,
+                  borderRadius: 6,
+                }}
+              >
+                <Text style={{ color: "white", fontSize: 12 }}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
+      <TouchableOpacity
+        onPress={handleSubmit}
+        style={[styles.button, { marginTop: 20 }]}
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Submit</Text>
+        )}
+      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -386,6 +496,10 @@ const WeightTypeToggle = ({ awbnumber }) => {
 export default WeightTypeToggle;
 
 const styles = StyleSheet.create({
+  uploadButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
   finalWeightInput: {
     borderWidth: 1,
     borderColor: "#D1D5DB",

@@ -288,7 +288,7 @@ const Runsheet = ({ datetime, awbnumberSearch, FromNumber }) => {
               </View>
             </TouchableOpacity>
             {/* user.City */}
-            {["Pondy", "Coimbatore", "Others"].includes("Others") && (
+            {["Pondy", "Coimbatore", "Others"].includes(user.City) && (
               <SwipeToConfirm
                 onSwipe={() => {
                   sendPickupArrivedMessage(

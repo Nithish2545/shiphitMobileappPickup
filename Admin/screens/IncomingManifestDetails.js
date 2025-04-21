@@ -20,7 +20,6 @@ function IncomingManifestDetails() {
   const { awbnumber } = route.params;
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   console.log("Incoming awbnumber", typeof awbnumber);
   const fetchRowByAWB = async () => {
@@ -41,34 +40,6 @@ function IncomingManifestDetails() {
       console.error("Error fetching row by AWB number:", error);
       return null; // Return null in case of an error
     }
-  };
-
-  const removeImage = () => {
-    setFinalWeightImage(null); // Clear the image
-  };
-
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
-    if (!result.canceled) {
-      setFinalWeightImage(result.assets[0].uri); // Set the image URI
-    }
-  };
-
-  const uploadImage = async (imageUri) => {
-    if (!imageUri) return null; // Return null if no image selected
-    const response = await fetch(imageUri);
-    const blob = await response.blob();
-    const storageRef = ref(
-      storage,
-      `${awbnumber}/FINAL IMAGE WEIGHT/${Date.now()}.jpg`
-    ); // Create a reference in the specified folder
-    await uploadBytes(storageRef, blob); // Upload the image
-    const downloadURL = await getDownloadURL(storageRef);
-    // Get the download URL
-    return downloadURL; // Return the URL
   };
 
   useEffect(() => {
@@ -181,7 +152,7 @@ function IncomingManifestDetails() {
             )}
           </View> */}
 
-          <WeightTypeToggle awbnumber={awbnumber} />
+          <WeightTypeToggle awbnumber={awbnumber} user={user} />
           {/* <View style={styles.imageUploadContainer}>
             {finalWeightImage && (
               <View style={styles.imagePreview}>
