@@ -99,7 +99,6 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
     }
   };
   const handleSubmit = async () => {
-    // ✅ Validate inputs
     if (isNaN(KmDriven) || KmDriven <= 0) {
       Alert.alert("Please enter a valid number for KM Driven.");
       return;
@@ -119,6 +118,21 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
     if (boxes.length !== parseInt(numBoxes)) {
       Alert.alert(`Please add ${numBoxes} boxes`);
       return;
+    }
+    for (let i = 0; i < boxes.length; i++) {
+      const box = boxes[i];
+
+      const imageCount = box.images?.length || 0;
+
+      if (box.type === "volumetric" && imageCount < 3) {
+        Alert.alert(`Please upload 3 images for box ${i + 1} (volumetric).`);
+        return;
+      }
+
+      if (box.type === "actual" && imageCount < 1) {
+        Alert.alert(`Please upload 1 image for box ${i + 1} (actual).`);
+        return;
+      }
     }
 
     setIsSubmitting(true);

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,65 @@ import {
   Linking,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../../FirebaseConfig";
+import DB from "../../Utility/DB";
 
-const Runsheet = ({ userData }) => {
+const Runsheet = () => {
+  const [userData, setUserData] = useState([]);
+
+  const parsePickupDate = (pickupDatetime) => {
+    // Split date and time parts
+    const [datePart, timePart] = pickupDatetime
+      .split("&")
+      .map((part) => part.trim());
+    const [day, month] = datePart.split("-").map(Number);
+    const [hourPart, period] = timePart.split(" ").map((part) => part.trim());
+
+    // Adjust hour based on AM/PM
+    let hour = parseInt(hourPart);
+    if (period === "PM" && hour < 12) hour += 12;
+    if (period === "AM" && hour === 12) hour = 0;
+
+    // Create a new Date object
+    const date = new Date();
+    date.setDate(day);
+    date.setMonth(month - 1); // Months are 0-indexed
+    date.setHours(hour, 0, 0, 0); // Set hours, minutes, seconds, and milliseconds to 0
+
+    return date;
+  };
+
+  const fetchData = async () => {
+    const unsubscribe = onSnapshot(
+      collection(db, DB.db_collection),
+      (querySnapshot) => {
+        const sortedData = querySnapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .sort((a, b) => {
+            // Convert pickupDatetime to Date objects for comparison
+            const dateA = parsePickupDate(a.pickupDatetime);
+            const dateB = parsePickupDate(b.pickupDatetime);
+            return dateA - dateB; // Sort in ascending order
+          });
+
+        setUserData(sortedData);
+      },
+      (error) => {
+        setError(`Error: ${error.message}`);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  };
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const navigation = useNavigation(); // Use useNavigation hook to access navigation
 
   const handleCardPress = (awbNumber) => {
@@ -16,11 +73,24 @@ const Runsheet = ({ userData }) => {
     navigation.navigate("PickupDetails", { awbnumber: awbNumber });
   };
 
-  const handleOpenMap = (latitude, longitude) => {
-    const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-    Linking.openURL(url).catch((err) =>
-      console.error("Failed to open URL:", err)
-    );
+  const handleOpenMap = (
+    latitude,
+    longitude,
+    awbNumber,
+    docId,
+    consignorphonenumber
+  ) => {
+    navigation.navigate("RealTimeNavigation", {
+      latitude: latitude,
+      longitude: longitude,
+      awbnumber: awbNumber,
+      docId: docId,
+      consignorphonenumber: consignorphonenumber,
+    });
+    // const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
+    // Linking.openURL(url).catch((err) =>
+    //   console.error("Failed to open URL:", err)
+    // );
   };
 
   const makeCall = (number) => {
@@ -108,7 +178,15 @@ const Runsheet = ({ userData }) => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.mapButton}
-                onPress={() => handleOpenMap(user.latitude, user.longitude)}
+                onPress={() =>
+                  handleOpenMap(
+                    user.latitude,
+                    user.longitude,
+                    user.awbNumber,
+                    user.id,
+                    user.consignorphonenumber
+                  )
+                }
               >
                 <Text style={styles.mapButtonText}>View on Map</Text>
               </TouchableOpacity>

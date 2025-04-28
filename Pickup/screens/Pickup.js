@@ -121,13 +121,13 @@ export default function Admin() {
     fetchData();
     setLoading(false);
   }, [userName]);
-
+  console.log(userName);
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchData();
     setRefreshing(false);
   };
-
+  console.log("okk");
   const currentItems = userData.filter(
     (user) =>
       user.status === "RUN SHEET" &&
@@ -148,7 +148,6 @@ export default function Admin() {
   const handleTabChange = (tab) => {
     setcurrentTab(tab);
   };
-  console.log(userData);
 
   return (
     <View style={styles.container}>

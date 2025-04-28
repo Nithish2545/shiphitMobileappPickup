@@ -19,7 +19,8 @@ import * as Notifications from "expo-notifications";
 import { StatusBar } from "expo-status-bar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NotificationService from "./Utility/NotificationService";
-
+import RealTimeNavigation from "./Pickup/screens/RealTimeNavigation";
+import VerifyPassword from "./Pickup/screens/VerifyPassword";
 export default function App() {
   useEffect(() => {
     console.log("useEffect testing!");
@@ -133,6 +134,11 @@ export default function App() {
           // If the logged-in user is a pickup person, show Pickup screens
           <>
             <Stack.Screen name="Pickup" component={Pickup} />
+            <Stack.Screen
+              name="RealTimeNavigation"
+              component={RealTimeNavigation}
+            />
+            <Stack.Screen name="verifyotp" component={VerifyPassword} />
             <Stack.Screen name="PickupDetails" component={PickupDetails} />
           </>
         ) : null}

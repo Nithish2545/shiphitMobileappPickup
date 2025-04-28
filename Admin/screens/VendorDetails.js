@@ -366,15 +366,26 @@ function VendorDetails() {
               </TouchableOpacity>
             </View>
           )}
-          <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
-            <Text style={styles.uploadButtonText}>
-              {finalWeightImage
-                ? "Change AWB BAR CODE Image"
-                : "Upload AWB BAR CODE Image"}
-            </Text>
-          </TouchableOpacity>
+          <View
+            style={{
+              marginBottom: 20,
+            }}
+          >
+            <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
+              <Text style={styles.uploadButtonText}>
+                {finalWeightImage
+                  ? "Change AWB BAR CODE Image"
+                  : "Upload AWB BAR CODE Image"}
+              </Text>
+            </TouchableOpacity>
+            {error ? (
+              <Text style={{ color: "red", paddingTop: 5 }}>{error}</Text>
+            ) : (
+              <></>
+            )}
+          </View>
         </View>
-        {error ? <Text style={{ color: "red" }}>{error}</Text> : <></>}
+
         <TouchableOpacity
           onPress={handleSubmit(onSubmit)}
           style={styles.button}
@@ -424,8 +435,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#6B21A8",
     borderRadius: 8,
     padding: 12,
-    marginBottom: 20,
-    marginTop: 20,
     alignItems: "center",
   },
   uploadButtonText: {

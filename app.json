@@ -16,11 +16,17 @@
     },
     "android": {
       "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyB_sePfGC7khG1CVlY87cTc4qNUnFsMS5Q"
+        }
+      },
       "android": {
         "permissions": [
           "READ_EXTERNAL_STORAGE",
           "WRITE_EXTERNAL_STORAGE",
-          "INTERNET"
+          "INTERNET",
+          "ACCESS_FINE_LOCATION"
         ]
       },
       "adaptiveIcon": {
