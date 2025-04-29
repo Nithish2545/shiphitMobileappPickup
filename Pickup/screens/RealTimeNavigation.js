@@ -12,9 +12,11 @@ import MapView, { Marker, Polyline } from "react-native-maps";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import polyline from "@mapbox/polyline";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 import { useRoute } from "@react-navigation/native";
+import VerifyPassword from "./VerifyPassword";
+import DB from "../../Utility/DB";
 
 export default function RealTimeNavigation() {
   const navigation = useNavigation();
@@ -25,11 +27,11 @@ export default function RealTimeNavigation() {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [navigationStarted, setNavigationStarted] = useState(false);
+  const [otpsent, setotpsent] = useState(false);
   const [distance, setDistance] = useState(null);
   const [duration, setDuration] = useState(null);
   const [isModalVisible, setModalVisible] = useState(false); // Modal visibility state
   const [isReachedConfirmed, setReachedConfirmed] = useState(false); // Reached button confirmation state
-
   const startPoint = { latitude: 12.9911, longitude: 80.2183 };
   const destinationPoint = { latitude: 13.0227, longitude: 80.2025 };
 
@@ -123,39 +125,59 @@ export default function RealTimeNavigation() {
   };
 
   const handleStartNavigation = async () => {
-    if (!userLocation) {
-      Alert.alert("Location Error", "Waiting for your current location...");
-      return;
-    }
-    setNavigationStarted(true);
-
-    // Once navigation starts, center the map on the user's current location
-    if (mapRef.current) {
-      mapRef.current.animateCamera({
-        center: {
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-        },
-        pitch: 45,
-        heading: 0,
-        zoom: 18,
-        duration: 500,
+    try {
+      const pickupDocRef = doc(db, DB.db_collection, docId);
+      await updateDoc(pickupDocRef, {
+        RideStarted: true,
       });
+      if (!userLocation) {
+        Alert.alert("Location Error", "Waiting for your current location...");
+        return;
+      }
+
+      // Once navigation starts, center the map on the user's current location
+      if (mapRef.current) {
+        mapRef.current.animateCamera({
+          center: {
+            latitude: userLocation.latitude,
+            longitude: userLocation.longitude,
+          },
+          pitch: 45,
+          heading: 0,
+          zoom: 18,
+          duration: 500,
+        });
+      }
+      await sendTemplateMessage();
+    } catch (error) {
+      console.log("error", error);
     }
-    await sendTemplateMessage();
   };
+  useEffect(() => {
+    if (!docId) return; // Exit if no docId
+
+    const docRef = doc(db, DB.db_collection, docId);
+
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setNavigationStarted(data.RideStarted); // Set RideStarted field value
+        setotpsent(data.OtpSent);
+      } else {
+        console.log("No such document!");
+      }
+    });
+
+    // Cleanup listener when component unmounts
+    return () => unsubscribe();
+  }, [docId]);
 
   const handleReachedPress = () => {
     setModalVisible(true); // Show the confirmation modal when "Reached" is clicked
   };
 
-  function generateOTP() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  }
-
-  const sendOTPMessage = async () => {
+  const sendOTPMessage = async (otp) => {
     try {
-      const otp = generateOTP();
       const response = await axios.post(
         "https://public.doubletick.io/whatsapp/message/template",
         {
@@ -187,7 +209,6 @@ export default function RealTimeNavigation() {
           },
         }
       );
-
       console.log("Message sent successfully:", response.data);
     } catch (error) {
       console.error(
@@ -199,18 +220,25 @@ export default function RealTimeNavigation() {
 
   // Example usage
   const handleConfirmReached = async () => {
-    const otp = generateOTP();
-    console.log("Your secure OTP is:", otp);
-    const pickupDocRef = doc(db, "pickuptestdata", docId);
+    try {
+      function generateOTP() {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+      }
+      const otp = generateOTP();
+      const pickupDocRef = doc(db, DB.db_collection, docId);
 
-    await updateDoc(pickupDocRef, {
-      OTP: otp,
-    });
+      await updateDoc(pickupDocRef, {
+        OTP: otp,
+        OtpSent: true,
+      });
 
-    await sendOTPMessage();
-    navigation.navigate("verifyotp"); // Navigate to "verifyotp" screen
-    setReachedConfirmed(true); // Set the "Reached" status as confirmed
-    setModalVisible(false); // Close the modal
+      await sendOTPMessage(otp);
+      navigation.navigate("verifyotp"); // Navigate to "verifyotp" screen
+      setReachedConfirmed(true); // Set the "Reached" status as confirmed
+      setModalVisible(false); // Close the modal
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleCancelReached = () => {
@@ -219,128 +247,134 @@ export default function RealTimeNavigation() {
 
   return (
     <View style={styles.container}>
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        showsUserLocation
-        followsUserLocation={true}
-        onUserLocationChange={handleUserLocationChange}
-        initialRegion={{
-          latitude: startPoint.latitude,
-          longitude: startPoint.longitude,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }}
-      >
-        {/* Start Marker */}
-        <Marker coordinate={startPoint} title="Start Point" />
-        {/* Destination Marker */}
-        <Marker coordinate={destinationPoint} title="Destination" />
-        {/* Route Polyline */}
-        {routeCoordinates.length > 0 && (
-          <Polyline
-            coordinates={routeCoordinates}
-            strokeWidth={5}
-            strokeColor="#007AFF"
-          />
-        )}
-      </MapView>
-
-      <View style={styles.controlsContainer}>
-        {/* Distance and Duration */}
-        {distance && duration && (
-          <View style={styles.infoContainer}>
-            <Text style={styles.infoText}>Distance: {distance}</Text>
-            <Text style={styles.infoText}>Duration: {duration}</Text>
-          </View>
-        )}
-
-        {!userLocation ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#9F4BDC" />
-            <Text style={styles.loadingText}>Getting your location...</Text>
-          </View>
-        ) : !navigationStarted ? (
-          <TouchableOpacity
-            onPress={handleStartNavigation}
-            style={styles.navButton}
-          >
-            <Text style={styles.buttonText}>START RIDE</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            onPress={handleReachedPress}
-            style={[styles.navButton, { backgroundColor: "green" }]} // Initially disabled
-            disabled={isReachedConfirmed} // Disable the button until confirmed
-          >
-            <Text style={styles.buttonText}>Reached</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-      {/* Modal for Confirmation */}
-      <Modal
-        transparent={true}
-        animationType="slide"
-        visible={isModalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: "#fff",
-              padding: 20,
-              borderRadius: 10,
-              width: 280,
-              alignItems: "center",
+      {!otpsent ? (
+        <View>
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            showsUserLocation
+            followsUserLocation={true}
+            onUserLocationChange={handleUserLocationChange}
+            initialRegion={{
+              latitude: startPoint.latitude,
+              longitude: startPoint.longitude,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
             }}
           >
-            <Text style={{ fontSize: 18, marginBottom: 15 }}>
-              Are you sure you've reached your destination?
-            </Text>
+            {/* Start Marker */}
+            <Marker coordinate={startPoint} title="Start Point" />
+            {/* Destination Marker */}
+            <Marker coordinate={destinationPoint} title="Destination" />
+            {/* Route Polyline */}
+            {routeCoordinates.length > 0 && (
+              <Polyline
+                coordinates={routeCoordinates}
+                strokeWidth={5}
+                strokeColor="#007AFF"
+              />
+            )}
+          </MapView>
+
+          <View style={styles.controlsContainer}>
+            {/* Distance and Duration */}
+            {distance && duration && (
+              <View style={styles.infoContainer}>
+                <Text style={styles.infoText}>Distance: {distance}</Text>
+                <Text style={styles.infoText}>Duration: {duration}</Text>
+              </View>
+            )}
+
+            {!userLocation ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#9F4BDC" />
+                <Text style={styles.loadingText}>Getting your location...</Text>
+              </View>
+            ) : !navigationStarted ? (
+              <TouchableOpacity
+                onPress={handleStartNavigation}
+                style={styles.navButton}
+              >
+                <Text style={styles.buttonText}>START RIDE</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={handleReachedPress}
+                style={[styles.navButton, { backgroundColor: "green" }]} // Initially disabled
+                disabled={isReachedConfirmed} // Disable the button until confirmed
+              >
+                <Text style={styles.buttonText}>Reached</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          {/* Modal for Confirmation */}
+          <Modal
+            transparent={true}
+            animationType="slide"
+            visible={isModalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
             <View
               style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                width: "100%",
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
               }}
             >
-              <TouchableOpacity
-                onPress={handleCancelReached}
+              <View
                 style={{
-                  backgroundColor: "#f44336",
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 8,
+                  backgroundColor: "#fff",
+                  padding: 20,
+                  borderRadius: 10,
+                  width: 280,
+                  alignItems: "center",
                 }}
               >
-                <Text style={{ color: "#FFF", fontWeight: "bold" }}>
-                  Cancel
+                <Text style={{ fontSize: 18, marginBottom: 15 }}>
+                  Are you sure you've reached your destination?
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleConfirmReached}
-                style={{
-                  backgroundColor: "#4CAF50",
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 8,
-                }}
-              >
-                <Text style={{ color: "#FFF", fontWeight: "bold" }}>
-                  Yes, I'm here
-                </Text>
-              </TouchableOpacity>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    width: "100%",
+                  }}
+                >
+                  <TouchableOpacity
+                    onPress={handleCancelReached}
+                    style={{
+                      backgroundColor: "#f44336",
+                      paddingVertical: 10,
+                      paddingHorizontal: 20,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Text style={{ color: "#FFF", fontWeight: "bold" }}>
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={handleConfirmReached}
+                    style={{
+                      backgroundColor: "#4CAF50",
+                      paddingVertical: 10,
+                      paddingHorizontal: 20,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Text style={{ color: "#FFF", fontWeight: "bold" }}>
+                      Yes, I'm here
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-          </View>
+          </Modal>
         </View>
-      </Modal>
+      ) : (
+        <VerifyPassword docID={docId} awbnumber={awbnumber} />
+      )}
     </View>
   );
 }

@@ -7,7 +7,8 @@
     KmDriven: 20,
     KycImage:
       "https://firebasestorage.googleapis.com/v0/b/shiphitmobileapppickup-4d0a1.appspot.com/o/1001%2FKYC%2FWhatsApp%20Image%202025-04-21%20at%2010.33.45%20AM.pdf?alt=media&token=7c2b75ba-d26d-4ecd-9bb7-081b902bfd10",
-    OTP: "590901",
+    OTP: "709331",
+    OtpSent: true,
     PACKAGEWEIGHTIMAGES: [
       "https://firebasestorage.googleapis.com/v0/b/shiphitmobileapppickup-4d0a1.appspot.com/o/1001%2FPACKAGE%20WEIGHT%2F1000052621.jpg?alt=media&token=0a090683-8c92-4d89-a57a-f27a52981070",
     ],
@@ -19,6 +20,7 @@
     PickupImageTakenTime: "Unknown date",
     PickupPersonImageURL:
       "https://firebasestorage.googleapis.com/v0/b/shiphitmobileapppickup-4d0a1.appspot.com/o/1001%2FPICKUPPERSONIMAGE%2FImage?alt=media&token=cd24c7d1-d3b4-4b97-a00e-fb3e286c47aa",
+    RideStarted: true,
     Source: "Customer Refer",
     actualNoOfPackages: "1",
     actualWeight: "12",
@@ -34,7 +36,6 @@
     destination: "United Kingdom",
     discountCost: 1000,
     franchise: "",
-    id: "LkSq7cv6xSVgLTxAfHAm",
     imageUrLs: null,
     internalWeight: "10",
     latitude: "11.000000000000",
@@ -64,7 +65,7 @@
     status: "RUNSHEET",
     vendorAwbnumber: null,
     vendorName: "DESK SELF",
-    volumaticActualImages: [[Object]],
+    volumaticActualImages: [{ image: [Array], type: "actual" }],
     weightapx: "12 KG",
   },
 ];

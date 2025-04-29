@@ -407,7 +407,7 @@ const PickupDetails = () => {
   }
 
   const handleGoBack = () => {
-    navigation.goBack(); // Go back one step in the navigation stack
+    navigation.navigate("Pickup");
   };
 
   return (
