@@ -127,14 +127,12 @@ export default function Admin() {
     await fetchData();
     setRefreshing(false);
   };
-  console.log("okk");
   const currentItems = userData.filter(
     (user) =>
       user.status === "RUN SHEET" &&
       user.pickUpPersonName === userName &&
       user.pickupDatetime?.includes(tofilterDate)
   );
-
   const incomingManifestItems = userData.filter(
     (user) =>
       (user.status === "INCOMING MANIFEST" ||
@@ -248,7 +246,7 @@ export default function Admin() {
           }
         >
           {currentTab === "RUN SHEET" ? (
-            <Runsheet userData={currentItems} />
+            <Runsheet tofilterDate={tofilterDate} />
           ) : currentTab === "INCOMING MANIFEST" ? (
             <PickupCompleted userData={incomingManifestItems} />
           ) : null}

@@ -22,8 +22,8 @@ import { db } from "../../FirebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, onSnapshot } from "firebase/firestore"; // Import Firestore functions
 import ModalDatePicker from "react-native-modal-datetime-picker";
-import Signout from "./Signout";
 import DB from "../../Utility/DB";
+import { useNavigation } from "@react-navigation/native";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -37,6 +37,8 @@ export default function Admin() {
   const [tofilterDate, settofilterdate] = useState("");
   const [awbnumber, setawbnumber] = useState("");
   const [FromNumber, setFromNumber] = useState("");
+  const [overview, setoverview] = useState("");
+  const navigation = useNavigation();
   const handleDatePicked = (date) => {
     const day = date.getDate(); // Get day without leading zero
     const month = date.getMonth() + 1; // Get month (0-based index) without leading zero
@@ -46,6 +48,18 @@ export default function Admin() {
     setSelectedDate(formattedDate);
     setDatePickerVisibility(false);
   };
+
+  useEffect(() => {
+    const getTotalCount = (data) => {
+      return data.reduce((acc, item) => {
+        // Increment count for each status
+        acc[item.status] = (acc[item.status] || 0) + 1;
+        return acc;
+      }, {});
+    };
+    const totalCount = getTotalCount(userData);
+    setoverview(totalCount);
+  }, [userData]);
 
   const pickupPersons = ["Unassigned", "sathish", "jaga"];
 
@@ -194,8 +208,14 @@ export default function Admin() {
             justifyContent: "space-between",
           }}
         >
-          <Signout />
-          <Text style={{ color: "black", fontWeight: "600", fontSize: 18 }}>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate("Profile", { overview: overview });
+            }}
+          >
+            <FontAwesome5 name="user-alt" size={24} color="black" />
+          </TouchableOpacity>
+          <Text style={{ color: "black", fontWeight: "600", fontSize: 16 }}>
             {currentTab == "INCOMING MANIFEST" ? "WAREHOUSE" : currentTab}
           </Text>
           <TextInput

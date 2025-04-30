@@ -26,12 +26,18 @@ import {
 } from "firebase/firestore";
 import axios from "axios";
 import DB from "../../Utility/DB";
+import VendorChangeModal from "./VendorChangeModal";
 
 function VendorDetails() {
   const route = useRoute();
   const navigation = useNavigation();
   const { awbnumber } = route.params;
+  const [modalVisible, setModalVisible] = useState(false);
 
+  const handleVendorSubmit = (vendor) => {
+    console.log("Selected Vendor:", vendor);
+    // Call your API or function here
+  };
   const {
     control,
     handleSubmit,
@@ -110,8 +116,10 @@ function VendorDetails() {
       seterror("AWB Bar code image is required!");
       return;
     }
-    setIsSubmitting(true); // Start loading
+    setModalVisible(true);
+  };
 
+  async function finalsubmit(finalVendor) {
     // Function to upload the image to Firebase
     const uploadImage = async (imageUri) => {
       if (!imageUri) return null; // Return null if no image selected
@@ -125,22 +133,19 @@ function VendorDetails() {
       const downloadURL = await getDownloadURL(storageRef); // Get the download URL
       return downloadURL; // Return the URL
     };
-
     const updatedFields = {
-      vendorAwbnumber: data.vendorAwbnumber,
+      vendorName: finalVendor,
+      vendorAwbnumber: vendorAwbnumber,
       status: "SHIPMENT CONNECTED",
       packageConnectedDataTime: PickupCompletedDate(),
       finalWeightImage: await uploadImage(finalWeightImage), // Upload image and store URL
     };
-
     const q = query(
       collection(db, DB.db_collection),
       where("awbNumber", "==", awbnumber)
     );
-
     const querySnapshot = await getDocs(q);
     let final_result = [];
-
     querySnapshot.forEach((doc) => {
       final_result.push({ id: doc.id, ...doc.data() });
     });
@@ -186,7 +191,6 @@ function VendorDetails() {
           },
         ],
       };
-
       axios
         .post("https://public.doubletick.io/whatsapp/message/template", data, {
           headers: {
@@ -207,8 +211,9 @@ function VendorDetails() {
     setVendorAwbnumber("");
     setFinalWeightImage(null); // Reset the image
     setIsSubmitting(false); // Stop loading
+    setModalVisible(false);
     navigation.navigate("Admin");
-  };
+  }
 
   // Function to handle image selection
   const pickImage = async () => {
@@ -343,7 +348,10 @@ function VendorDetails() {
                 placeholder="Enter Vendor AWB number"
                 keyboardType="numeric"
                 value={value}
-                onChangeText={onChange}
+                onChangeText={(text) => {
+                  onChange(text); // update react-hook-form
+                  setVendorAwbnumber(text); // update local state
+                }}
               />
             )}
           />
@@ -353,6 +361,7 @@ function VendorDetails() {
             </Text>
           )}
         </View>
+
         {/* Final Weight Image Upload */}
         <View style={styles.imageUploadContainer}>
           {finalWeightImage && (
@@ -398,6 +407,15 @@ function VendorDetails() {
           )}
         </TouchableOpacity>
       </View>
+      <VendorChangeModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSubmit={handleVendorSubmit}
+        currentVendor={user.vendorName}
+        finalsubmit={finalsubmit}
+        isSubmitting={isSubmitting}
+        setIsSubmitting={setIsSubmitting}
+      />
     </ScrollView>
   );
 }

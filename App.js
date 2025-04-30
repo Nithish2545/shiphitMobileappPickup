@@ -21,6 +21,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import NotificationService from "./Utility/NotificationService";
 import RealTimeNavigation from "./Pickup/screens/RealTimeNavigation";
 import VerifyPassword from "./Pickup/screens/VerifyPassword";
+import Profile from "./Admin/screens/Profile";
 export default function App() {
   useEffect(() => {
     console.log("useEffect testing!");
@@ -112,6 +113,7 @@ export default function App() {
           // If the logged-in user is admin, show Admin screens
           <>
             <Stack.Screen name="Admin" component={Admin} />
+            <Stack.Screen name="Profile" component={Profile} />
             <Stack.Screen name="Runsheet" component={Runsheet} />
             <Stack.Screen
               name="IncomingManifest"

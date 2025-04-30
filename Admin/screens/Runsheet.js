@@ -18,7 +18,7 @@ import SwipeToConfirm from "./SwipeToConfirm";
 import axios from "axios";
 import DB from "../../Utility/DB";
 // import NotificationService from "../../Utility/NotificationService";
-
+import utility from "../../Utility/utility";
 const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
   const [userData, setUserData] = useState([]);
   const navigation = useNavigation();
@@ -37,21 +37,6 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
       setSelectedDate(null);
     }
     setModalVisible(!isModalVisible);
-  }
-
-  function convertToTimeOnly(input) {
-    const timePart = input.split("&")[1].trim().toUpperCase(); // "9 PM"
-
-    const [hourStr, meridiem] = timePart.split(" ");
-    let hour = parseInt(hourStr, 10);
-    let minutes = "00";
-
-    if (meridiem === "AM" || meridiem === "PM") {
-      const formattedHour = hour < 10 ? `0${hour}` : `${hour}`;
-      return `${formattedHour}:${minutes} ${meridiem}`;
-    } else {
-      return "Invalid Time Format";
-    }
   }
 
   async function PEassigned(PEname, pickupDatetime, consignorphonenumber) {
@@ -93,7 +78,7 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
   }
 
   useEffect(() => {
-    convertToTimeOnly("16-4-2025 &1 AM");
+    utility.convertToTimeOnly("16-4-2025 &1 AM");
   }, []);
 
   function parseDateTime(pickupDatetime) {
@@ -176,8 +161,6 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
     Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
   };
 
-
-  
   const handleAssignmentChange = async (
     awbNumber,
     pickupPerson,
@@ -198,7 +181,7 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
         final_result.push({ id: doc.id, ...doc.data() });
       });
       const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
-      const Hour_min = convertToTimeOnly(pickupDatetime);
+      const Hour_min = utility.convertToTimeOnly(pickupDatetime);
       const pickupPersonCaps =
         pickupPerson.charAt(0).toUpperCase() + pickupPerson.slice(1);
       console.log("pickupDatetime", pickupDatetime);

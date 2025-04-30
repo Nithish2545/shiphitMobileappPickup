@@ -5,13 +5,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   Linking,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 import DB from "../../Utility/DB";
 
-const Runsheet = () => {
+const Runsheet = ({ tofilterDate }) => {
   const [userData, setUserData] = useState([]);
 
   const parsePickupDate = (pickupDatetime) => {
@@ -35,24 +36,28 @@ const Runsheet = () => {
 
     return date;
   };
-
   const fetchData = async () => {
     const unsubscribe = onSnapshot(
       collection(db, DB.db_collection),
       (querySnapshot) => {
-        const sortedData = querySnapshot.docs
+        const filteredAndSortedData = querySnapshot.docs
           .map((doc) => ({
             id: doc.id,
             ...doc.data(),
           }))
+          .filter(
+            (item) =>
+              item.status === "RUN SHEET" &&
+              item.pickUpPersonName?.toLowerCase() === "sathish" &&
+              item.pickupDatetime?.includes(tofilterDate)
+          )
           .sort((a, b) => {
-            // Convert pickupDatetime to Date objects for comparison
             const dateA = parsePickupDate(a.pickupDatetime);
             const dateB = parsePickupDate(b.pickupDatetime);
-            return dateA - dateB; // Sort in ascending order
+            return dateA - dateB;
           });
 
-        setUserData(sortedData);
+        setUserData(filteredAndSortedData);
       },
       (error) => {
         setError(`Error: ${error.message}`);
@@ -62,15 +67,22 @@ const Runsheet = () => {
 
     return () => unsubscribe();
   };
+
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [tofilterDate]);
 
   const navigation = useNavigation(); // Use useNavigation hook to access navigation
 
   const handleCardPress = (awbNumber) => {
+    if (userData[0].OtpVerified == true) {
+      navigation.navigate("PickupDetails", { awbnumber: awbNumber });
+      return;
+    }
+    Alert.alert(
+      "OTP not verified. Please follow the instructions and the required flow"
+    );
     // Navigate to PickupDetails screen with AWB number as a parameter
-    navigation.navigate("PickupDetails", { awbnumber: awbNumber });
   };
 
   const handleOpenMap = (
@@ -78,14 +90,21 @@ const Runsheet = () => {
     longitude,
     awbNumber,
     docId,
-    consignorphonenumber
+    consignorphonenumber,
+    pickupDatetime,
+    pickUpPersonName
   ) => {
+    if (userData[0].OtpVerified == true) {
+      return;
+    }
     navigation.navigate("RealTimeNavigation", {
       latitude: latitude,
       longitude: longitude,
       awbnumber: awbNumber,
       docId: docId,
       consignorphonenumber: consignorphonenumber,
+      pickupDatetime: pickupDatetime,
+      pickUpPersonName: pickUpPersonName,
     });
     // const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
     // Linking.openURL(url).catch((err) =>
@@ -177,14 +196,20 @@ const Runsheet = () => {
                 <Text style={styles.mapButtonText}>Call</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.mapButton}
+                style={[
+                  styles.mapButton,
+                  userData[0].OtpVerified && styles.disabledButton, // apply disabled style
+                ]}
+                disabled={userData[0].OtpVerified} // disable if OTP is verified
                 onPress={() =>
                   handleOpenMap(
                     user.latitude,
                     user.longitude,
                     user.awbNumber,
                     user.id,
-                    user.consignorphonenumber
+                    user.consignorphonenumber,
+                    user.pickupDatetime,
+                    user.pickUpPersonName
                   )
                 }
               >
@@ -199,6 +224,11 @@ const Runsheet = () => {
 };
 
 const styles = StyleSheet.create({
+  disabledButton: {
+    backgroundColor: "#ccc", // greyed out look
+    opacity: 0.6,
+  },
+
   noPickups: {
     alignItems: "center",
     padding: 16,

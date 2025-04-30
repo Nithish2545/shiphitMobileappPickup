@@ -48,8 +48,6 @@ const SignIn = ({ navigation }) => {
               return "sathish";
             case "jaga.opshead@gmail.com":
               return "jaga";
-            case "praven@gmail.com":
-              return "praven";
             default:
               return response.user.email;
           }

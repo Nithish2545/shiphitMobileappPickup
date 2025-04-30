@@ -11,7 +11,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Entypo from "@expo/vector-icons/Entypo";
 import LottieView from "lottie-react-native";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 import DB from "../../Utility/DB";
 
@@ -20,7 +20,7 @@ export default function VerifyPassword({ docID, awbnumber }) {
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
   const route = useRoute();
-  console.log("docId", docID);
+  console.log("docId vwerify", docID);
   const handleChange = (text) => {
     const numericValue = text.replace(/[^0-9]/g, "");
     setOtp(numericValue);
@@ -40,7 +40,10 @@ export default function VerifyPassword({ docID, awbnumber }) {
       if (docSnap.exists()) {
         const storedOtp = docSnap.data().OTP;
         if (parseInt(otp) === parseInt(storedOtp)) {
-          navigation.navigate("PickupDetails", { awbnumber: awbnumber });
+          await updateDoc(docRef, {
+            OtpVerified: true,
+          });
+          navigation.navigate("Pickup");
           Alert.alert("Success", "OTP Verified!");
           // navigation.navigate("NextScreen");
         } else {

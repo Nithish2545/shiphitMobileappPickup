@@ -17,13 +17,23 @@ import { db } from "../../FirebaseConfig";
 import { useRoute } from "@react-navigation/native";
 import VerifyPassword from "./VerifyPassword";
 import DB from "../../Utility/DB";
+import utility from "../../Utility/utility";
 
 export default function RealTimeNavigation() {
   const navigation = useNavigation();
   const mapRef = useRef(null);
   const route = useRoute();
-  const { latitude, longitude, awbnumber, docId, consignorphonenumber } =
-    route.params;
+  const {
+    latitude,
+    longitude,
+    awbnumber,
+    docId,
+    consignorphonenumber,
+    pickUpPersonName,
+    pickupDatetime,
+  } = route.params;
+
+  console.log("docId test", docId);
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [navigationStarted, setNavigationStarted] = useState(false);
@@ -88,6 +98,11 @@ export default function RealTimeNavigation() {
 
   const sendTemplateMessage = async () => {
     try {
+      const Hour_min = utility.convertToTimeOnly(pickupDatetime);
+      const name =
+        pickUpPersonName.charAt(0).toUpperCase() +
+        pickUpPersonName.slice(1).toLowerCase();
+
       const response = await axios.post(
         "https://public.doubletick.io/whatsapp/message/template",
         {
@@ -97,7 +112,11 @@ export default function RealTimeNavigation() {
                 language: "en",
                 templateData: {
                   body: {
-                    placeholders: ["SATHISH", "10:00", "Sathish"],
+                    placeholders: [
+                      pickUpPersonName.toUpperCase(),
+                      Hour_min,
+                      name,
+                    ],
                   },
                 },
                 templateName: "pestartedsathish",
@@ -191,7 +210,10 @@ export default function RealTimeNavigation() {
                     placeholder: "OTP For Pickup Shipment",
                   },
                   body: {
-                    placeholders: ["SATHISH", `OTP ${otp}`],
+                    placeholders: [
+                      pickUpPersonName.toUpperCase(),
+                      `OTP ${otp}`,
+                    ],
                   },
                 },
                 templateName: "pereachedtemplate_sathish",
