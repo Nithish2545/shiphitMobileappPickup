@@ -1,0 +1,10 @@
+/* Hide scrollbar for WebKit-based browsers (e.g., Chrome, Safari) */
+.tab-container::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Hide scrollbar for Firefox */
+  .tab-container {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
