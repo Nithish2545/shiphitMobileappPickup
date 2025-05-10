@@ -10,20 +10,21 @@ import {
   Button,
   ActivityIndicator,
 } from "react-native";
-import { FIREBASE_AUTH } from "../../FirebaseConfig";
+import { db, FIREBASE_AUTH } from "../../FirebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useForm, Controller } from "react-hook-form";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Feather from "@expo/vector-icons/Feather";
 import * as Notifications from "expo-notifications";
 import NotificationService from "../../Utility/NotificationService";
+import { collection, getDocs } from "firebase/firestore";
 
 const SignIn = ({ navigation }) => {
   const auth = FIREBASE_AUTH;
   const [Autherror, setAuthError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-
+  const [loginCredentials, setloginCredentials] = useState({});
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
   };
@@ -33,6 +34,21 @@ const SignIn = ({ navigation }) => {
     formState: { errors },
   } = useForm();
 
+  async function logNestedData() {
+    const querySnapshot = await getDocs(
+      collection(db, "OpsPickupLoginCredentials")
+    );
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      setloginCredentials(data);
+    });
+  }
+
+  useEffect(() => {
+    logNestedData();
+  }, []);
+
   const handleSignIn = async (data) => {
     const { email, password } = data;
     setLoading(true);
@@ -40,24 +56,12 @@ const SignIn = ({ navigation }) => {
 
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
-
-      let userData = {
-        name: (() => {
-          switch (response.user.email) {
-            case "sathish@gmail.com":
-              return "sathish";
-            case "jaga.opshead@gmail.com":
-              return "jaga";
-            case "sairam@gmail.com":
-              return "sairam";
-            default:
-              return response.user.email;
-          }
-        })(),
-        email: response.user.email,
-        role:
-          response.user.email === "jaga.opshead@gmail.com" ? "admin" : "pickup",
+      const userData = {
+        name: loginCredentials[response.user.email][0],
+        email: loginCredentials[response.user.email][1],
+        role: loginCredentials[response.user.email][2],
       };
+      console.log(userData);
       await AsyncStorage.setItem("userData", JSON.stringify(userData));
       await NotificationService.fetchAndStoreToken(response.user.email);
       setLoading(false);

@@ -61,7 +61,7 @@ export default function Admin() {
     setoverview(totalCount);
   }, [userData]);
 
-  const pickupPersons = ["Unassigned", "sathish", "jaga", "sairam"];
+  const pickupPersons = ["Unassigned", "sathish", "jaga", "sairam", "dinesh"];
 
   // ALL SHIPMENTS
 
