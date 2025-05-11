@@ -19,7 +19,7 @@ const Profile = () => {
   const { overview } = route.params;
 
   const profile = {
-    version: "v1.0.3",
+    version: "v1.0.4",
   };
 
   useEffect(() => {
