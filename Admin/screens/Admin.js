@@ -38,6 +38,28 @@ export default function Admin() {
   const [awbnumber, setawbnumber] = useState("");
   const [FromNumber, setFromNumber] = useState("");
   const [overview, setoverview] = useState("");
+  const [pickupPersons, setPickupPersons] = useState(["Unassigned"]);
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, "OpsPickupLoginCredentials"),
+      (querySnapshot) => {
+        const names = ["Unassigned"];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          Object.values(data).forEach((arr) => {
+            names.push(arr[0]); // Push only the name (index 0)
+          });
+        });
+        setPickupPersons(names);
+      },
+      (error) => {
+        console.error("Error fetching pickup persons: ", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
   const navigation = useNavigation();
   const handleDatePicked = (date) => {
     const day = date.getDate(); // Get day without leading zero
@@ -60,8 +82,6 @@ export default function Admin() {
     const totalCount = getTotalCount(userData);
     setoverview(totalCount);
   }, [userData]);
-
-  const pickupPersons = ["Unassigned", "sathish", "jaga", "sairam", "dinesh"];
 
   // ALL SHIPMENTS
 

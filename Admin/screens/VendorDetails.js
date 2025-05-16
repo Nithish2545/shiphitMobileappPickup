@@ -345,7 +345,7 @@ function VendorDetails() {
                   errors.vendorAwbnumber ? styles.inputError : null,
                 ]}
                 placeholder="Enter Vendor AWB number"
-                keyboardType="numeric"
+                keyboardType="default"
                 value={value}
                 onChangeText={(text) => {
                   onChange(text); // update react-hook-form
@@ -360,7 +360,6 @@ function VendorDetails() {
             </Text>
           )}
         </View>
-
         {/* Final Weight Image Upload */}
         <View style={styles.imageUploadContainer}>
           {finalWeightImage && (
