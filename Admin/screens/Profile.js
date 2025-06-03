@@ -68,6 +68,12 @@ const Profile = () => {
       bgColor: "#e5e7eb",
       textColor: "#374151",
     },
+    {
+      label: "SHIPMENT CONNECTED",
+      value: overview["SHIPMENT CONNECTED"],
+      bgColor: "#F3E8FF",
+      textColor: "#374151",
+    },
   ];
 
   return (

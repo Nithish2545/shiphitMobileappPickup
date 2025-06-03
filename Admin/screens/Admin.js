@@ -409,12 +409,13 @@ export default function Admin() {
             />
           ) : currentTab === "SHIPMENT CONNECTED" ? (
             <ShipmentConnected
-              userData={shipmentconnected}
               datetime={tofilterDate}
               awbnumberSearch={awbnumber}
               FromNumber={FromNumber}
             />
           ) : null}
+          {/*
+           */}
           {/* : currentTab === "ALL SHIPMENTS" ? (
   <Allshipments userData={AllShipments} datetime={tofilterDate} /> */}
         </ScrollView>

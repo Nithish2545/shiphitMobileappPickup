@@ -9,7 +9,7 @@ import {
 } from "react-native";
 // Removed Picker import since it is commented out
 import { db } from "../../FirebaseConfig";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import DB from "../../Utility/DB";
 const ShipmentConnected = ({ datetime, FromNumber, awbnumberSearch }) => {
   const [userData, setuserData] = useState([]);
@@ -39,50 +39,53 @@ const ShipmentConnected = ({ datetime, FromNumber, awbnumberSearch }) => {
   }
 
   const fetchData = () => {
-    const unsubscribe = onSnapshot(
+    let q = query(
       collection(db, DB.db_collection),
+      where("status", "==", "SHIPMENT CONNECTED"),
+      where("currentStatus", "!=", "DELIVERED")
+    );
+
+    // Add additional filters conditionally
+    if (awbnumberSearch) {
+      q = query(
+        q,
+        where("awbNumber", ">=", awbnumberSearch),
+        where("awbNumber", "<", awbnumberSearch + "\uf8ff")
+      );
+    }
+
+    if (FromNumber) {
+      q = query(
+        q,
+        where("consignorphonenumber", ">=", FromNumber),
+        where("consignorphonenumber", "<", FromNumber + "\uf8ff")
+      );
+    }
+
+    const unsubscribe = onSnapshot(
+      q,
       (querySnapshot) => {
-        // Filter documents where status is "RUN SHEET"
-        const sortedData = querySnapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
-          .filter((data) => data.status === "SHIPMENT CONNECTED")
-          .filter((data) => {
-            // If the awbnumber is empty, return all data without filtering by awbNumber
-            if (awbnumberSearch === "") {
-              return true; // This will return all data
-            }
-            // Otherwise, filter by awbnumber
-            return String(data.awbNumber || "").startsWith(awbnumberSearch);
-          })
-          .filter((data) => data.pickupDatetime?.startsWith(datetime))
-          .filter((data) => {
-            // If the awbnumber is empty, return all data without filtering by awbNumber
-            if (FromNumber === "") {
-              return true; // This will return all data
-            }
-            // Otherwise, filter by awbnumber
-            return String(data.consignorphonenumber || "").startsWith(
-              FromNumber
-            );
-          })
+        const filtered = querySnapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((data) => data.pickupDatetime?.startsWith(datetime)) // local filtering
           .sort((a, b) => {
             const dateA = parseDateTime(a.pickupDatetime);
             const dateB = parseDateTime(b.pickupDatetime);
-            return dateB - dateA; // Ascending
-          }); // Filter based on status
-        setuserData(sortedData);
-        // If you have a function named parsePickupDateTime, call it here
+            return dateB - dateA; // Descending order
+          });
+
+        setuserData(filtered);
       },
       (error) => {
-        console.error(`Error fetching data: ${error.message}`); // Log error if any
+        console.error(`Error fetching data: ${error.message}`);
       }
     );
-    // Cleanup the listener on component unmount
+
     return () => unsubscribe();
   };
 
   useEffect(() => {
-    fetchData(); // Fetch data initially
+    fetchData();
   }, [FromNumber, awbnumberSearch, datetime]);
 
   const makeCall = (number) => {
