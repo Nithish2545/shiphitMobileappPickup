@@ -1,137 +1,51 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Linking,
+  ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { collection, onSnapshot } from "firebase/firestore";
-import { db } from "../../FirebaseConfig";
-import DB from "../../Utility/DB";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import model from "../dbModel/model";
+import utility from "../../Utility/utility";
 
-const Runsheet = ({ tofilterDate }) => {
+const Runsheet = () => {
   const [userData, setUserData] = useState([]);
-  const [userName, setUserName] = useState("");
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const local_S_userData = await AsyncStorage.getItem("userData");
-        if (local_S_userData) {
-          setUserName(JSON.parse(local_S_userData).name);
-        } else {
-          console.log("No data found for key 'userData'");
-        }
-      } catch (e) {
-        console.error("Failed to load data from AsyncStorage", e);
-      }
-    };
-    fetchData();
-  }, []);
-  const parsePickupDate = (pickupDatetime) => {
-    // Split date and time parts
-    const [datePart, timePart] = pickupDatetime
-      .split("&")
-      .map((part) => part.trim());
-    const [day, month] = datePart.split("-").map(Number);
-    const [hourPart, period] = timePart.split(" ").map((part) => part.trim());
-
-    // Adjust hour based on AM/PM
-    let hour = parseInt(hourPart);
-    if (period === "PM" && hour < 12) hour += 12;
-    if (period === "AM" && hour === 12) hour = 0;
-
-    // Create a new Date object
-    const date = new Date();
-    date.setDate(day);
-    date.setMonth(month - 1); // Months are 0-indexed
-    date.setHours(hour, 0, 0, 0); // Set hours, minutes, seconds, and milliseconds to 0
-
-    return date;
-  };
-  const fetchData = async () => {
-    const unsubscribe = onSnapshot(
-      collection(db, DB.db_collection),
-      (querySnapshot) => {
-        const filteredAndSortedData = querySnapshot.docs
-          .map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }))
-          .filter(
-            (item) =>
-              item.status === "RUN SHEET" &&
-              item.pickUpPersonName?.toLowerCase() === userName &&
-              item.pickupDatetime?.includes(tofilterDate)
-          )
-          .sort((a, b) => {
-            const dateA = parsePickupDate(a.pickupDatetime);
-            const dateB = parsePickupDate(b.pickupDatetime);
-            return dateA - dateB;
-          });
-        console.log("filteredAndSortedData");
-        setUserData(filteredAndSortedData);
-      },
-      (error) => {
-        setError(`Error: ${error.message}`);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [tofilterDate, userName]);
-
-  const navigation = useNavigation(); // Use useNavigation hook to access navigation
+  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();
 
   const handleCardPress = (awbNumber) => {
-    // if (userData[0].OtpVerified == true) {
     navigation.navigate("PickupDetails", { awbnumber: awbNumber });
-    // return;
-    // }
-    // Alert.alert(
-    //   "OTP not verified. Please follow the instructions and the required flow"
-    // );
-    // Navigate to PickupDetails screen with AWB number as a parameter
-  };
-  const handleOpenMap = (
-    latitude,
-    longitude,
-    awbNumber,
-    docId,
-    consignorphonenumber,
-    pickupDatetime,
-    pickUpPersonName
-  ) => {
-    if (userData[0].OtpVerified == true) {
-      return;
-    }
-    navigation.navigate("RealTimeNavigation", {
-      latitude: latitude,
-      longitude: longitude,
-      awbnumber: awbNumber,
-      docId: docId,
-      consignorphonenumber: consignorphonenumber,
-      pickupDatetime: pickupDatetime,
-      pickUpPersonName: pickUpPersonName,
-    });
-    // const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
-    // Linking.openURL(url).catch((err) =>
-    //   console.error("Failed to open URL:", err)
-    // );
   };
 
-  const makeCall = (number) => {
-    Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
-  };
+  useEffect(() => {
+    let unsubscribe;
+    async function fetch() {
+      unsubscribe = await model.PErunsheet(
+        setUserData,
+        "run sheet",
+        setLoading
+      );
+    }
+    fetch();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#6D28D9" />
+        <Text style={styles.loadingText}>Fetching Runsheet</Text>
+      </View>
+    );
+  }
+
   return (
-    <View>
+    <ScrollView contentContainerStyle={styles.container}>
       {userData.length === 0 ? (
         <View style={styles.noPickups}>
           <Text style={styles.noPickupsText}>No pickups available</Text>
@@ -166,13 +80,12 @@ const Runsheet = ({ tofilterDate }) => {
                 >
                   RUN SHEET
                 </Text>
-                <Text
-                  style={{ color: "green", fontWeight: "700", fontSize: 17 }}
-                >
-                  {user.pickuparea}
+                <Text style={styles.pickupAreaText}>
+                  {user.pickuparea || "N/A"}
                 </Text>
               </View>
             </View>
+
             <View style={styles.infoRow}>
               <Text style={styles.label}>AWB Number:</Text>
               <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>
@@ -189,10 +102,6 @@ const Runsheet = ({ tofilterDate }) => {
               <Text style={styles.label}>Weight APX:</Text>
               <Text style={styles.value}>{user.weightapx || "N/A"}</Text>
             </View>
-            {/* <View style={styles.infoRow}>
-              <Text style={styles.label}>Phone number:</Text>
-              <Text style={styles.value}>{user.consignorphonenumber || "N/A"}</Text>
-            </View> */}
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup DateTime:</Text>
               <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
@@ -203,28 +112,30 @@ const Runsheet = ({ tofilterDate }) => {
                 {user.consignorlocation || "N/A"}
               </Text>
             </View>
-            <View style={styles.infoRow}>
+            <View style={styles.buttonRow}>
               <TouchableOpacity
                 style={styles.mapButton}
-                onPress={() => makeCall(user.consignorphonenumber)}
+                onPress={() => utility.makeCall(user.consignorphonenumber)}
               >
                 <Text style={styles.mapButtonText}>Call</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.mapButton,
-                  userData[0].OtpVerified && styles.disabledButton, // apply disabled style
+                  user.OtpVerified && styles.disabledButton,
                 ]}
-                disabled={userData[0].OtpVerified} // disable if OTP is verified
+                disabled={user.OtpVerified}
                 onPress={() =>
-                  handleOpenMap(
+                  utility.handleOpenMap(
                     user.latitude,
                     user.longitude,
                     user.awbNumber,
                     user.id,
                     user.consignorphonenumber,
                     user.pickupDatetime,
-                    user.pickUpPersonName
+                    user.pickUpPersonName,
+                    user.OtpVerified,
+                    navigation
                   )
                 }
               >
@@ -234,33 +145,43 @@ const Runsheet = ({ tofilterDate }) => {
           </TouchableOpacity>
         ))
       )}
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  disabledButton: {
-    backgroundColor: "#ccc", // greyed out look
-    opacity: 0.6,
+  container: {
+    padding: 8,
   },
-
+  loaderContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 50,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#6D28D9",
+  },
   noPickups: {
     alignItems: "center",
     padding: 16,
   },
   noPickupsText: {
-    color: "#6C757D", // Adjusted color for better visibility
-    fontSize: 16, // Added font size for better readability
+    color: "#6C757D",
+    fontSize: 16,
   },
   card: {
-    backgroundColor: "#FFFFFF", // Updated color for a cleaner look
-    borderRadius: 10, // Adjusted border radius for modern look
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000000",
-    shadowOpacity: 0.4, // Increased shadow opacity for better depth
-    shadowRadius: 1,
-    elevation: 2,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 4,
   },
   statusContainer: {
     marginBottom: 12,
@@ -268,67 +189,78 @@ const styles = StyleSheet.create({
   statusBadge: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 20, // Updated border radius for a rounded badge
-  },
-  statusPending: {
-    backgroundColor: "#FEE2E2", // Light red background for pending status
-  },
-  statusCompleted: {
-    backgroundColor: "#D1FAE5", // Light green background for completed status
-  },
-  statusDefault: {
-    display: "flex",
+    borderRadius: 20,
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#E2E8F0", // Light gray background for default status
+    alignItems: "center",
+  },
+  pickupAreaText: {
+    color: "green",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  statusPending: {
+    backgroundColor: "#FEE2E2",
+  },
+  statusCompleted: {
+    backgroundColor: "#D1FAE5",
+  },
+  statusDefault: {
+    backgroundColor: "#E2E8F0",
   },
   statusText: {
     fontWeight: "bold",
-    fontSize: 14, // Added font size for status text
+    fontSize: 14,
+    marginRight: 8,
   },
   textPending: {
-    color: "#B91C1C", // Dark red color for pending status
+    color: "#B91C1C",
   },
   textCompleted: {
-    color: "#065F46", // Dark green color for completed status
+    color: "#065F46",
   },
   textDefault: {
-    color: "#1F2937", // Dark gray color for default status
+    color: "#1F2937",
   },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10, // Increased margin for better spacing
+    marginBottom: 8,
   },
   label: {
-    fontWeight: "600", // Updated font weight for labels
-    color: "#4B5563", // Updated color for labels
-    fontSize: 16, // Updated font size for labels
+    fontWeight: "600",
+    color: "#4B5563",
+    fontSize: 15,
   },
   value: {
-    color: "#1F2937", // Updated color for values
-    fontSize: 16, // Updated font size for values
+    color: "#1F2937",
+    fontSize: 15,
   },
   conLocation: {
-    color: "#1F2937", // Updated color for values
-    fontSize: 16,
+    color: "#1F2937",
+    fontSize: 15,
     width: "70%",
     textAlign: "right",
   },
-  picker: {
-    height: 50,
-    width: 150,
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 12,
   },
   mapButton: {
-    backgroundColor: "#6D28D9", // Updated color for map button
-    paddingVertical: 10, // Adjusted padding for button
+    backgroundColor: "#6D28D9",
+    paddingVertical: 10,
     paddingHorizontal: 16,
-    borderRadius: 20, // Rounded button corners
+    borderRadius: 20,
   },
   mapButtonText: {
     color: "#FFFFFF",
-    fontWeight: "600", // Added font weight for button text
-    fontSize: 16, // Added font size for button text
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  disabledButton: {
+    backgroundColor: "#ccc",
+    opacity: 0.6,
   },
 });
 

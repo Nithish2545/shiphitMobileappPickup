@@ -1,110 +1,59 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { db } from "../../FirebaseConfig";
-import DB from "../../Utility/DB";
-import { collection, onSnapshot } from "firebase/firestore";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-// Removed Picker import since it is commented out
+import { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  ScrollView,
+} from "react-native";
+import model from "../dbModel/model";
 
-const PickupCompleted = ({ tofilterDate }) => {
+const PickupCompleted = () => {
   const [userData, setUserData] = useState([]);
-  const [userName, setUserName] = useState("");
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const fetchData = async () => {
+    let unsubscribe;
+
+    async function fetchData() {
       try {
-        const local_S_userData = await AsyncStorage.getItem("userData");
-        if (local_S_userData) {
-          setUserName(JSON.parse(local_S_userData).name);
-        } else {
-          console.log("No data found for key 'userData'");
-        }
-      } catch (e) {
-        console.error("Failed to load data from AsyncStorage", e);
+        setLoading(true); // Start loading
+        unsubscribe = await model.PErunsheet(
+          setUserData,
+          "pickupcompleted",
+          setLoading
+        );
+      } catch (error) {
+        console.error("Error fetching runsheet:", error);
+        setLoading(false); // Ensure loading stops on error
       }
-    };
+    }
+
     fetchData();
+
+    return () => {
+      if (unsubscribe) unsubscribe(); // Clean up Firestore listener
+    };
   }, []);
 
-  const parsePickupDate = (pickupDatetime) => {
-    // Split date and time parts
-    const [datePart, timePart] = pickupDatetime
-      .split("&")
-      .map((part) => part.trim());
-    const [day, month] = datePart.split("-").map(Number);
-    const [hourPart, period] = timePart.split(" ").map((part) => part.trim());
-
-    // Adjust hour based on AM/PM
-    let hour = parseInt(hourPart);
-    if (period === "PM" && hour < 12) hour += 12;
-    if (period === "AM" && hour === 12) hour = 0;
-
-    // Create a new Date object
-    const date = new Date();
-    date.setDate(day);
-    date.setMonth(month - 1); // Months are 0-indexed
-    date.setHours(hour, 0, 0, 0); // Set hours, minutes, seconds, and milliseconds to 0
-
-    return date;
-  };
-  const fetchData = async () => {
-    try {
-      const unsubscribe = onSnapshot(
-        collection(db, DB.db_collection),
-        (querySnapshot) => {
-          const filteredAndSortedData = querySnapshot.docs
-            .map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            }))
-            .filter(
-              (item) =>
-                [
-                  "INCOMING MANIFEST",
-                  "PAYMENT PENDING",
-                  "PAYMENT REQUESTED",
-                  "PAYMENT DONE",
-                  "SHIPMENT CONNECTED",
-                ].includes(item.status) &&
-                item.pickUpPersonName?.toLowerCase() === userName &&
-                item.pickupDatetime?.includes(tofilterDate)
-            )
-            .sort((a, b) => {
-              const dateA = parsePickupDate(a.pickupDatetime);
-              const dateB = parsePickupDate(b.pickupDatetime);
-              return dateA - dateB;
-            });
-
-          setUserData(filteredAndSortedData);
-        },
-        (error) => {
-          setError(`Error: ${error.message}`);
-          setLoading(false);
-        }
-      );
-
-      return () => unsubscribe();
-    } catch (error) {
-      console.log("error", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [tofilterDate, userName]);
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#6D28D9" />
+        <Text style={styles.loadingText}>Fetching Completed</Text>
+      </View>
+    );
+  }
 
   return (
-    <View>
-      {userData.length === 0 ? (
+    <ScrollView contentContainerStyle={styles.container}>
+      {userData?.length === 0 ? (
         <View style={styles.noPickups}>
           <Text style={styles.noPickupsText}>No pickups available</Text>
         </View>
       ) : (
         userData.map((user, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.card}
-            onPress={() => handleCardPress(user.AWB_NUMBER)}
-          >
+          <View key={index} style={styles.card}>
             <View style={styles.statusContainer}>
               <View
                 style={[
@@ -129,9 +78,14 @@ const PickupCompleted = ({ tofilterDate }) => {
                   PICKUP COMPLETED
                 </Text>
                 <Text
-                  style={{ color: "green", fontWeight: "700", fontSize: 17 }}
+                  style={{
+                    color: "green",
+                    fontWeight: "700",
+                    fontSize: 17,
+                    marginTop: 4,
+                  }}
                 >
-                  {user.pickuparea}
+                  {user.pickuparea || "N/A"}
                 </Text>
               </View>
             </View>
@@ -144,7 +98,7 @@ const PickupCompleted = ({ tofilterDate }) => {
               <Text style={styles.value}>{user.consignorname || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Destination</Text>
+              <Text style={styles.label}>Destination:</Text>
               <Text style={styles.value}>{user.destination || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
@@ -157,93 +111,94 @@ const PickupCompleted = ({ tofilterDate }) => {
                 {user.pickupCompletedDatatime || "N/A"}
               </Text>
             </View>
-          </TouchableOpacity>
+          </View>
         ))
       )}
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    padding: 8,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#6D28D9",
+  },
   noPickups: {
     alignItems: "center",
     padding: 16,
   },
   noPickupsText: {
-    color: "#6C757D", // Adjusted color for better visibility
-    fontSize: 16, // Added font size for better readability
+    color: "#6C757D",
+    fontSize: 16,
   },
   card: {
-    backgroundColor: "#FFFFFF", // Updated color for a cleaner look
-    borderRadius: 10, // Adjusted border radius for modern look
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
     padding: 16,
     marginBottom: 16,
     shadowColor: "#000000",
-    shadowOpacity: 0.4, // Increased shadow opacity for better depth
-    shadowRadius: 1,
-    elevation: 2,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   statusContainer: {
     marginBottom: 12,
   },
   statusBadge: {
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 20, // Updated border radius for a rounded badge
+    borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   statusPending: {
-    backgroundColor: "#FEE2E2", // Light red background for pending status
+    backgroundColor: "#FEE2E2",
   },
   statusCompleted: {
-    backgroundColor: "#D1FAE5", // Light green background for completed status
+    backgroundColor: "#D1FAE5",
   },
   statusDefault: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#E2E8F0", // Light gray background for default status
+    backgroundColor: "#E2E8F0",
   },
   statusText: {
     fontWeight: "bold",
-    fontSize: 14, // Added font size for status text
+    fontSize: 14,
   },
   textPending: {
-    color: "#B91C1C", // Dark red color for pending status
+    color: "#B91C1C",
   },
   textCompleted: {
-    color: "#065F46", // Dark green color for completed status
+    color: "#065F46",
   },
   textDefault: {
-    color: "#1F2937", // Dark gray color for default status
+    color: "#1F2937",
   },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10, // Increased margin for better spacing
+    marginBottom: 8,
   },
   label: {
-    fontWeight: "600", // Updated font weight for labels
-    color: "#4B5563", // Updated color for labels
-    fontSize: 16, // Updated font size for labels
+    fontWeight: "600",
+    color: "#4B5563",
+    fontSize: 16,
   },
   value: {
-    color: "#1F2937", // Updated color for values
-    fontSize: 16, // Updated font size for values
-  },
-  picker: {
-    height: 50,
-    width: 150,
-  },
-  mapButton: {
-    backgroundColor: "#6D28D9", // Updated color for map button
-    paddingVertical: 10, // Adjusted padding for button
-    paddingHorizontal: 16,
-    borderRadius: 20, // Rounded button corners
-  },
-  mapButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "600", // Added font weight for button text
-    fontSize: 16, // Added font size for button text
+    color: "#1F2937",
+    fontSize: 16,
+    flexShrink: 1,
+    textAlign: "right",
   },
 });
 

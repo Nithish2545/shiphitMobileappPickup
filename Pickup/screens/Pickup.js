@@ -2,173 +2,66 @@ import {
   View,
   Text,
   StyleSheet,
-  ActivityIndicator,
   ScrollView,
   TouchableOpacity,
-  RefreshControl,
   TextInput,
+  Animated,
 } from "react-native";
-import { useEffect, useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Runsheet from "./Runsheet";
 import PickupCompleted from "./PickupCompleted";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { db, FIREBASE_AUTH } from "../../FirebaseConfig";
-import { signOut } from "firebase/auth";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { collection, onSnapshot } from "firebase/firestore";
 import ModalDatePicker from "react-native-modal-datetime-picker";
-import DB from "../../Utility/DB";
 import { useNavigation } from "@react-navigation/native";
 
 export default function Admin() {
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [userData, setUserData] = useState([]);
   const [error, setError] = useState("");
-  const [userName, setUserName] = useState("");
-  const [currentTab, setcurrentTab] = useState("RUN SHEET");
+  const [currentTab, setCurrentTab] = useState("RUN SHEET");
   const [selectedDate, setSelectedDate] = useState("");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [tofilterDate, settofilterdate] = useState("");
+  const [tofilterDate, setToFilterDate] = useState("");
   const navigation = useNavigation();
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [currentTab]);
+
   const handleDatePicked = (date) => {
-    const day = date.getDate(); // Get day without leading zero
-    const month = date.getMonth() + 1; // Get month (0-based index) without leading zero
-    const year = date.getFullYear(); // Get full year
-    const formattedDate = `${day}-${month}-${year}`; // Format as dd-mm-yyyy
-    settofilterdate(`${day}-${month}`);
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    const formattedDate = `${day}-${month}-${year}`;
+    setToFilterDate(`${day}-${month}`);
     setSelectedDate(formattedDate);
     setDatePickerVisibility(false);
   };
 
-  const handleSignOut = async () => {
-    await signOut(FIREBASE_AUTH)
-      .then(() => {
-        console.log("Sign-out successful.");
-      })
-      .catch((error) => {
-        console.error("Error signing out:", error);
-      });
-    await AsyncStorage.removeItem("userData");
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const local_S_userData = await AsyncStorage.getItem("userData");
-        if (local_S_userData) {
-          setUserName(JSON.parse(local_S_userData).name);
-        } else {
-          console.log("No data found for key 'userData'");
-        }
-      } catch (e) {
-        console.error("Failed to load data from AsyncStorage", e);
-      }
-    };
-    fetchData();
-  }, []);
-
-  const parsePickupDate = (pickupDatetime) => {
-    // Split date and time parts
-    const [datePart, timePart] = pickupDatetime
-      .split("&")
-      .map((part) => part.trim());
-    const [day, month] = datePart.split("-").map(Number);
-    const [hourPart, period] = timePart.split(" ").map((part) => part.trim());
-
-    // Adjust hour based on AM/PM
-    let hour = parseInt(hourPart);
-    if (period === "PM" && hour < 12) hour += 12;
-    if (period === "AM" && hour === 12) hour = 0;
-
-    // Create a new Date object
-    const date = new Date();
-    date.setDate(day);
-    date.setMonth(month - 1); // Months are 0-indexed
-    date.setHours(hour, 0, 0, 0); // Set hours, minutes, seconds, and milliseconds to 0
-
-    return date;
-  };
-
-  const fetchData = async () => {
-    const unsubscribe = onSnapshot(
-      collection(db, DB.db_collection),
-      (querySnapshot) => {
-        const sortedData = querySnapshot.docs
-          .map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }))
-          .sort((a, b) => {
-            // Convert pickupDatetime to Date objects for comparison
-            const dateA = parsePickupDate(a.pickupDatetime);
-            const dateB = parsePickupDate(b.pickupDatetime);
-            return dateA - dateB; // Sort in ascending order
-          });
-
-        setUserData(sortedData);
-      },
-      (error) => {
-        setError(`Error: ${error.message}`);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  };
-  useEffect(() => {
-    fetchData();
-    setLoading(false);
-  }, [userName]);
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchData();
-    setRefreshing(false);
-  };
-  const currentItems = userData.filter(
-    (user) =>
-      user.status === "RUN SHEET" &&
-      user.pickUpPersonName === userName &&
-      user.pickupDatetime?.includes(tofilterDate)
-  );
-  const incomingManifestItems = userData.filter(
-    (user) =>
-      (user.status === "INCOMING MANIFEST" ||
-        user.status === "PAYMENT PENDING" ||
-        user.status === "PAYMENT DONE" ||
-        user.status === "SHIPMENT CONNECTED") &&
-      user.pickUpPersonName === userName &&
-      user.pickupCompletedDatatime?.includes(tofilterDate)
-  );
   const handleTabChange = (tab) => {
-    setcurrentTab(tab);
+    setCurrentTab(tab);
+    fadeAnim.setValue(0); // Reset for animation
   };
+
   return (
     <View style={styles.container}>
       <View style={styles.signout}>
-        <View
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
-          <Text style={{ color: "black", fontWeight: "600", fontSize: 18 }}>
-            {currentTab == "INCOMING MANIFEST"
+        <View style={styles.headerTop}>
+          <Text style={styles.headerText}>
+            {currentTab === "INCOMING MANIFEST"
               ? "PICKUP COMPLETED"
               : currentTab}
           </Text>
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate("Profile");
-            }}
-          >
+          <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
             <FontAwesome5 name="user-alt" size={24} color="black" />
           </TouchableOpacity>
         </View>
-
-        <View style={{ display: "flex", flexDirection: "row", gap: 20 }}>
+        <View style={styles.dateControls}>
           <TouchableOpacity
             onPress={() => setDatePickerVisibility(true)}
             style={styles.datePickerInput}
@@ -176,22 +69,21 @@ export default function Admin() {
             <TextInput
               style={styles.datePickerText}
               value={selectedDate}
-              editable={false} // Prevent user input
-              placeholder="dd/mm/yyyy" // Set placeholder
+              editable={false}
+              placeholder="dd/mm/yyyy"
             />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.clearButton}
             onPress={() => {
-              settofilterdate("");
-              setSelectedDate(null); // Clear selected date
-              setDatePickerVisibility(false); // Close the modal
+              setToFilterDate("");
+              setSelectedDate(null);
+              setDatePickerVisibility(false);
             }}
           >
             <Text style={styles.clearButtonText}>Clear Date</Text>
           </TouchableOpacity>
         </View>
-
         <ModalDatePicker
           isVisible={isDatePickerVisible}
           mode="date"
@@ -199,78 +91,77 @@ export default function Admin() {
           onCancel={() => setDatePickerVisibility(false)}
         />
       </View>
-      {/* Navigation Tabs */}
       <View style={styles.nav}>
-        <TouchableOpacity onPress={() => handleTabChange("RUN SHEET")}>
+        <TouchableOpacity
+          style={styles.tabButton}
+          onPress={() => {
+            handleTabChange("RUN SHEET");
+          }}
+        >
           <FontAwesome5
             name="truck-pickup"
-            size={32}
+            size={24}
             color={currentTab === "RUN SHEET" ? "#8647D3" : "#A985D4"}
           />
+          <Text
+            style={[
+              styles.tabLabel,
+              currentTab === "RUN SHEET" && styles.activeTabLabel,
+            ]}
+          >
+            Run Sheet
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleTabChange("INCOMING MANIFEST")}>
+        <TouchableOpacity
+          style={styles.tabButton}
+          onPress={() => handleTabChange("INCOMING MANIFEST")}
+        >
           <Ionicons
             name="checkmark-done-circle-outline"
-            size={32}
+            size={24}
             color={currentTab === "INCOMING MANIFEST" ? "#8647D3" : "#A985D4"}
           />
+          <Text
+            style={[
+              styles.tabLabel,
+              currentTab === "INCOMING MANIFEST" && styles.activeTabLabel,
+            ]}
+          >
+            Completed
+          </Text>
         </TouchableOpacity>
       </View>
-      {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
-      ) : error ? (
-        <Text style={styles.errorText}>{error}</Text>
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
-          {currentTab === "RUN SHEET" ? (
-            <Runsheet tofilterDate={tofilterDate} userName={userName} />
-          ) : currentTab === "INCOMING MANIFEST" ? (
-            <PickupCompleted
-              tofilterDate={tofilterDate}
-              userName={userName}
-            />
-          ) : null}
-        </ScrollView>
-      )}
+      <>
+        {error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : (
+          <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+            <ScrollView
+              contentContainerStyle={styles.scrollContainer}
+              showsVerticalScrollIndicator={false}
+            >
+              {currentTab === "RUN SHEET" ? (
+                <Runsheet />
+              ) : currentTab === "INCOMING MANIFEST" ? (
+                <PickupCompleted tofilterDate={tofilterDate} />
+              ) : null}
+            </ScrollView>
+          </Animated.View>
+        )}
+      </>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  clearButton: {
-    backgroundColor: "#6200ea", // Purple button background
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  clearButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  datePickerInput: {
-    borderWidth: 1,
-    borderColor: "#8647D3",
-    borderRadius: 5,
+  container: {
+    flex: 1,
+    paddingTop: 50,
+    paddingBottom: 50,
     backgroundColor: "#fff",
-    display: "flex",
-    alignSelf: "flex-start",
-  },
-  datePickerText: {
-    color: "black",
-    fontSize: 16,
-    height: 40,
-    padding: 10,
+    position: "relative",
   },
   signout: {
-    display: "flex",
     paddingRight: 15,
     paddingLeft: 15,
     flexDirection: "column",
@@ -280,13 +171,56 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "lightgrey",
   },
-  container: {
-    flex: 1,
-    paddingTop: 0,
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  headerText: {
+    color: "black",
+    fontWeight: "600",
+    fontSize: 18,
+  },
+  dateControls: {
+    flexDirection: "row",
+    gap: 20,
+    marginTop: 10,
+  },
+  nav: {
     backgroundColor: "#fff",
-    paddingTop: 50,
-    paddingBottom: 50,
-    position: "relative",
+    position: "absolute",
+    height: 80,
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e5e5",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 10,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    zIndex: 20,
+  },
+  tabButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    flex: 1,
+  },
+  tabLabel: {
+    fontSize: 12,
+    color: "#A985D4",
+    marginTop: 4,
+  },
+  activeTabLabel: {
+    color: "#8647D3",
+    fontWeight: "600",
   },
   scrollContainer: {
     paddingBottom: 20,
@@ -299,17 +233,43 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 10,
   },
-  nav: {
-    backgroundColor: "white",
-    position: "absolute",
-    height: 80,
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-around",
+  datePickerInput: {
+    borderWidth: 1,
+    borderColor: "#8647D3",
+    borderRadius: 5,
+    backgroundColor: "#fff",
+    alignSelf: "flex-start",
+  },
+  datePickerText: {
+    color: "black",
+    fontSize: 16,
+    height: 40,
+    padding: 10,
+  },
+  clearButton: {
+    backgroundColor: "#6200ea",
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 8,
     alignItems: "center",
-    bottom: 0,
-    zIndex: 10,
-    left: 0,
-    right: 0,
+  },
+  clearButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+    elevation: 10,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#8647D3",
+    fontWeight: "600",
   },
 });
