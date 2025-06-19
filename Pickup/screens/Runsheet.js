@@ -4,45 +4,88 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   ScrollView,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import model from "../dbModel/model";
 import utility from "../../Utility/utility";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { db } from "../../FirebaseConfig";
+import { collection, onSnapshot } from "firebase/firestore";
+import DB from "../../Utility/DB";
 
 const Runsheet = () => {
   const [userData, setUserData] = useState([]);
-  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
+  const handleCardPress = (awbNumber, OtpVerified) => {
+    if (OtpVerified) {
+      navigation.navigate("PickupDetails", { awbnumber: awbNumber });
+      return;
+    }
+    Alert.alert(
+      "Action Required",
+      "Please verify your OTP before submitting pickup details."
+    );
+  };
 
-  const handleCardPress = (awbNumber) => {
-    navigation.navigate("PickupDetails", { awbnumber: awbNumber });
+  const fetchData = async () => {
+    try {
+      const local_S_userData = await AsyncStorage.getItem("userData");
+      if (local_S_userData) {
+        return JSON.parse(local_S_userData).name;
+      } else {
+        console.log("No data found for key 'userData'");
+      }
+    } catch (e) {
+      console.error("Failed to load data from AsyncStorage", e);
+    }
   };
 
   useEffect(() => {
     let unsubscribe;
     async function fetch() {
-      unsubscribe = await model.PErunsheet(
-        setUserData,
-        "run sheet",
-        setLoading
-      );
+      const filterByScreenName = ["RUN SHEET"];
+
+      try {
+        let PeName;
+        try {
+          PeName = await fetchData(); // simplified and cleaner
+          console.log("PeName", PeName);
+        } catch (error) {
+          console.log("Fetch error:", error);
+          return;
+        }
+
+        const unsubscribe = onSnapshot(
+          collection(db, DB.db_collection),
+          (querySnapshot) => {
+            const filteredAndSortedData = querySnapshot.docs
+              .map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              }))
+              .filter(
+                (item) =>
+                  filterByScreenName.includes(item.status) &&
+                  item.pickUpPersonName?.toLowerCase() === PeName?.toLowerCase()
+              );
+            setUserData(filteredAndSortedData);
+          },
+          (error) => {
+            console.log("Snapshot error:", error);
+          }
+        );
+
+        return unsubscribe; // For cleanup if needed
+      } catch (error) {
+        console.log("Unexpected error:", error);
+      }
     }
     fetch();
     return () => {
       if (unsubscribe) unsubscribe();
     };
   }, []);
-
-  if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#6D28D9" />
-        <Text style={styles.loadingText}>Fetching Runsheet</Text>
-      </View>
-    );
-  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -55,7 +98,7 @@ const Runsheet = () => {
           <TouchableOpacity
             key={index}
             style={styles.card}
-            onPress={() => handleCardPress(user.awbNumber)}
+            onPress={() => handleCardPress(user.awbNumber, user.OtpVerified)}
           >
             <View style={styles.statusContainer}>
               <View

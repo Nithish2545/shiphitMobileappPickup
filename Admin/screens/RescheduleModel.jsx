@@ -26,6 +26,8 @@ const RescheduleModel = ({
   awbNumber,
 }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [loading, setloading] = useState(false);
+
   // Generate hour values in "1:00, 2:00, ..., 12:00" format
   const hours = [...Array(12).keys()].map((n) => ({
     label: `${n + 1}`,
@@ -48,6 +50,7 @@ const RescheduleModel = ({
   };
 
   async function handleConfirm(newDatetime) {
+    setloading(true);
     try {
       const q = query(
         collection(db, DB.db_collection),
@@ -66,6 +69,8 @@ const RescheduleModel = ({
       toggleModal();
     } catch (error) {
       console.error("Error updating document:", error);
+    } finally {
+      setloading(true);
     }
   }
 
@@ -170,7 +175,9 @@ const RescheduleModel = ({
               style={styles.confirmButton}
               onPress={() => handleConfirm(formatedDateTime())}
             >
-              <Text style={styles.confirmButtonText}>Confirm</Text>
+              <Text style={styles.confirmButtonText}>
+                {loading ? "loading..." : "Confirm"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -14,7 +14,6 @@ import {
 } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 import RescheduleModel from "./RescheduleModel";
-import SwipeToConfirm from "./SwipeToConfirm";
 import axios from "axios";
 import DB from "../../Utility/DB";
 // import NotificationService from "../../Utility/NotificationService";
@@ -27,7 +26,6 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
   const [selectedPeriod, setSelectedPeriod] = useState("AM");
   const [selectedDate, setSelectedDate] = useState(null);
   const [awbnumber, setawbnumber] = useState();
-  const [confirmed, setConfirmed] = useState(false);
 
   function toggleModal(awbNumber) {
     setawbnumber(awbNumber);

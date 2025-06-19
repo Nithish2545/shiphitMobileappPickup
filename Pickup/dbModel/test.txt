@@ -1,0 +1,88 @@
+import {
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
+import DB from "../../Utility/DB";
+import { db } from "../../FirebaseConfig";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const fetchData = async () => {
+  try {
+    const local_S_userData = await AsyncStorage.getItem("userData");
+    if (local_S_userData) {
+      return JSON.parse(local_S_userData).name;
+    } else {
+      console.log("No data found for key 'userData'");
+    }
+  } catch (e) {
+    console.error("Failed to load data from AsyncStorage", e);
+  }
+};
+
+const PErunsheet = async (setUserData, screenName, setLoading) => {
+  const filterByStatus =
+    screenName === "pickupcompleted"
+      ? [
+          "INCOMING MANIFEST",
+          "PAYMENT PENDING",
+          "PAYMENT REQUESTED",
+          "PAYMENT DONE",
+          "SHIPMENT CONNECTED",
+        ]
+      : ["RUN SHEET"];
+
+  try {
+    setLoading(true);
+
+    let PeName;
+    try {
+      PeName = await fetchData();
+      if (!PeName) {
+        setLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.log("Fetch error:", error);
+      setLoading(false);
+      return;
+    }
+
+    // Construct the Firebase Query
+    const q = query(
+      collection(db, DB.db_collection),
+      where("status", "in", filterByStatus), // Filter by multiple statuses
+      where("pickUpPersonName", "==", PeName), // Filter by pickUpPersonName
+      orderBy("pickupDatetime", "desc") // Sort by pickupDatetime in descending order
+    );
+
+    const unsubscribe = onSnapshot(
+      q, // Use the constructed query 'q'
+      (querySnapshot) => {
+        const filteredAndSortedData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        // The data is already filtered and sorted by Firebase,
+        // so no need for client-side .filter() or .sort()
+        setUserData(filteredAndSortedData);
+        setLoading(false);
+      },
+      (error) => {
+        console.log("Snapshot error:", error);
+        setLoading(false);
+      }
+    );
+
+    return unsubscribe;
+  } catch (error) {
+    console.log("Unexpected error:", error);
+    setLoading(false);
+  }
+};
+export default {
+  PErunsheet: PErunsheet,
+};

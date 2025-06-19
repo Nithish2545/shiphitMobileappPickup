@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import styles from "./PickupDetails_stylesheet.js";
 import {
   View,
   Text,
   TextInput,
   Button,
-  StyleSheet,
   ActivityIndicator,
-  Alert,
   ScrollView,
   Image,
 } from "react-native";
@@ -24,8 +23,10 @@ import {
   where,
 } from "firebase/firestore";
 import * as MediaLibrary from "expo-media-library";
-import axios from "axios";
+import axios from "axios"; // axios is not explicitly used here but included in imports
 import DB from "../../Utility/DB";
+import FileInput from "../atomic_components/FileInput.js";
+import utility from "../../Utility/utility.js";
 
 const PickupDetails = () => {
   const route = useRoute();
@@ -42,16 +43,18 @@ const PickupDetails = () => {
   const [formImages, setFormImages] = useState([]);
   const [formError, setFormError] = useState("");
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState(null); // This is likely for the single image display
   const [timestamp, setTimestamp] = useState(null);
   const [metadata, setMetadata] = useState(null);
-  const [PickupersonImage, setPickupersonImage] = useState([]);
+  const [PickupersonImage, setPickupersonImage] = useState([]); // This stores the URI for upload
+
+  // New state to store the document ID for direct update
+  const [documentId, setDocumentId] = useState(null);
 
   const formatToIST = (exifDateTime) => {
-    if (!exifDateTime) return "Unknown date"; // Handle null case
-
+    if (!exifDateTime) return "Unknown date";
     const parts = exifDateTime.split(" ");
-    if (parts.length !== 2) return "Invalid date format"; // Check for the correct format
+    if (parts.length !== 2) return "Invalid date format";
 
     const [datePart, timePart] = parts;
     const [year, month, day] = datePart.split(":");
@@ -80,20 +83,16 @@ const PickupDetails = () => {
     const permissionResult = await MediaLibrary.requestPermissionsAsync();
 
     if (!permissionResult.granted) {
-      // Alert.alert(
-      //   "Permission Required",
-      //   "Permission to access the media library is required!"
-      // );
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaType.Images,
       exif: true,
     });
 
     if (!result.cancelled) {
-      setImage(result.assets[0].uri); // Ensure the correct URI is set from assets
+      setImage(result.assets[0].uri);
       if (result.assets[0].exif) {
         setMetadata(result.assets[0].exif);
         setTimestamp(
@@ -102,32 +101,31 @@ const PickupDetails = () => {
       } else {
         setTimestamp(new Date().toString());
       }
-      setPickupersonImage([result.assets[0].uri]);
+      setPickupersonImage([result.assets[0].uri]); // Store the URI for later upload
     }
   };
 
-  const uploadImage = async (uri) => {
+  // Modified to take folder and awbNumber as arguments for dynamic path
+  const uploadImage = async (uri, currentAwbNumber) => {
     if (!uri) {
-      // Alert.alert("No Image Selected", "Please select an image to upload.");
-      return;
+      return null; // Return null if no URI to prevent errors
     }
 
     const response = await fetch(uri);
-    const blob = await response.blob(); // Convert the image to a Blob
+    const blob = await response.blob();
 
     const storageRef = ref(
       storage,
-      `${awbnumber}/${"PICKUPPERSONIMAGE"}/${"Image"}`
-    ); // Create a reference in Firebase Storage
+      `${currentAwbNumber}/${"PICKUPPERSONIMAGE"}/${"Image"}`
+    );
 
     try {
-      await uploadBytes(storageRef, blob); // Upload the Blob
+      await uploadBytes(storageRef, blob);
       const url = await getDownloadURL(storageRef);
-      // Alert.alert("Success", "Image uploaded successfully!");
       return url;
     } catch (error) {
-      console.error("Upload failed:", error);
-      // Alert.alert("Upload failed", "There was an error uploading your image.");
+      console.error("Upload failed for PickupersonImage:", error);
+      throw error; // Re-throw to be caught by handleSubmit's try/catch
     }
   };
 
@@ -135,47 +133,56 @@ const PickupDetails = () => {
     setImage(null);
     setTimestamp(null);
     setMetadata(null);
+    setPickupersonImage([]); // Clear the stored URI as well
   };
 
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        // Create Firestore query
         const q = query(
           collection(db, DB.db_collection),
           where("status", "==", "RUN SHEET"),
           where("awbNumber", "==", awbnumber)
         );
 
-        // Execute query and get matching documents
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
-          const userDetails = querySnapshot.docs[0].data(); // Assuming awbNumber is unique, take the first match
+          const docData = querySnapshot.docs[0].data();
+          const docId = querySnapshot.docs[0].id; // Get the document ID
 
-          // Set state with fetched details
-          setDetails(userDetails);
-          setPickupWeight(userDetails?.pickupWeight || "");
-          setNumberOfPackages(userDetails?.numberOfPackages || 1);
+          setDetails(docData);
+          setDocumentId(docId); // Store the document ID in state
+          setPickupWeight(docData?.pickupWeight || "");
+          setNumberOfPackages(docData?.numberOfPackages || 1);
         } else {
           console.log("No data found for the provided awbNumber and status.");
         }
       } catch (error) {
         console.error("Error fetching data:", error);
+        setError("Failed to load details. Please try again."); // Set user-friendly error
       } finally {
         setLoading(false);
       }
     };
 
     fetchDetails();
-  }, []);
+  }, [awbnumber]); // Add awbnumber to dependency array
 
   const uploadFileToFirebase = async (file, folder) => {
-    const response = await fetch(file.uri);
-    const blob = await response.blob();
-    const storageRef = ref(storage, `${awbnumber}/${folder}/${file.fileName}`);
-    await uploadBytes(storageRef, blob);
-    const url = await getDownloadURL(storageRef);
-    return url;
+    try {
+      const response = await fetch(file.uri);
+      const blob = await response.blob();
+      const storageRef = ref(
+        storage,
+        `${awbnumber}/${folder}/${file.fileName}`
+      );
+      await uploadBytes(storageRef, blob);
+      const url = await getDownloadURL(storageRef);
+      return url;
+    } catch (error) {
+      console.error(`Upload failed for ${folder}/${file.fileName}:`, error);
+      throw error; // Re-throw to be caught by handleSubmit's try/catch
+    }
   };
 
   const handleFileChange = async (folder, setState) => {
@@ -183,15 +190,11 @@ const PickupDetails = () => {
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        // Alert.alert(
-        //   "Permission Required",
-        //   "We need camera roll permissions to make this work!"
-        // );
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaType.Images,
         allowsMultipleSelection: true,
         quality: 1,
       });
@@ -243,89 +246,58 @@ const PickupDetails = () => {
 
   const PickupCompletedDate = () => {
     const now = new Date();
+    const day = now.getDate();
+    const month = now.getMonth() + 1;
 
-    // Extract day and month, ensuring no leading zero
-    const day = now.getDate(); // Get day without leading zero
-    const month = now.getMonth() + 1; // Get month (0-indexed, so add 1)
-
-    // Format the time in IST with AM/PM in uppercase
     const istTime = now
       .toLocaleTimeString("en-IN", {
         timeZone: "Asia/Kolkata",
         hour: "numeric",
         hour12: true,
       })
-      .toUpperCase(); // Ensure AM/PM is uppercase
+      .toUpperCase();
 
     return `${day}-${month} &${istTime}`;
   };
-
-  async function check(consignorname, awbNumber, consignorphonenumber) {
-    const url = "https://public.doubletick.io/whatsapp/message/template";
-
-    const data = {
-      messages: [
-        {
-          content: {
-            language: "en",
-            templateData: {
-              body: {
-                placeholders: [consignorname, awbNumber],
-              },
-              buttons: [
-                {
-                  type: "URL",
-                  parameter: awbNumber,
-                },
-              ],
-            },
-            templateName: "pickupcompleted__final",
-          },
-          from: "+919600690881",
-          to: `+91${consignorphonenumber}`,
-        },
-      ],
-    };
-
-    const headers = {
-      Authorization: "key_z6hIuLo8GC",
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    };
-
-    axios
-      .post(url, data, { headers })
-      .then((response) => {
-        console.log("✅ Message sent:", response.data);
-      })
-      .catch((error) => {
-        console.error(
-          "❌ Error sending message:",
-          error.response ? error.response.data : error.message
-        );
-      });
-  }
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
     setSubmitLoading(true);
     try {
-      if (!details) {
-        throw new Error("User details not found");
+      if (!details || !documentId) {
+        throw new Error("User details or document ID not found");
       }
-      const productImageUrls = await Promise.all(
-        productImages.map((file) =>
-          uploadFileToFirebase(file, "PRODUCT IMAGES")
-        )
+
+      // 1. Prepare all image upload promises concurrently
+      const productImagePromises = productImages.map((file) =>
+        uploadFileToFirebase(file, "PRODUCT IMAGES")
       );
-      const packageWeightImageUrls = await Promise.all(
-        packageWeightImages.map((file) =>
-          uploadFileToFirebase(file, "PACKAGE WEIGHT")
-        )
+      const packageWeightImagePromises = packageWeightImages.map((file) =>
+        uploadFileToFirebase(file, "PACKAGE WEIGHT")
       );
-      const formImageUrls = await Promise.all(
-        formImages.map((file) => uploadFileToFirebase(file, "FORM IMAGES"))
+      const formImagePromises = formImages.map((file) =>
+        uploadFileToFirebase(file, "FORM IMAGES")
       );
+      const pickupPersonImagePromise = uploadImage(
+        PickupersonImage[0],
+        awbnumber
+      );
+
+      // 2. Await all image uploads in parallel
+      const [
+        productImageUrls,
+        packageWeightImageUrls,
+        formImageUrls,
+        pickupPersonImageUrl,
+      ] = await Promise.all([
+        Promise.all(productImagePromises),
+        Promise.all(packageWeightImagePromises),
+        Promise.all(formImagePromises),
+        pickupPersonImagePromise,
+      ]);
+
+      console.timeEnd("ImageUploads"); // End timer for all image uploads
+
       const updatedFields = {
         postPickupWeight: `${pickupWeight} KG`,
         postNumberOfPackages: numberOfPackages,
@@ -336,28 +308,24 @@ const PickupDetails = () => {
         FORMIMAGES: formImageUrls,
         pickupCompletedDatatime: PickupCompletedDate(),
         PickupImageTakenTime: timestamp,
-        PickupPersonImageURL: await uploadImage(PickupersonImage),
+        PickupPersonImageURL: pickupPersonImageUrl,
       };
-      const q = query(
-        collection(db, DB.db_collection),
-        where("awbNumber", "==", awbnumber)
-      );
-      const querySnapshot = await getDocs(q);
-      let final_result = [];
-      querySnapshot.forEach((doc) => {
-        final_result.push({ id: doc.id, ...doc.data() });
-      });
-      const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
-      updateDoc(docRef, updatedFields);
-      await check(
+
+      console.time("FirestoreUpdate"); // Start timer for Firestore update
+      const docRef = doc(db, DB.db_collection, documentId);
+      await updateDoc(docRef, updatedFields);
+      console.timeEnd("FirestoreUpdate"); // End timer for Firestore update
+
+      console.time("WhatsAppMessage"); // Start timer for WhatsApp message
+      await utility.sendWaMessage_PickupCompleted(
         details.consignorname,
         String(details.awbNumber),
-        String(details.consignorphonenumber)
+        String(details.consignorphonenumber),
+        String(details.awbHashedValue)
       );
 
-      // await NotificationService.sendNotification_pickupCompleted(
-      //   details.pickUpPersonName
-      // );
+      console.timeEnd("WhatsAppMessage"); // End timer for WhatsApp message
+
       navigation.navigate("Pickup");
     } catch (error) {
       handleError(error);
@@ -387,6 +355,10 @@ const PickupDetails = () => {
     setProductImages([]);
     setPackageWeightImages([]);
     setFormImages([]);
+    setImage(null); // Clear the displayed image as well
+    setTimestamp(null);
+    setMetadata(null);
+    setPickupersonImage([]); // Clear the URI for the person's image
   };
 
   if (loading) {
@@ -416,18 +388,6 @@ const PickupDetails = () => {
           <Text style={styles.backButton} onPress={handleGoBack}>
             Back
           </Text>
-          {/* <Button
-            title="Check"
-            onPress={() => {
-              check(
-                details.consignorname,
-                String(details.awbNumber),
-                String(9042489612)
-              );
-            }}
-          >
-            <Text>Check</Text>
-          </Button> */}
         </View>
         {details ? (
           <View>
@@ -590,197 +550,5 @@ const PickupDetails = () => {
     </View>
   );
 };
-
-const FileInput = ({ label, files, onAddFiles, onRemoveFile }) => (
-  <View style={styles.fileContainer}>
-    <Text style={styles.subtitle}>{label}</Text>
-    <Button title="Add Files" onPress={onAddFiles} color="#8447D6" />
-    {files.length > 0 && (
-      <View style={styles.fileList}>
-        {files.map((file, index) => (
-          <View key={index} style={styles.fileItem}>
-            <Text>{file.fileName}</Text>
-            <Button
-              title="Remove"
-              onPress={() => onRemoveFile(file.fileName)}
-              color="#8447D6"
-            />
-          </View>
-        ))}
-      </View>
-    )}
-  </View>
-);
-
-const styles = StyleSheet.create({
-  subtitle2: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#8447D6",
-    marginVertical: 8,
-    marginBottom: 10,
-  },
-  container2: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "RED", // Light background color
-    paddingTop: 10,
-    paddingBottom: 20,
-  },
-  imageContainer: {
-    alignItems: "center",
-    marginBottom: 20,
-    borderColor: "#ddd",
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-    backgroundColor: "#fff",
-    shadowColor: "#000", // Adding shadow for depth
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 5,
-  },
-  image: {
-    width: 200,
-    height: 200,
-    marginBottom: 10,
-    borderRadius: 10, // Rounded corners for the image
-    resizeMode: "cover", // Cover the area
-  },
-  buttonContainer: {
-    marginBottom: 10,
-    color: "red",
-    width: "100%",
-    backgroundColor: "#8447D6",
-    padding: 10,
-    fontSize: 18,
-  },
-  buttonContainer2: {
-    marginBottom: 10,
-    width: "100%",
-    padding: 10,
-    fontSize: 18,
-  },
-  removeButtonContainer: {
-    marginTop: 10,
-  },
-
-  increDecre: {
-    paddingLeft: 15,
-    paddingRight: 15,
-    paddingTop: 4,
-    paddingBottom: 4,
-    backgroundColor: "#8447D6",
-    borderRadius: 5, // Optional: Add border radius for a rounded button
-    alignItems: "center", // Center the text inside the button
-  },
-  buttonText: {
-    color: "#FFFFFF", // White text color
-    fontSize: 30, // Font size for the text
-  },
-  weighttext: {
-    color: "#8447D6",
-    fontSize: 18,
-    marginBottom: 10,
-    marginTop: 10,
-    fontWeight: "700",
-  },
-  container: {
-    flexGrow: 1,
-    padding: 16,
-    marginTop: 50,
-    paddingBottom: 100,
-    backgroundColor: "#F5F5F5",
-  },
-  backButton: {
-    marginBottom: 16,
-    fontSize: 20,
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#8447D6",
-    marginBottom: 16,
-  },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#8447D6",
-    marginVertical: 8,
-  },
-  detailContainer: {
-    marginBottom: 12,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  text: {
-    fontSize: 16,
-    color: "#666",
-  },
-  formContainer: {
-    marginTop: 20,
-    padding: 16,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 4,
-    padding: 8,
-    marginBottom: 12,
-    backgroundColor: "#fff",
-  },
-  quantityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  quantityInput: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 4,
-    padding: 8,
-    marginHorizontal: 8,
-    width: 60,
-    fontSize: 16,
-    textAlign: "center",
-  },
-  fileContainer: {
-    marginBottom: 20,
-  },
-  fileList: {
-    marginTop: 8,
-  },
-  fileItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  errorText: {
-    color: "red",
-    fontSize: 16,
-    marginTop: 12,
-  },
-});
 
 export default PickupDetails;

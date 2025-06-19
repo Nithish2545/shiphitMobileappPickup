@@ -45,7 +45,12 @@ export default function Admin() {
 
   const handleTabChange = (tab) => {
     setCurrentTab(tab);
-    fadeAnim.setValue(0); // Reset for animation
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
   };
 
   return (
@@ -144,7 +149,17 @@ export default function Admin() {
                 <Runsheet />
               ) : currentTab === "INCOMING MANIFEST" ? (
                 <PickupCompleted tofilterDate={tofilterDate} />
-              ) : null}
+              ) : (
+                <View>
+                  <Text>Null</Text>
+                  <Text>Null</Text>
+                  <Text>Null</Text>
+                  <Text>Null</Text>
+                  <Text>Null</Text>
+                  <Text>Null</Text>
+                  {console.log("null")}
+                </View>
+              )}
             </ScrollView>
           </Animated.View>
         )}

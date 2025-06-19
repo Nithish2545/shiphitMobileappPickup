@@ -321,50 +321,80 @@ export default function Admin() {
         />
       </View>
       <View style={styles.nav}>
-        {/* <TouchableOpacity
-          style={styles.buttonSpace}
-          onPress={() => handleTabChange("ALL SHIPMENTS")}
+        <TouchableOpacity
+          onPress={() => handleTabChange("RUN SHEET")}
+          style={styles.navItem}
         >
-          <MaterialCommunityIcons
-            name="view-list"
-            size={32}
-            color={currentTab === "ALL SHIPMENTS" ? "#8647D3" : "#A985D4"}
-          />
-        </TouchableOpacity> */}
-        <TouchableOpacity onPress={() => handleTabChange("RUN SHEET")}>
           <FontAwesome5
             name="running"
-            size={32}
+            size={24} // Slightly smaller for better text pairing
             color={currentTab === "RUN SHEET" ? "#8647D3" : "#A985D4"}
           />
+          <Text
+            style={[
+              styles.navText,
+              currentTab === "RUN SHEET" && styles.navTextActive,
+            ]}
+          >
+            Run Sheet
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleTabChange("INCOMING MANIFEST")}>
+
+        <TouchableOpacity
+          onPress={() => handleTabChange("INCOMING MANIFEST")}
+          style={styles.navItem}
+        >
           <MaterialCommunityIcons
             name="warehouse"
-            size={32}
+            size={24}
             color={currentTab === "INCOMING MANIFEST" ? "#8647D3" : "#A985D4"}
           />
+          <Text
+            style={[
+              styles.navText,
+              currentTab === "INCOMING MANIFEST" && styles.navTextActive,
+            ]}
+          >
+            Incoming
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleTabChange("PAYMENT PENDING")}>
+
+        <TouchableOpacity
+          onPress={() => handleTabChange("PAYMENT PENDING")}
+          style={styles.navItem}
+        >
           <MaterialIcons
             name="pending-actions"
-            size={32}
+            size={24}
             color={currentTab === "PAYMENT PENDING" ? "#8647D3" : "#A985D4"}
           />
+          <Text
+            style={[
+              styles.navText,
+              currentTab === "PAYMENT PENDING" && styles.navTextActive,
+            ]}
+          >
+            Pending
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleTabChange("PAYMENT DONE")}>
+
+        <TouchableOpacity
+          onPress={() => handleTabChange("PAYMENT DONE")}
+          style={styles.navItem}
+        >
           <Ionicons
             name="checkmark-done-circle"
-            size={32}
+            size={24}
             color={currentTab === "PAYMENT DONE" ? "#8647D3" : "#A985D4"}
           />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleTabChange("SHIPMENT CONNECTED")}>
-          <MaterialIcons
-            name="flight"
-            size={32}
-            color={currentTab === "SHIPMENT CONNECTED" ? "#8647D3" : "#A985D4"}
-          />
+          <Text
+            style={[
+              styles.navText,
+              currentTab === "PAYMENT DONE" && styles.navTextActive,
+            ]}
+          >
+            Done
+          </Text>
         </TouchableOpacity>
       </View>
       {loading ? (
@@ -403,12 +433,6 @@ export default function Admin() {
           ) : currentTab === "PAYMENT DONE" ? (
             <PaymentDone
               userData={paymentDone}
-              datetime={tofilterDate}
-              awbnumberSearch={awbnumber}
-              FromNumber={FromNumber}
-            />
-          ) : currentTab === "SHIPMENT CONNECTED" ? (
-            <ShipmentConnected
               datetime={tofilterDate}
               awbnumberSearch={awbnumber}
               FromNumber={FromNumber}
@@ -485,14 +509,40 @@ const styles = StyleSheet.create({
   nav: {
     backgroundColor: "white",
     position: "absolute",
-    height: 80,
-    display: "flex",
+    height: 70, // Slightly reduced height to fit text better, adjust as needed
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
     bottom: 0,
-    zIndex: 10,
     left: 0,
     right: 0,
+    // Add some visual flair
+    borderTopLeftRadius: 20, // Rounded top-left corner
+    borderTopRightRadius: 20, // Rounded top-right corner
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -3, // Shadow pointing upwards
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 10, // For Android shadow
+    paddingHorizontal: 10, // Add some horizontal padding
+    zIndex: 20,
+  },
+  navItem: {
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1, // Distribute space evenly
+    paddingVertical: 8, // Padding for better touch target
+  },
+  navText: {
+    fontSize: 12, // Smaller font size for labels
+    marginTop: 4, // Space between icon and text
+    color: "#A985D4", // Default text color
+    fontWeight: "bold",
+  },
+  navTextActive: {
+    color: "#8647D3", // Active text color
   },
 });

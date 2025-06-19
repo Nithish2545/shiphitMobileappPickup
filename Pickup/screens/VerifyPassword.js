@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -15,24 +15,26 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 import DB from "../../Utility/DB";
 
-export default function VerifyPassword({ docID, awbnumber }) {
+export default function VerifyPassword() {
+  const route = useRoute();
+  const docID = route.params.docId;
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
-  const route = useRoute();
-  console.log("docId vwerify", docID);
   const handleChange = (text) => {
     const numericValue = text.replace(/[^0-9]/g, "");
     setOtp(numericValue);
   };
-
   const handleGetOtp = async () => {
+    console.log("verify OTP docID", docID);
+
     if (otp.length !== 6) {
       Alert.alert("Invalid OTP", "Please enter a valid 6-digit OTP.");
       return;
     }
 
     setLoading(true);
+
     try {
       const docRef = doc(db, DB.db_collection, docID);
       const docSnap = await getDoc(docRef);

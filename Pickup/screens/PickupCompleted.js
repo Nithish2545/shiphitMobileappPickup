@@ -7,43 +7,80 @@ import {
   ScrollView,
 } from "react-native";
 import model from "../dbModel/model";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../../FirebaseConfig";
+import DB from "../../Utility/DB";
 
 const PickupCompleted = () => {
   const [userData, setUserData] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      const local_S_userData = await AsyncStorage.getItem("userData");
+      if (local_S_userData) {
+        return JSON.parse(local_S_userData).name;
+      } else {
+        console.log("No data found for key 'userData'");
+      }
+    } catch (e) {
+      console.error("Failed to load data from AsyncStorage", e);
+    }
+  };
 
   useEffect(() => {
     let unsubscribe;
+    async function fetchRunsheetData() {
+      const filterByScreenName = [
+        "INCOMING MANIFEST",
+        "PAYMENT PENDING",
+        "PAYMENT REQUESTED",
+        "PAYMENT DONE",
+        "SHIPMENT CONNECTED",
+      ];
 
-    async function fetchData() {
       try {
-        setLoading(true); // Start loading
-        unsubscribe = await model.PErunsheet(
-          setUserData,
-          "pickupcompleted",
-          setLoading
+        let PeName;
+        try {
+          PeName = await fetchData(); // simplified and cleaner
+          console.log("PeName", PeName);
+        } catch (error) {
+          console.log("Fetch error:", error);
+          return;
+        }
+
+        const unsubscribe = onSnapshot(
+          collection(db, DB.db_collection),
+          (querySnapshot) => {
+            const filteredAndSortedData = querySnapshot.docs
+              .map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              }))
+              .filter(
+                (item) =>
+                  filterByScreenName.includes(item.status) &&
+                  item.pickUpPersonName?.toLowerCase() === PeName?.toLowerCase()
+              );
+            setUserData(filteredAndSortedData);
+          },
+          (error) => {
+            console.log("Snapshot error:", error);
+          }
         );
+
+        return unsubscribe; // For cleanup if needed
       } catch (error) {
-        console.error("Error fetching runsheet:", error);
-        setLoading(false); // Ensure loading stops on error
+        console.log("Unexpected error:", error);
       }
     }
 
-    fetchData();
+    fetchRunsheetData();
 
     return () => {
-      if (unsubscribe) unsubscribe(); // Clean up Firestore listener
+      if (unsubscribe) unsubscribe();
     };
-  }, []);
-
-  if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#6D28D9" />
-        <Text style={styles.loadingText}>Fetching Completed</Text>
-      </View>
-    );
-  }
+  }, []); // Dependency on tofilterDate and onLoadingChange
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

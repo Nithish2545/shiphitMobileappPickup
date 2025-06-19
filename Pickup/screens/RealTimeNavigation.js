@@ -7,6 +7,7 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
+  Platform,
 } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { useNavigation } from "@react-navigation/native";
@@ -18,14 +19,15 @@ import { useRoute } from "@react-navigation/native";
 import VerifyPassword from "./VerifyPassword";
 import DB from "../../Utility/DB";
 import utility from "../../Utility/utility";
+import * as Location from "expo-location"; // Import expo-location
 
 export default function RealTimeNavigation() {
   const navigation = useNavigation();
   const mapRef = useRef(null);
   const route = useRoute();
   const {
-    latitude,
-    longitude,
+    latitude, // This is the destination latitude from route.params
+    longitude, // This is the destination longitude from route.params
     awbnumber,
     docId,
     consignorphonenumber,
@@ -35,21 +37,38 @@ export default function RealTimeNavigation() {
 
   console.log("docId test", docId);
   const [routeCoordinates, setRouteCoordinates] = useState([]);
-  const [userLocation, setUserLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState(null); // Current user's GPS location
   const [navigationStarted, setNavigationStarted] = useState(false);
   const [otpsent, setotpsent] = useState(false);
   const [distance, setDistance] = useState(null);
   const [duration, setDuration] = useState(null);
-  const [isModalVisible, setModalVisible] = useState(false); // Modal visibility state
-  const [isReachedConfirmed, setReachedConfirmed] = useState(false); // Reached button confirmation state
-  const startPoint = { latitude: 12.9911, longitude: 80.2183 };
-  const destinationPoint = { latitude: 13.0227, longitude: 80.2025 };
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [isReachedConfirmed, setReachedConfirmed] = useState(false);
 
-  const GOOGLE_MAPS_APIKEY = "AIzaSyB_sePfGC7khG1CVlY87cTc4qNUnFsMS5Q"; // <-- your key
+  // The fixed destination point from route params
+  const destinationPoint = {
+    latitude: parseFloat(latitude),
+    longitude: parseFloat(longitude),
+  };
 
-  const fetchRoute = async () => {
+  // A default initial point for map display BEFORE user's location is known.
+  // This could be a central hub, or even the destination itself for initial overview.
+  // Let's use the origin point from your original hardcoded values for clarity initially.
+  // This point will be used as the *origin* for the route calculation if userLocation isn't ready.
+  const defaultInitialOrigin = { latitude: 12.9911, longitude: 80.2183 };
+
+  const Maps_APIKEY = "AIzaSyB_sePfGC7khG1CVlY87cTc4qNUnFsMS5Q"; // <-- your key
+
+  // Function to fetch the route from an origin to the destination
+  const fetchRoute = async (originPoint) => {
+    if (!originPoint || !destinationPoint) {
+      console.log("Cannot fetch route: origin or destination missing.");
+      return;
+    }
+
     try {
-      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${startPoint.latitude},${startPoint.longitude}&destination=${destinationPoint.latitude},${destinationPoint.longitude}&mode=driving&key=${GOOGLE_MAPS_APIKEY}`;
+      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${originPoint.latitude},${originPoint.longitude}&destination=${destinationPoint.latitude},${destinationPoint.longitude}&mode=driving&key=${Maps_APIKEY}`;
+      // console.log("Directions API URL:", url);
       const response = await axios.get(url);
 
       if (response.data.routes.length) {
@@ -66,9 +85,20 @@ export default function RealTimeNavigation() {
         const routeLeg = response.data.routes[0].legs[0];
         setDistance(routeLeg.distance.text);
         setDuration(routeLeg.duration.text);
+
+        // Fit map to show the entire route
+        if (mapRef.current) {
+          mapRef.current.fitToCoordinates(routePath, {
+            edgePadding: { top: 100, right: 50, bottom: 100, left: 50 }, // Adjusted padding for controls
+            animated: true,
+          });
+        }
       } else {
         console.error("No routes found:", response.data);
-        Alert.alert("Error", "No route found");
+        Alert.alert(
+          "Error",
+          "No route found from your current location to destination."
+        );
       }
     } catch (error) {
       console.error("Error fetching directions:", error);
@@ -76,25 +106,86 @@ export default function RealTimeNavigation() {
     }
   };
 
+  // Effect to handle location permissions and continuous updates
   useEffect(() => {
-    fetchRoute();
-  }, []);
+    let locationSubscription;
 
-  const handleUserLocationChange = (event) => {
-    const { latitude, longitude, heading } = event.nativeEvent.coordinate;
-    setUserLocation({ latitude, longitude });
+    const setupLocationTracking = async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Denied",
+          "Location access is required for real-time navigation. Please enable it in your device settings."
+        );
+        return;
+      }
 
-    // If navigation has started, animate the camera to follow the user
-    if (navigationStarted && mapRef.current) {
-      mapRef.current.animateCamera({
-        center: { latitude, longitude },
-        heading: heading || 0, // Heading represents the direction the user is facing
-        pitch: 45, // 45 degree tilt for 3D effect
-        zoom: 18, // Zoom level
-        duration: 500, // Smooth transition duration (ms)
+      // Get initial single position immediately
+      let initialPosition = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Highest,
       });
-    }
-  };
+      const initialLocation = {
+        latitude: initialPosition.coords.latitude,
+        longitude: initialPosition.coords.longitude,
+        heading: initialPosition.coords.heading || 0,
+      };
+      setUserLocation(initialLocation);
+      fetchRoute(initialLocation);
+
+      // Then, start watching user's position for continuous updates
+      locationSubscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.Highest,
+          distanceInterval: 10, // Update every 10 meters
+          timeInterval: 1000, // **MODIFIED: Update every 1 second for smoother tracking**
+        },
+        (position) => {
+          const { latitude, longitude, heading } = position.coords;
+          const newLocation = { latitude, longitude, heading: heading || 0 };
+          setUserLocation(newLocation);
+
+          // Animate camera to follow the user if navigation has started
+          if (navigationStarted && mapRef.current) {
+            mapRef.current.animateCamera({
+              center: { latitude, longitude },
+              heading: heading || 0,
+              pitch: 60, // **MODIFIED: Increased pitch for better 3D view**
+              zoom: 17, // **MODIFIED: Adjusted zoom for a better driver's view**
+              duration: 1000, // **MODIFIED: Smoother animation over 1 second**
+            });
+          }
+        }
+      );
+    };
+
+    setupLocationTracking();
+
+    // Cleanup function
+    return () => {
+      if (locationSubscription) {
+        locationSubscription.remove();
+      }
+    };
+  }, [navigationStarted]); // Dependency is correct
+
+  // Effect to listen for changes in Firebase docId (RideStarted, OtpSent)
+  useEffect(() => {
+    if (!docId) return;
+
+    const docRef = doc(db, DB.db_collection, docId);
+
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setNavigationStarted(data.RideStarted);
+        setotpsent(data.OtpSent);
+      } else {
+        console.log("No such document!");
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup Firebase listener
+  }, [docId]);
 
   const sendTemplateMessage = async () => {
     try {
@@ -145,54 +236,26 @@ export default function RealTimeNavigation() {
 
   const handleStartNavigation = async () => {
     try {
+      if (!userLocation) {
+        Alert.alert(
+          "Location Error",
+          "Still getting your current location. Please wait a moment."
+        );
+        return;
+      }
       const pickupDocRef = doc(db, DB.db_collection, docId);
       await updateDoc(pickupDocRef, {
         RideStarted: true,
       });
-      if (!userLocation) {
-        Alert.alert("Location Error", "Waiting for your current location...");
-        return;
-      }
-
-      // Once navigation starts, center the map on the user's current location
-      if (mapRef.current) {
-        mapRef.current.animateCamera({
-          center: {
-            latitude: userLocation.latitude,
-            longitude: userLocation.longitude,
-          },
-          pitch: 45,
-          heading: 0,
-          zoom: 18,
-          duration: 500,
-        });
-      }
+      // Camera animation will be handled by the watchPositionAsync callback due to navigationStarted update
       await sendTemplateMessage();
     } catch (error) {
-      console.log("error", error);
+      console.log("error starting navigation:", error);
     }
   };
-  useEffect(() => {
-    if (!docId) return; // Exit if no docId
-
-    const docRef = doc(db, DB.db_collection, docId);
-
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setNavigationStarted(data.RideStarted); // Set RideStarted field value
-        setotpsent(data.OtpSent);
-      } else {
-        console.log("No such document!");
-      }
-    });
-
-    // Cleanup listener when component unmounts
-    return () => unsubscribe();
-  }, [docId]);
 
   const handleReachedPress = () => {
-    setModalVisible(true); // Show the confirmation modal when "Reached" is clicked
+    setModalVisible(true);
   };
 
   const sendOTPMessage = async (otp) => {
@@ -240,7 +303,6 @@ export default function RealTimeNavigation() {
     }
   };
 
-  // Example usage
   const handleConfirmReached = async () => {
     try {
       function generateOTP() {
@@ -255,39 +317,59 @@ export default function RealTimeNavigation() {
       });
 
       await sendOTPMessage(otp);
-      navigation.navigate("verifyotp"); // Navigate to "verifyotp" screen
-      setReachedConfirmed(true); // Set the "Reached" status as confirmed
-      setModalVisible(false); // Close the modal
+      console.log("realt time ", docId);
+      navigation.navigate("verifyotp", {
+        docId: docId,
+      });
+      setReachedConfirmed(true);
+      setModalVisible(false);
     } catch (error) {
       console.log(error);
     }
   };
 
   const handleCancelReached = () => {
-    setModalVisible(false); // Close the modal without confirming
+    setModalVisible(false);
   };
+
+  // Determine the initial region for the map view
+  const initialMapRegion = userLocation
+    ? {
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        latitudeDelta: 0.005, // Zoomed in on user
+        longitudeDelta: 0.005,
+      }
+    : {
+        // Fallback to default origin, suitable for showing an initial route overview
+        latitude: defaultInitialOrigin.latitude,
+        longitude: defaultInitialOrigin.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      };
 
   return (
     <View style={styles.container}>
       {!otpsent ? (
-        <View>
+        <View style={{ flex: 1 }}>
           <MapView
             ref={mapRef}
             style={styles.map}
             showsUserLocation
-            followsUserLocation={true}
-            onUserLocationChange={handleUserLocationChange}
-            initialRegion={{
-              latitude: startPoint.latitude,
-              longitude: startPoint.longitude,
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
-            }}
+            followsUserLocation={navigationStarted} // Only follow user when navigation has started
+            initialRegion={initialMapRegion}
           >
-            {/* Start Marker */}
-            <Marker coordinate={startPoint} title="Start Point" />
             {/* Destination Marker */}
             <Marker coordinate={destinationPoint} title="Destination" />
+            {/* Origin Marker (optional, if you want to show the initial origin) */}
+            {/* This could be userLocation if it's available, or the defaultInitialOrigin */}
+            {userLocation && (
+              <Marker
+                coordinate={userLocation}
+                title="Your Current Location"
+                pinColor="blue"
+              />
+            )}
             {/* Route Polyline */}
             {routeCoordinates.length > 0 && (
               <Polyline
@@ -299,7 +381,6 @@ export default function RealTimeNavigation() {
           </MapView>
 
           <View style={styles.controlsContainer}>
-            {/* Distance and Duration */}
             {distance && duration && (
               <View style={styles.infoContainer}>
                 <Text style={styles.infoText}>Distance: {distance}</Text>
@@ -322,8 +403,8 @@ export default function RealTimeNavigation() {
             ) : (
               <TouchableOpacity
                 onPress={handleReachedPress}
-                style={[styles.navButton, { backgroundColor: "green" }]} // Initially disabled
-                disabled={isReachedConfirmed} // Disable the button until confirmed
+                style={[styles.navButton, { backgroundColor: "green" }]}
+                disabled={isReachedConfirmed}
               >
                 <Text style={styles.buttonText}>Reached</Text>
               </TouchableOpacity>
@@ -445,5 +526,18 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 6,
     textAlign: "center",
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: "#e0e0e0",
+  },
+  loadingText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: "#333",
   },
 });

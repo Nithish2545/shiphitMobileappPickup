@@ -19,7 +19,7 @@ const Profile = () => {
   const { overview } = route.params;
 
   const profile = {
-    version: "v1.0.6",
+    version: "v2.0.0",
   };
 
   useEffect(() => {
@@ -46,32 +46,26 @@ const Profile = () => {
   const statusCards = [
     {
       label: "Run Sheet",
-      value: overview["RUN SHEET"],
+      value: overview["RUN SHEET"] ? overview["RUN SHEET"] : 0,
       bgColor: "#fee2e2",
       textColor: "#b91c1c",
     },
     {
       label: "Warehouse",
-      value: overview["INCOMING MANIFEST"],
+      value: overview["INCOMING MANIFEST"] ? overview["INCOMING MANIFEST"] : 0,
       bgColor: "#fef3c7",
       textColor: "#92400e",
     },
     {
       label: "Payment Pending",
-      value: overview["PAYMENT PENDING"],
+      value: overview["PAYMENT PENDING"] ? overview["PAYMENT PENDING"] : 0,
       bgColor: "#dbeafe",
       textColor: "#1e3a8a",
     },
     {
       label: "NOT CONNECTED",
-      value: overview["PAYMENT DONE"],
+      value: overview["PAYMENT DONE"] ? overview["PAYMENT DONE"] : 0,
       bgColor: "#e5e7eb",
-      textColor: "#374151",
-    },
-    {
-      label: "SHIPMENT CONNECTED",
-      value: overview["SHIPMENT CONNECTED"],
-      bgColor: "#F3E8FF",
       textColor: "#374151",
     },
   ];

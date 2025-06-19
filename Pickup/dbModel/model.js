@@ -37,6 +37,7 @@ const fetchData = async () => {
     console.error("Failed to load data from AsyncStorage", e);
   }
 };
+
 const PErunsheet = async (setUserData, screenName, setLoading) => {
   const filterByScreenName =
     screenName === "pickupcompleted"
@@ -58,6 +59,7 @@ const PErunsheet = async (setUserData, screenName, setLoading) => {
     } catch (error) {
       console.log("Fetch error:", error);
       setLoading(false); // In case fetch fails
+      console.timeEnd("PErunsheetExecution"); // End timer on error
       return;
     }
 
@@ -82,10 +84,12 @@ const PErunsheet = async (setUserData, screenName, setLoading) => {
 
         setUserData(filteredAndSortedData);
         setLoading(false); // ✅ Done loading after data is set
+        console.timeEnd("PErunsheetExecution"); // End the timer here after data is processed and set
       },
       (error) => {
         console.log("Snapshot error:", error);
         setLoading(false); // Error while listening
+        console.timeEnd("PErunsheetExecution"); // End timer on error
       }
     );
 
@@ -93,9 +97,9 @@ const PErunsheet = async (setUserData, screenName, setLoading) => {
   } catch (error) {
     console.log("Unexpected error:", error);
     setLoading(false);
+    console.timeEnd("PErunsheetExecution"); // End timer on unexpected error
   }
 };
-
 export default {
   PErunsheet: PErunsheet,
 };

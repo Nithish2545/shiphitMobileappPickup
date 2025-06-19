@@ -13,7 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
 
 const PEProfile = () => {
-  const profile = { version: "v1.0.3" };
+  const profile = { version: "v2.0.0" };
   const [user, setUser] = useState({});
 
   const handleSignOut = async () => {
