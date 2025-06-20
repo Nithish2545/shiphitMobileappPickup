@@ -80,26 +80,26 @@ const PickupDetails = () => {
   };
 
   const pickImage = async () => {
-    // const permissionResult = await MediaLibrary.requestPermissionsAsync();
-    // if (!permissionResult.granted) {
-    //   return;
-    // }
-    // const result = await ImagePicker.launchImageLibraryAsync({
-    //   mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    //   exif: true,
-    // });
-    // if (!result.cancelled) {
-    //   setImage(result.assets[0].uri);
-    //   if (result.assets[0].exif) {
-    //     setMetadata(result.assets[0].exif);
-    //     setTimestamp(
-    //       formatToIST(result.assets[0].exif.DateTime) || "Unknown date"
-    //     );
-    //   } else {
-    //     setTimestamp(new Date().toString());
-    //   }
-    //   setPickupersonImage([result.assets[0].uri]); // Store the URI for later upload
-    // }
+    const permissionResult = await MediaLibrary.requestPermissionsAsync();
+    if (!permissionResult.granted) {
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      exif: true,
+    });
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+      if (result.assets[0].exif) {
+        setMetadata(result.assets[0].exif);
+        setTimestamp(
+          formatToIST(result.assets[0].exif.DateTime) || "Unknown date"
+        );
+      } else {
+        setTimestamp(new Date().toString());
+      }
+      setPickupersonImage([result.assets[0].uri]); // Store the URI for later upload
+    }
   };
 
   // Modified to take folder and awbNumber as arguments for dynamic path
@@ -227,11 +227,11 @@ const PickupDetails = () => {
       setFormError("You must upload between 1 to 2 form images.");
       return false;
     }
-    
-    // if (PickupersonImage.length === 0 || PickupersonImage.length > 1) {
-    //   setFormError("Picture Is Required!");
-    //   return false;
-    // }
+
+    if (PickupersonImage.length === 0 || PickupersonImage.length > 1) {
+      setFormError("Picture Is Required!");
+      return false;
+    }
 
     if (!pickupWeight || !numberOfPackages) {
       setFormError("Pickup weight and number of packages are required.");

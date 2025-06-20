@@ -35,13 +35,6 @@ export default function App() {
       }
     );
 
-    // Handle background messages
-    const backgroundMessageHandler = messaging().setBackgroundMessageHandler(
-      async (remoteMessage) => {
-        console.log("Message handled in the background:", remoteMessage);
-      }
-    );
-
     // Handle foreground notifications
     const onMessageListener = messaging().onMessage(async (remoteMessage) => {
       console.log("Foreground Notification:", remoteMessage);
@@ -64,11 +57,29 @@ export default function App() {
       });
     });
 
+    // ✅ Token refresh listener added (no modification to your existing code)
+    const onTokenRefreshListener = messaging().onTokenRefresh(
+      async (newToken) => {
+        console.log("Token refreshed:", newToken);
+        try {
+          const userData = await AsyncStorage.getItem("userData");
+          const user = JSON.parse(userData);
+          if (user?.email) {
+            await NotificationService.fetchAndStoreToken(user.email);
+            console.log("Refreshed token stored successfully.");
+          }
+        } catch (e) {
+          console.log("Error storing refreshed token:", e.message);
+        }
+      }
+    );
+
     // Cleanup listeners when the component unmounts
     return () => {
       console.log("Cleaning up listeners...");
       onNotificationOpenedAppListener();
       onMessageListener();
+      onTokenRefreshListener(); // cleanup token refresh listener
       // setBackgroundMessageHandler does not require cleanup
     };
   }, []);

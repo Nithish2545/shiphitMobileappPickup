@@ -16,7 +16,7 @@ import { db } from "../../FirebaseConfig";
 import RescheduleModel from "./RescheduleModel";
 import axios from "axios";
 import DB from "../../Utility/DB";
-// import NotificationService from "../../Utility/NotificationService";
+import NotificationService from "../../Utility/NotificationService";
 import utility from "../../Utility/utility";
 const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
   const [userData, setUserData] = useState([]);
@@ -163,7 +163,9 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
     awbNumber,
     pickupPerson,
     pickupDatetime,
-    consignorphonenumber
+    consignorphonenumber,
+    consignorname,
+    pickuparea
   ) => {
     if (pickupPerson == "Unassigned") {
       return;
@@ -191,12 +193,12 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
         Hour_min,
         String(consignorphonenumber)
       );
-      // await NotificationService.sendNotification(
-      //   pickupPerson,
-      //   consignorname,
-      //   pickuparea,
-      //   pickupDatetime
-      // );
+      await NotificationService.sendNotification(
+        pickupPerson,
+        consignorname,
+        pickuparea,
+        pickupDatetime
+      );
     } catch (error) {
       console.error("Error updating document:", error);
     }
@@ -280,7 +282,9 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
                       user.awbNumber,
                       pickupPerson,
                       user.pickupDatetime,
-                      user.consignorphonenumber
+                      user.consignorphonenumber,
+                      user.consignorname,
+                      user.pickuparea
                     )
                   }
                 >
