@@ -79,29 +79,6 @@ const PickupDetails = () => {
     return `${formattedDate} ${formattedTime}`;
   };
 
-  const pickImage = async () => {
-    const permissionResult = await MediaLibrary.requestPermissionsAsync();
-    if (!permissionResult.granted) {
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      exif: true,
-    });
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-      if (result.assets[0].exif) {
-        setMetadata(result.assets[0].exif);
-        setTimestamp(
-          formatToIST(result.assets[0].exif.DateTime) || "Unknown date"
-        );
-      } else {
-        setTimestamp(new Date().toString());
-      }
-      setPickupersonImage([result.assets[0].uri]); // Store the URI for later upload
-    }
-  };
-
   // Modified to take folder and awbNumber as arguments for dynamic path
   const uploadImage = async (uri, currentAwbNumber) => {
     if (!uri) {
@@ -179,6 +156,33 @@ const PickupDetails = () => {
     } catch (error) {
       console.error(`Upload failed for ${folder}/${file.fileName}:`, error);
       throw error; // Re-throw to be caught by handleSubmit's try/catch
+    }
+  };
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      exif: true,
+    });
+
+    if (!result.canceled) {
+      console.log("result", result.assets[0].uri);
+
+      setImage(result.assets[0].uri);
+      if (result.assets[0].exif) {
+        setMetadata(result.assets[0].exif);
+        setTimestamp(
+          formatToIST(result.assets[0].exif.DateTime) || "Unknown date"
+        );
+      } else {
+        setTimestamp(new Date().toString());
+      }
+      setPickupersonImage([result.assets[0].uri]); // Store the URI for later upload
     }
   };
 
@@ -266,7 +270,6 @@ const PickupDetails = () => {
         throw new Error("User details or document ID not found");
       }
 
-      // 1. Prepare all image upload promises concurrently
       const productImagePromises = productImages.map((file) =>
         uploadFileToFirebase(file, "PRODUCT IMAGES")
       );
@@ -281,7 +284,6 @@ const PickupDetails = () => {
         awbnumber
       );
 
-      // 2. Await all image uploads in parallel
       const [
         productImageUrls,
         packageWeightImageUrls,
@@ -293,8 +295,6 @@ const PickupDetails = () => {
         Promise.all(formImagePromises),
         pickupPersonImagePromise,
       ]);
-
-      console.timeEnd("ImageUploads"); // End timer for all image uploads
 
       const updatedFields = {
         postPickupWeight: `${pickupWeight} KG`,
@@ -309,12 +309,9 @@ const PickupDetails = () => {
         PickupPersonImageURL: pickupPersonImageUrl,
       };
 
-      console.time("FirestoreUpdate"); // Start timer for Firestore update
       const docRef = doc(db, DB.db_collection, documentId);
       await updateDoc(docRef, updatedFields);
-      console.timeEnd("FirestoreUpdate"); // End timer for Firestore update
 
-      console.time("WhatsAppMessage"); // Start timer for WhatsApp message
       await utility.sendWaMessage_PickupCompleted(
         details.consignorname,
         String(details.awbNumber),
@@ -322,11 +319,10 @@ const PickupDetails = () => {
         String(details.awbHashedValue)
       );
 
-      console.timeEnd("WhatsAppMessage"); // End timer for WhatsApp message
-
       navigation.navigate("Pickup");
     } catch (error) {
       handleError(error);
+      console.log(error);
     } finally {
       setSubmitLoading(false);
       resetForm();
@@ -359,6 +355,7 @@ const PickupDetails = () => {
     setPickupersonImage([]); // Clear the URI for the person's image
   };
 
+  console.log("PickupersonImage", PickupersonImage);
   if (loading) {
     return (
       <View style={styles.center}>

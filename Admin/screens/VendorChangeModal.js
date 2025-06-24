@@ -71,6 +71,7 @@ const VendorChangeModal = ({
                 <Picker.Item label="DHL" value="DHL" />
                 <Picker.Item label="ARAMEX" value="ARAMEX" />
                 <Picker.Item label="FedEx" value="FedEx" />
+                <Picker.Item label="ExPlus" value="ExPlus" />
               </Picker>
             </View>
           )}
