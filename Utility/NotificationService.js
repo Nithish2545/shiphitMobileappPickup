@@ -128,7 +128,9 @@ async function sendNotification_pickupCompleted(pickupPersonName) {
       title: "Pickup Completed",
       body: `The pickup has been successfully completed.\n\n👷 Pickup Person: ${pickupPersonName}\n\nPlease review the details in the app. Thank you.`,
       image: "",
+      sound: "default", // use "default" if the custom sound is named in channel
       link: "",
+      channelId: "default",
     })
     .then((result) => {})
     .catch((e) => {

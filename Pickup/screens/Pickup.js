@@ -150,15 +150,7 @@ export default function Admin() {
               ) : currentTab === "INCOMING MANIFEST" ? (
                 <PickupCompleted tofilterDate={tofilterDate} />
               ) : (
-                <View>
-                  <Text>Null</Text>
-                  <Text>Null</Text>
-                  <Text>Null</Text>
-                  <Text>Null</Text>
-                  <Text>Null</Text>
-                  <Text>Null</Text>
-                  {console.log("null")}
-                </View>
+                ""
               )}
             </ScrollView>
           </Animated.View>

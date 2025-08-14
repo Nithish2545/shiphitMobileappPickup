@@ -59,7 +59,8 @@
     "react-native-screens": "^4.4.0",
     "react-native-swipe-button": "^0.0.4",
     "react-native-web": "^0.19.13",
-    "styled-components": "^6.1.13"
+    "styled-components": "^6.1.13",
+    "expo-av": "~15.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",

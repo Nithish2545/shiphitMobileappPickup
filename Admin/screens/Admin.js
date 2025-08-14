@@ -13,7 +13,6 @@ import Runsheet from "./Runsheet";
 import Incomingmanifest from "../screens/IncomingManifest";
 import PaymentDone from "../screens/PaymentDone";
 import PaymentPending from "../screens/PaymentPending";
-import ShipmentConnected from "../screens/ShipmentConnected";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -24,6 +23,10 @@ import { collection, onSnapshot } from "firebase/firestore"; // Import Firestore
 import ModalDatePicker from "react-native-modal-datetime-picker";
 import DB from "../../Utility/DB";
 import { useNavigation } from "@react-navigation/native";
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
+import { Alert } from "react-native";
+import { configureNotificationChannel } from "../../Utility/configureNotificationChannel";
 
 export default function Admin() {
   const [loading, setLoading] = useState(false);
@@ -39,6 +42,32 @@ export default function Admin() {
   const [FromNumber, setFromNumber] = useState("");
   const [overview, setoverview] = useState("");
   const [pickupPersons, setPickupPersons] = useState(["Unassigned"]);
+
+  useEffect(() => {
+    requestPermission();
+    configureNotificationChannel();
+  }, []);
+
+  async function requestPermission() {
+    if (!Device.isDevice) {
+      Alert.alert("Push notifications only work on a physical device");
+      return;
+    }
+
+    const { status: existingStatus } =
+      await Notifications.getPermissionsAsync();
+    if (existingStatus !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Notification permission not granted");
+      } else {
+        console.log("Notification permission granted ✅");
+      }
+    } else {
+      console.log("Notification permission already granted ✅");
+    }
+  }
+
   useEffect(() => {
     const unsubscribe = onSnapshot(
       collection(db, "OpsPickupLoginCredentials"),

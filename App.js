@@ -25,7 +25,6 @@ import Profile from "./Admin/screens/Profile";
 import PEProfile from "./Pickup/screens/PEProfile";
 export default function App() {
   useEffect(() => {
-    // Handle when the app is opened from a notification
     const onNotificationOpenedAppListener = messaging().onNotificationOpenedApp(
       (remoteMessage) => {
         console.log(
@@ -34,11 +33,9 @@ export default function App() {
         );
       }
     );
-
     // Handle foreground notifications
     const onMessageListener = messaging().onMessage(async (remoteMessage) => {
       console.log("Foreground Notification:", remoteMessage);
-
       // Display the notification in the foreground
       Notifications.setNotificationHandler({
         handleNotification: async () => ({
