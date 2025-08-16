@@ -6,7 +6,6 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import model from "../dbModel/model";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
@@ -14,6 +13,7 @@ import DB from "../../Utility/DB";
 
 const PickupCompleted = () => {
   const [userData, setUserData] = useState([]);
+  const [loading, setLoading] = useState(true); // 👈 new loading state
 
   const fetchData = async () => {
     try {
@@ -42,14 +42,15 @@ const PickupCompleted = () => {
       try {
         let PeName;
         try {
-          PeName = await fetchData(); // simplified and cleaner
+          PeName = await fetchData();
           console.log("PeName", PeName);
         } catch (error) {
           console.log("Fetch error:", error);
+          setLoading(false);
           return;
         }
 
-        const unsubscribe = onSnapshot(
+        unsubscribe = onSnapshot(
           collection(db, DB.db_collection),
           (querySnapshot) => {
             const filteredAndSortedData = querySnapshot.docs
@@ -62,16 +63,18 @@ const PickupCompleted = () => {
                   filterByScreenName.includes(item.status) &&
                   item.pickUpPersonName?.toLowerCase() === PeName?.toLowerCase()
               );
+
             setUserData(filteredAndSortedData);
+            setLoading(false); // 👈 done loading
           },
           (error) => {
             console.log("Snapshot error:", error);
+            setLoading(false);
           }
         );
-
-        return unsubscribe; // For cleanup if needed
       } catch (error) {
         console.log("Unexpected error:", error);
+        setLoading(false);
       }
     }
 
@@ -80,11 +83,16 @@ const PickupCompleted = () => {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, []); // Dependency on tofilterDate and onLoadingChange
+  }, []);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {userData?.length === 0 ? (
+      {loading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#6D28D9" />
+          <Text style={styles.loadingText}>Loading pickups...</Text>
+        </View>
+      ) : userData?.length === 0 ? (
         <View style={styles.noPickups}>
           <Text style={styles.noPickupsText}>No pickups available</Text>
         </View>
@@ -126,6 +134,7 @@ const PickupCompleted = () => {
                 </Text>
               </View>
             </View>
+
             <View style={styles.infoRow}>
               <Text style={styles.label}>AWB No:</Text>
               <Text style={styles.value}>{user.awbNumber || "N/A"}</Text>

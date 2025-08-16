@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import utility from "../../Utility/utility";
@@ -16,7 +17,9 @@ import DB from "../../Utility/DB";
 
 const Runsheet = () => {
   const [userData, setUserData] = useState([]);
+  const [loading, setLoading] = useState(true); // 👈 loading state
   const navigation = useNavigation();
+
   const handleCardPress = (awbNumber, OtpVerified) => {
     if (OtpVerified) {
       navigation.navigate("PickupDetails", { awbnumber: awbNumber });
@@ -45,18 +48,18 @@ const Runsheet = () => {
     let unsubscribe;
     async function fetch() {
       const filterByScreenName = ["RUN SHEET"];
-
       try {
         let PeName;
         try {
-          PeName = await fetchData(); // simplified and cleaner
+          PeName = await fetchData();
           console.log("PeName", PeName);
         } catch (error) {
           console.log("Fetch error:", error);
+          setLoading(false); // stop loading on error
           return;
         }
 
-        const unsubscribe = onSnapshot(
+        unsubscribe = onSnapshot(
           collection(db, DB.db_collection),
           (querySnapshot) => {
             const filteredAndSortedData = querySnapshot.docs
@@ -69,19 +72,22 @@ const Runsheet = () => {
                   filterByScreenName.includes(item.status) &&
                   item.pickUpPersonName?.toLowerCase() === PeName?.toLowerCase()
               );
+
             setUserData(filteredAndSortedData);
+            setLoading(false); // 👈 mark loading complete
           },
           (error) => {
             console.log("Snapshot error:", error);
+            setLoading(false);
           }
         );
-
-        return unsubscribe; // For cleanup if needed
       } catch (error) {
         console.log("Unexpected error:", error);
+        setLoading(false);
       }
     }
     fetch();
+
     return () => {
       if (unsubscribe) unsubscribe();
     };
@@ -89,7 +95,12 @@ const Runsheet = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {userData.length === 0 ? (
+      {loading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#6D28D9" />
+          <Text style={styles.loadingText}>Loading pickups...</Text>
+        </View>
+      ) : userData.length === 0 ? (
         <View style={styles.noPickups}>
           <Text style={styles.noPickupsText}>No pickups available</Text>
         </View>

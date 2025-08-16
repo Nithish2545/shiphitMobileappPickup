@@ -1,0 +1,1 @@
+export default { version: "v2.1.0" };

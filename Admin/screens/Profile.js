@@ -12,15 +12,14 @@ import { signOut } from "firebase/auth";
 import { useRoute } from "@react-navigation/native";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import version from "../../Utility/version";
 
 const Profile = () => {
   const [user, setuser] = useState({});
   const route = useRoute();
   const { overview } = route.params;
 
-  const profile = {
-    version: "v2.0.0",
-  };
+  const profile = version;
 
   useEffect(() => {
     const fetchUserRole = async () => {

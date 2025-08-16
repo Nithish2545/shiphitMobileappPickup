@@ -57,7 +57,7 @@ export default function RealTimeNavigation() {
   // This point will be used as the *origin* for the route calculation if userLocation isn't ready.
   const defaultInitialOrigin = { latitude: 12.9911, longitude: 80.2183 };
 
-  const Maps_APIKEY = "AIzaSyB_sePfGC7khG1CVlY87cTc4qNUnFsMS5Q"; // <-- your key
+  const Maps_APIKEY = "AIzaSyCjEIen7lQp3OHfR0FBhKhIaewFREad6Rg"; // <-- your key
 
   // Function to fetch the route from an origin to the destination
   const fetchRoute = async (originPoint) => {

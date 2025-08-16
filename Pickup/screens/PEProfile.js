@@ -11,9 +11,10 @@ import {
 import { signOut } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
+import version from "../../Utility/version";
 
 const PEProfile = () => {
-  const profile = { version: "v2.0.0" };
+  const profile = version;
   const [user, setUser] = useState({});
 
   const handleSignOut = async () => {

@@ -134,7 +134,7 @@ function VendorDetails() {
     };
     const updatedFields = {
       vendorName: finalVendor,
-      vendorAwbnumber: vendorAwbnumber,
+      vendorAwbnumber: vendorAwbnumber.toUpperCase(),
       status: "SHIPMENT CONNECTED",
       packageConnectedDataTime: PickupCompletedDate(),
       AWbNumberImage: await uploadImage(finalWeightImage), // Upload image and store URL
