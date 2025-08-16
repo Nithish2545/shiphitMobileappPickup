@@ -107,7 +107,7 @@ async function sendNotification(
     .post("https://shiphit-backend.onrender.com/sendNotification", {
       to: token,
       title: "New Pickup Request",
-      body: `🚨 You have a new pickup request:\n\n📍 Location: ${pickuparea}\n👤 Client: ${consignorname}\n🕒 Time: ${pickupDatetime}\n\n➡️ Please review the details and proceed.`,
+      body: `The pickup has been successfully completed.\n\n👷 Pickup Person: ${pickupPersonName}\n\nPlease review the details in the app. Thank you.`,
       image: "",
       link: "",
     })
