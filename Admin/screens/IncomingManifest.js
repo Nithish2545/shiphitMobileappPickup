@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Linking,
+  Alert,
 } from "react-native";
 import { db } from "../../FirebaseConfig";
 import DB from "../../Utility/DB";
@@ -69,11 +70,9 @@ const Runsheet = ({ datetime, awbnumberSearch, FromNumber }) => {
             return String(data.awbNumber || "").startsWith(awbnumberSearch);
           })
           .filter((data) => {
-            // If the awbnumber is empty, return all data without filtering by awbNumber
             if (FromNumber === "") {
               return true; // This will return all data
             }
-            // Otherwise, filter by awbnumber
             return String(data.consignorphonenumber || "").startsWith(
               FromNumber
             );
@@ -82,38 +81,41 @@ const Runsheet = ({ datetime, awbnumberSearch, FromNumber }) => {
             const dateA = parseDateTime(a.pickupDatetime);
             const dateB = parseDateTime(b.pickupDatetime);
             return dateB - dateA; // Ascending
-          }); // Filter based on status; // Map through documents to get data
+          });
         setuserData(sortedData);
-        // You can call a function here if needed
-        // fetchAssignments(); // Fetch assignments
       },
       (error) => {
         console.error("Error fetching documents:", error);
       }
     );
 
-    // Cleanup the listener on component unmount
     return () => unsubscribe();
   };
 
   useEffect(() => {
-    fetchData(); // Fetch data initially
+    fetchData();
   }, [datetime, awbnumberSearch, FromNumber]);
 
   const navigation = useNavigation();
 
-  const handleCardPress = (awbNumber) => {
-    // Handle card press action
+  const handleCardPress = (awbNumber, WHReached) => {
+    if (!WHReached) {
+      Alert.alert(
+        "Please swipe to confirm! before submitting",
+        "Reached warehouse ?",
+        [{ text: "OK", onPress: () => console.log("OK Pressed") }]
+      );
+      return;
+    }
     navigation.navigate("IncomingManifestDetails", { awbnumber: awbNumber });
   };
 
   const CardDetails = (awbNumber) => {
-    // Handle card press action
     navigation.navigate("CardDetails", { awbnumber: awbNumber });
   };
 
   const makeCall = (number) => {
-    Linking.openURL(`tel:+91${number}`); // Replace with the desired Indian phone number
+    Linking.openURL(`tel:+91${number}`);
   };
 
   async function sendPickupArrivedMessage(
@@ -185,7 +187,7 @@ const Runsheet = ({ datetime, awbnumberSearch, FromNumber }) => {
             <TouchableOpacity
               key={index}
               // style={styles.card}
-              onPress={() => handleCardPress(user.awbNumber)}
+              onPress={() => handleCardPress(user.awbNumber, user.WHReached)}
             >
               <View style={styles.statusContainer}>
                 <View

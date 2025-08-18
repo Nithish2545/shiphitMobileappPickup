@@ -9,6 +9,7 @@ import {
   Image,
   ScrollView,
   SafeAreaView,
+  Alert,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
@@ -27,6 +28,7 @@ import {
 import axios from "axios";
 import DB from "../../Utility/DB";
 import VendorChangeModal from "./VendorChangeModal";
+import validateAwbNumber from "../../Utility/validateAwbNumber";
 
 function VendorDetails() {
   const route = useRoute();
@@ -132,6 +134,7 @@ function VendorDetails() {
       const downloadURL = await getDownloadURL(storageRef); // Get the download URL
       return downloadURL; // Return the URL
     };
+
     const updatedFields = {
       vendorName: finalVendor,
       vendorAwbnumber: vendorAwbnumber.toUpperCase(),
@@ -139,6 +142,7 @@ function VendorDetails() {
       packageConnectedDataTime: PickupCompletedDate(),
       AWbNumberImage: await uploadImage(finalWeightImage), // Upload image and store URL
     };
+
     const q = query(
       collection(db, DB.db_collection),
       where("awbNumber", "==", awbnumber)
@@ -413,6 +417,7 @@ function VendorDetails() {
         finalsubmit={finalsubmit}
         isSubmitting={isSubmitting}
         setIsSubmitting={setIsSubmitting}
+        vendorAwbnumber={vendorAwbnumber}
       />
     </ScrollView>
   );
