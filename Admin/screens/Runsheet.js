@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Picker } from "@react-native-picker/picker"; // Ensure you are using the correct Picker library
+import { Picker } from "@react-native-picker/picker";
 import { Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -8,7 +8,9 @@ import {
   doc,
   getDocs,
   onSnapshot,
+  orderBy,
   query,
+  Timestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -18,6 +20,7 @@ import axios from "axios";
 import DB from "../../Utility/DB";
 import NotificationService from "../../Utility/NotificationService";
 import utility from "../../Utility/utility";
+import formatFirestoreTimestamp from "../../Utility/formatFirestoreTimestamp";
 const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
   const [userData, setUserData] = useState([]);
   const navigation = useNavigation();
@@ -75,79 +78,68 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
       });
   }
 
-  useEffect(() => {
-    utility.convertToTimeOnly("16-4-2025 &1 AM");
-  }, []);
-
-  function parseDateTime(pickupDatetime) {
-    // Remove "&" and extra spaces
-    const cleaned = pickupDatetime.replace("&", "").trim();
-
-    // Match pattern like "11-4-2025 1 PM"
-    const parts = cleaned.split(/\s+/);
-
-    if (parts.length < 3) return new Date(0); // Fallback for bad formats
-
-    const [dayStr, monthStr, yearStr] = parts[0].split("-");
-    const [hourStr, ampm] = [parts[1], parts[2]];
-
-    const day = parseInt(dayStr, 10);
-    const month = parseInt(monthStr, 10);
-    const year = parseInt(yearStr, 10);
-    let hour = parseInt(hourStr, 10);
-
-    if (ampm === "PM" && hour !== 12) hour += 12;
-    if (ampm === "AM" && hour === 12) hour = 0;
-
-    return new Date(year, month - 1, day, hour);
-  }
-
   const fetchData = () => {
+    let startTimestamp = null;
+    let endTimestamp = null;
+
+    if (datetime) {
+      const dateObj = new Date(datetime);
+      const startDate = new Date(dateObj.setHours(0, 0, 0, 0));
+      const endDate = new Date(dateObj.setHours(23, 59, 59, 999));
+      startTimestamp = Timestamp.fromDate(startDate);
+      endTimestamp = Timestamp.fromDate(endDate);
+    } else {
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+      const today = new Date();
+      const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+
+      startTimestamp = Timestamp.fromDate(oneMonthAgo);
+      endTimestamp = Timestamp.fromDate(endOfToday);
+    }
+
+    let q;
+    if (datetime) {
+      q = query(
+        collection(db, DB.db_collection),
+        where("pickupDatetime", ">=", startTimestamp),
+        where("pickupDatetime", "<=", endTimestamp),
+        orderBy("pickupDatetime", "desc")
+      );
+    } else {
+      q = query(
+        collection(db, DB.db_collection),
+        where("pickupDatetime", ">=", startTimestamp),
+        where("pickupDatetime", "<=", endTimestamp), // ✅ added
+        orderBy("pickupDatetime", "desc")
+      );
+    }
+
     const unsubscribe = onSnapshot(
-      collection(db, DB.db_collection),
+      q,
       (querySnapshot) => {
-        // Filter documents where status is "RUN SHEET"
         const sortedData = querySnapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
           .filter((data) => {
-            // If the awbnumber is empty, return all data without filtering by awbNumber
-            if (awbnumber === "") {
-              return true; // This will return all data
-            }
-            // Otherwise, filter by awbnumber
+            if (awbnumber === "") return true;
             return String(data.awbNumber || "").startsWith(awbnumberSearch);
           })
           .filter((data) => {
-            // If the awbnumber is empty, return all data without filtering by awbNumber
-            if (FromNumber === "") {
-              return true; // This will return all data
-            }
-            // Otherwise, filter by awbnumber
+            if (FromNumber === "") return true;
             return String(data.consignorphonenumber || "").startsWith(
               FromNumber
             );
           })
-          .filter(
-            (data) =>
-              data.status === "RUN SHEET" &&
-              data.pickupDatetime.startsWith(datetime)
-          )
-          .sort((a, b) => {
-            const dateA = parseDateTime(a.pickupDatetime);
-            const dateB = parseDateTime(b.pickupDatetime);
-            return dateB - dateA; // Ascending
-          });
-
-        // Filter based on status
+          .filter((data) => data.status === "RUN SHEET");
 
         setUserData(sortedData);
-        // If you have a function named parsePickupDateTime, call it here
       },
       (error) => {
-        console.error(`Error fetching data: ${error.message}`); // Log error if any
+        console.error(`Error fetching data: ${error.message}`);
       }
     );
-    // Cleanup the listener on component unmount
+
     return () => unsubscribe();
   };
 
@@ -175,24 +167,30 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
         collection(db, DB.db_collection),
         where("awbNumber", "==", awbNumber)
       );
+
       const querySnapshot = await getDocs(q);
       let final_result = [];
+
       querySnapshot.forEach((doc) => {
         final_result.push({ id: doc.id, ...doc.data() });
       });
-      const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
+
+      const docRef = doc(db, DB.db_collection, final_result[0].id);
       const Hour_min = utility.convertToTimeOnly(pickupDatetime);
+
       const pickupPersonCaps =
         pickupPerson.charAt(0).toUpperCase() + pickupPerson.slice(1);
-      // Update the document with the new pickUpPersonName
+
       await updateDoc(docRef, {
         pickUpPersonName: pickupPerson,
       });
+
       await PEassigned(
         pickupPersonCaps,
         Hour_min,
         String(consignorphonenumber)
       );
+
       await NotificationService.sendNotification(
         pickupPerson,
         consignorname,
@@ -303,12 +301,10 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Pickup DateTime:</Text>
-                <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
+                <Text style={styles.value}>
+                  {formatFirestoreTimestamp(user?.pickupDatetime) || "N/A"}
+                </Text>
               </View>
-              {/* {["Pondy", "Coimbatore", "Others"].includes(user.City) && (
-                <SwipeToConfirm onSwipe={() => console.log("Swiped!")} />
-              )} */}
-
               <View style={styles.infoRow}>
                 <TouchableOpacity
                   style={styles.mapButton}

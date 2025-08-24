@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,75 +7,76 @@ import {
   Linking,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { collection, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  Timestamp,
+  where,
+} from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 import DB from "../../Utility/DB";
-// Removed Picker import since it is commented out
+import formatFirestoreTimestamp from "../../Utility/formatFirestoreTimestamp";
 
 const PaymentDone = ({ datetime, awbnumberSearch, FromNumber }) => {
   const [userData, setuserData] = useState([]);
-  function parseDateTime(pickupDatetime) {
-    // Remove "&" and extra spaces
-    const cleaned = pickupDatetime.replace("&", "").trim();
 
-    // Match pattern like "11-4-2025 1 PM"
-    const parts = cleaned.split(/\s+/);
-
-    if (parts.length < 3) return new Date(0); // Fallback for bad formats
-
-    const [dayStr, monthStr, yearStr] = parts[0].split("-");
-    const [hourStr, ampm] = [parts[1], parts[2]];
-
-    const day = parseInt(dayStr, 10);
-    const month = parseInt(monthStr, 10);
-    const year = parseInt(yearStr, 10);
-    let hour = parseInt(hourStr, 10);
-
-    if (ampm === "PM" && hour !== 12) hour += 12;
-    if (ampm === "AM" && hour === 12) hour = 0;
-
-    return new Date(year, month - 1, day, hour);
-  }
   const fetchData = () => {
-    const unsubscribe = onSnapshot(
+    let startTimestamp = null;
+    let endTimestamp = null;
+
+    if (datetime) {
+      // ✅ If a specific date is selected
+      const dateObj = new Date(datetime);
+      const startDate = new Date(dateObj.setHours(0, 0, 0, 0));
+      const endDate = new Date(dateObj.setHours(23, 59, 59, 999));
+      startTimestamp = Timestamp.fromDate(startDate);
+      endTimestamp = Timestamp.fromDate(endDate);
+    } else {
+      // ✅ Default to last 30 days
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+      const today = new Date();
+      const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+
+      startTimestamp = Timestamp.fromDate(oneMonthAgo);
+      endTimestamp = Timestamp.fromDate(endOfToday);
+    }
+
+    // ✅ Firestore query: only "PAYMENT DONE" in the time range
+    const q = query(
       collection(db, DB.db_collection),
+      where("status", "==", "PAYMENT DONE"),
+      where("pickupDatetime", ">=", startTimestamp),
+      where("pickupDatetime", "<=", endTimestamp),
+      orderBy("pickupDatetime", "desc")
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
       (querySnapshot) => {
-        // Filter documents where status is "RUN SHEET"
         const sortedData = querySnapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() })) // Map through documents to get data
-          .filter((data) => data.status === "PAYMENT DONE")
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
           .filter((data) => {
-            // If the awbnumber is empty, return all data without filtering by awbNumber
-            if (awbnumberSearch === "") {
-              return true; // This will return all data
-            }
-            // Otherwise, filter by awbnumber
+            if (awbnumberSearch === "") return true;
             return String(data.awbNumber || "").startsWith(awbnumberSearch);
           })
           .filter((data) => {
-            // If the awbnumber is empty, return all data without filtering by awbNumber
-            if (FromNumber === "") {
-              return true; // This will return all data
-            }
-            // Otherwise, filter by awbnumber
+            if (FromNumber === "") return true;
             return String(data.consignorphonenumber || "").startsWith(
               FromNumber
             );
-          })
-          .filter((data) => data.pickupDatetime?.includes(datetime))
-          .sort((a, b) => {
-            const dateA = parseDateTime(a.pickupDatetime);
-            const dateB = parseDateTime(b.pickupDatetime);
-            return dateB - dateA; // Ascending
-          }); // Filter based on status
+          });
+
         setuserData(sortedData);
-        // If you have a function named parsePickupDateTime, call it here
       },
       (error) => {
-        console.error(`Error fetching data: ${error.message}`); // Log error if any
+        console.error(`Error fetching data: ${error.message}`);
       }
     );
-    // Cleanup the listener on component unmount
+
     return () => unsubscribe();
   };
 
@@ -173,12 +174,12 @@ const PaymentDone = ({ datetime, awbnumberSearch, FromNumber }) => {
                 {user.actualWeight + " " + "KG" || "N/A"}
               </Text>
             </View>
-
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup Datetime</Text>
-              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
+              <Text style={styles.value}>
+                {formatFirestoreTimestamp(user.pickupDatetime) || "N/A"}
+              </Text>
             </View>
-
             <View
               style={{
                 display: "flex",

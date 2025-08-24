@@ -13,6 +13,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import DB from "../../Utility/DB";
+import convertToFirebaseTimestamp from "../../Utility/convertToFirebaseTimestamp";
 
 const RescheduleModel = ({
   isModalVisible,
@@ -61,14 +62,12 @@ const RescheduleModel = ({
       querySnapshot.forEach((doc) => {
         final_result.push({ id: doc.id, ...doc.data() });
       });
-      const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
-      // Update the document with the new pickUpPersonName
+      const docRef = doc(db, DB.db_collection, final_result[0].id);
       await updateDoc(docRef, {
-        pickupDatetime: newDatetime,
+        pickupDatetime: convertToFirebaseTimestamp(newDatetime),
       });
       toggleModal();
     } catch (error) {
-      console.error("Error updating document:", error);
     } finally {
       setloading(true);
     }
@@ -76,7 +75,6 @@ const RescheduleModel = ({
 
   return (
     <View style={styles.container}>
-      {/* Modal */}
       <Modal
         isVisible={isModalVisible}
         onBackdropPress={() => toggleModal(awbNumber)}

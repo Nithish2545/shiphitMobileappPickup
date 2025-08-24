@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { collection, onSnapshot } from "firebase/firestore";
-import { db } from "../../FirebaseConfig";
+import formatFirestoreTimestamp from "../../Utility/formatFirestoreTimestamp";
 
 const Allshipments = ({ userData }) => {
   const navigation = useNavigation();
@@ -86,7 +84,9 @@ const Allshipments = ({ userData }) => {
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Pickup DateTime:</Text>
-                <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
+                <Text style={styles.value}>
+                  {formatFirestoreTimestamp(user.pickupDatetime) || "N/A"}
+                </Text>
               </View>
               <View style={styles.infoRow}>
                 <TouchableOpacity style={styles.status}>

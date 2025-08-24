@@ -14,6 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db } from "../../FirebaseConfig";
 import { collection, onSnapshot } from "firebase/firestore";
 import DB from "../../Utility/DB";
+import formatFirestoreTimestamp from "../../Utility/formatFirestoreTimestamp";
 
 const Runsheet = () => {
   const [userData, setUserData] = useState([]);
@@ -158,7 +159,9 @@ const Runsheet = () => {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup DateTime:</Text>
-              <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
+              <Text style={styles.value}>
+                {formatFirestoreTimestamp(user.pickupDatetime) || "N/A"}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Pickup Address:</Text>
@@ -179,7 +182,7 @@ const Runsheet = () => {
                   user.OtpVerified && styles.disabledButton,
                 ]}
                 disabled={user.OtpVerified}
-                onPress={() =>
+                onPress={() => 
                   utility.handleOpenMap(
                     user.latitude,
                     user.longitude,

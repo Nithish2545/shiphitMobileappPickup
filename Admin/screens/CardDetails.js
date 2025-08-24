@@ -12,6 +12,7 @@ import {
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 import DB from "../../Utility/DB";
+import formatFirestoreTimestamp from "../../Utility/formatFirestoreTimestamp";
 
 function CardDetails() {
   const route = useRoute();
@@ -124,7 +125,7 @@ function CardDetails() {
           </Text>
           <Text style={styles.item}>
             <Text style={styles.label}>Pickup Date & Time: </Text>
-            {details.pickupDatetime}
+            {formatFirestoreTimestamp(details.pickupDatetime)}
           </Text>
         </View>
 
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 16,
-    paddingTop: 20,
+    paddingTop: 40,
     backgroundColor: "#f5f5f5",
   },
   title: {

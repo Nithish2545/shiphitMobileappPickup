@@ -4,11 +4,14 @@ import {
   doc,
   getDocs,
   onSnapshot,
+  orderBy,
   query,
+  Timestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+
 import {
   View,
   Text,
@@ -21,38 +24,40 @@ import { db } from "../../FirebaseConfig";
 import DB from "../../Utility/DB";
 import SwipeToConfirm from "./SwipeToConfirm";
 import axios from "axios";
+import formatFirestoreTimestamp from "../../Utility/formatFirestoreTimestamp";
 
 const Runsheet = ({ datetime, awbnumberSearch, FromNumber }) => {
   const [userData, setuserData] = useState([]);
 
-  function parseDateTime(pickupDatetime) {
-    // Remove "&" and extra spaces
-    const cleaned = pickupDatetime.replace("&", "").trim();
-
-    // Match pattern like "11-4-2025 1 PM"
-    const parts = cleaned.split(/\s+/);
-
-    if (parts.length < 3) return new Date(0); // Fallback for bad formats
-
-    const [dayStr, monthStr, yearStr] = parts[0].split("-");
-    const [hourStr, ampm] = [parts[1], parts[2]];
-
-    const day = parseInt(dayStr, 10);
-    const month = parseInt(monthStr, 10);
-    const year = parseInt(yearStr, 10);
-    let hour = parseInt(hourStr, 10);
-
-    if (ampm === "PM" && hour !== 12) hour += 12;
-    if (ampm === "AM" && hour === 12) hour = 0;
-
-    return new Date(year, month - 1, day, hour);
-  }
-
   const fetchData = () => {
-    // Create a query to filter documents where status is "INCOMING MANIFEST"
+    let startTimestamp = null;
+    let endTimestamp = null;
+
+    if (datetime) {
+      const dateObj = new Date(datetime);
+      const startDate = new Date(dateObj.setHours(0, 0, 0, 0));
+      const endDate = new Date(dateObj.setHours(23, 59, 59, 999));
+      startTimestamp = Timestamp.fromDate(startDate);
+      endTimestamp = Timestamp.fromDate(endDate);
+    } else {
+      // ✅ Default to last 30 days
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+      const today = new Date();
+      const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+
+      startTimestamp = Timestamp.fromDate(oneMonthAgo);
+      endTimestamp = Timestamp.fromDate(endOfToday);
+    }
+
+    // ✅ Build query with status + date range
     const q = query(
       collection(db, DB.db_collection),
-      where("status", "==", "INCOMING MANIFEST") // Add condition to filter by status
+      where("status", "==", "INCOMING MANIFEST"),
+      where("pickupDatetime", ">=", startTimestamp),
+      where("pickupDatetime", "<=", endTimestamp),
+      orderBy("pickupDatetime", "desc")
     );
 
     const unsubscribe = onSnapshot(
@@ -60,35 +65,23 @@ const Runsheet = ({ datetime, awbnumberSearch, FromNumber }) => {
       (querySnapshot) => {
         const sortedData = querySnapshot.docs
           .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter((data) => data.pickupDatetime?.startsWith(datetime))
           .filter((data) => {
-            // If the awbnumber is empty, return all data without filtering by awbNumber
-            if (awbnumberSearch === "") {
-              return true; // This will return all data
-            }
-            // Otherwise, filter by awbnumber
+            if (awbnumberSearch === "") return true;
             return String(data.awbNumber || "").startsWith(awbnumberSearch);
           })
           .filter((data) => {
-            if (FromNumber === "") {
-              return true; // This will return all data
-            }
+            if (FromNumber === "") return true;
             return String(data.consignorphonenumber || "").startsWith(
               FromNumber
             );
-          })
-          .sort((a, b) => {
-            const dateA = parseDateTime(a.pickupDatetime);
-            const dateB = parseDateTime(b.pickupDatetime);
-            return dateB - dateA; // Ascending
           });
+
         setuserData(sortedData);
       },
       (error) => {
         console.error("Error fetching documents:", error);
       }
     );
-
     return () => unsubscribe();
   };
 
@@ -241,17 +234,17 @@ const Runsheet = ({ datetime, awbnumberSearch, FromNumber }) => {
                 <Text style={styles.label}>Destination:</Text>
                 <Text style={styles.value}>{user.destination || "N/A"}</Text>
               </View>
-
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Post Pickup Weight:</Text>
                 <Text style={styles.value}>
                   {user.postPickupWeight || "N/A"}
                 </Text>
               </View>
-
               <View style={styles.infoRow}>
                 <Text style={styles.label}>Pickup Datetime:</Text>
-                <Text style={styles.value}>{user.pickupDatetime || "N/A"}</Text>
+                <Text style={styles.value}>
+                  {formatFirestoreTimestamp(user.pickupDatetime) || "N/A"}
+                </Text>
               </View>
               <View
                 style={{

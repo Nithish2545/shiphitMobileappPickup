@@ -33,7 +33,6 @@ export default function Admin() {
   const [userData, setUserData] = useState([]);
   const [error, setError] = useState("");
   const [userRole, setUserRole] = useState(null);
-  const [assignments, setAssignments] = useState({});
   const [refreshing, setRefreshing] = useState(false); // Add refreshing state
   const [selectedDate, setSelectedDate] = useState("");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
@@ -95,7 +94,9 @@ export default function Admin() {
     const month = date.getMonth() + 1; // Get month (0-based index) without leading zero
     const year = date.getFullYear(); // Get full year
     const formattedDate = `${day}-${month}-${year}`; // Format as dd-mm-yyyy
-    settofilterdate(`${day}-${month}`);
+    const selectedDates = new Date(`${year}-${month}-${day}`);
+    selectedDates.setHours(0, 0, 0, 0);
+    settofilterdate(selectedDates.toString());
     setSelectedDate(formattedDate);
     setDatePickerVisibility(false);
   };
@@ -115,29 +116,6 @@ export default function Admin() {
   // ALL SHIPMENTS
 
   const [currentTab, setcurrentTab] = useState("RUN SHEET");
-
-  function parseDateTime(pickupDatetime) {
-    // Remove "&" and extra spaces
-    const cleaned = pickupDatetime.replace("&", "").trim();
-
-    // Match pattern like "11-4-2025 1 PM"
-    const parts = cleaned.split(/\s+/);
-
-    if (parts.length < 3) return new Date(0); // Fallback for bad formats
-
-    const [dayStr, monthStr, yearStr] = parts[0].split("-");
-    const [hourStr, ampm] = [parts[1], parts[2]];
-
-    const day = parseInt(dayStr, 10);
-    const month = parseInt(monthStr, 10);
-    const year = parseInt(yearStr, 10);
-    let hour = parseInt(hourStr, 10);
-
-    if (ampm === "PM" && hour !== 12) hour += 12;
-    if (ampm === "AM" && hour === 12) hour = 0;
-
-    return new Date(year, month - 1, day, hour);
-  }
 
   const onRefresh = async () => {
     setRefreshing(true); // Start refreshing
@@ -169,8 +147,6 @@ export default function Admin() {
           ...doc.data(),
         })); // Map through documents to get data
         setUserData(sortedData);
-        // If you have a function named parsePickupDateTime, call it here
-        // fetchAssignments(); // Fetch assignments
       },
       (error) => {
         setError(`Error: ${error.message}`);
@@ -187,61 +163,15 @@ export default function Admin() {
     setLoading(false); // Set loading to false after fetching data
   }, [userRole]);
 
-  // Filter data based on STATUS
-  const AllShipments = userData
-    .filter((data) => {
-      // If the awbnumber is empty, return all data without filtering by awbNumber
-      if (awbnumber === "") {
-        return true; // This will return all data
-      }
-      // Otherwise, filter by awbnumber
-      return String(data.awbNumber || "").startsWith(awbnumber);
-    })
-    .filter((data) => {
-      // If the awbnumber is empty, return all data without filtering by awbNumber
-      if (FromNumber === "") {
-        return true; // This will return all data
-      }
-      // Otherwise, filter by awbnumber
-      return String(data.consignorphonenumber || "").startsWith(FromNumber);
-    })
-    .filter((data) => data.pickupDatetime.startsWith(tofilterDate)) // Apply the date filter
-    .sort(
-      (a, b) =>
-        parseDateTime(b.pickupDatetime) - parseDateTime(a.pickupDatetime)
-    );
+  const incomingManifestItems = userData.filter(
+    (user) => user.status === "INCOMING MANIFEST"
+  );
 
-  const incomingManifestItems = userData
-    .filter(
-      (user) =>
-        user.status === "INCOMING MANIFEST" &&
-        user.pickupDatetime.includes(tofilterDate)
-    )
-    .sort(
-      (a, b) =>
-        parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
-    );
+  const paymentPending = userData.filter(
+    (user) => user.status === "PAYMENT PENDING"
+  );
 
-  const paymentPending = userData
-    .filter((user) => user.status === "PAYMENT PENDING")
-    .sort(
-      (a, b) =>
-        parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
-    );
-
-  const paymentDone = userData
-    .filter((user) => user.status === "PAYMENT DONE")
-    .sort(
-      (a, b) =>
-        parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
-    );
-
-  const shipmentconnected = userData
-    .filter((user) => user.status === "SHIPMENT CONNECTED")
-    .sort(
-      (a, b) =>
-        parseDateTime(a.pickupDatetime) - parseDateTime(b.pickupDatetime)
-    );
+  const paymentDone = userData.filter((user) => user.status === "PAYMENT DONE");
 
   const handleTabChange = (tab) => {
     setcurrentTab(tab);
@@ -387,7 +317,6 @@ export default function Admin() {
             Incoming
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           onPress={() => handleTabChange("PAYMENT PENDING")}
           style={styles.navItem}

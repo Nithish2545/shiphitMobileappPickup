@@ -148,12 +148,16 @@ function VendorDetails() {
       where("awbNumber", "==", awbnumber)
     );
     const querySnapshot = await getDocs(q);
+
     let final_result = [];
     querySnapshot.forEach((doc) => {
       final_result.push({ id: doc.id, ...doc.data() });
     });
+
     const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
+
     updateDoc(docRef, updatedFields);
+    console.log("testing................");
     try {
       const data = {
         messages: [

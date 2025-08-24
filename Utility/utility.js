@@ -1,19 +1,31 @@
 import axios from "axios";
 import { Linking } from "react-native";
 
-function convertToTimeOnly(input) {
-  const timePart = input.split("&")[1].trim().toUpperCase(); // "9 PM"
+function convertToTimeOnly(timestamp) {
+  let date;
 
-  const [hourStr, meridiem] = timePart.split(" ");
-  let hour = parseInt(hourStr, 10);
-  let minutes = "00";
-
-  if (meridiem === "AM" || meridiem === "PM") {
-    const formattedHour = hour < 10 ? `0${hour}` : `${hour}`;
-    return `${formattedHour}:${minutes} ${meridiem}`;
+  if (typeof timestamp === "object" && "seconds" in timestamp) {
+    date = new Date(
+      timestamp.seconds * 1000 + Math.floor(timestamp.nanoseconds / 1e6)
+    );
   } else {
-    return "Invalid Time Format";
+    date = new Date(timestamp);
   }
+
+  if (isNaN(date)) {
+    return "Invalid Date Format";
+  }
+
+  let hours = date.getHours();
+  let minutes = date.getMinutes();
+
+  const meridiem = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12; // 0 → 12, 13 → 1
+
+  const formattedHour = hours < 10 ? `0${hours}` : `${hours}`;
+  const formattedMinutes = minutes < 10 ? `0${minutes}` : `${minutes}`;
+
+  return `${formattedHour}:${formattedMinutes} ${meridiem}`;
 }
 
 const handleOpenMap = (

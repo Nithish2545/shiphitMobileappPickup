@@ -27,6 +27,7 @@ import axios from "axios"; // axios is not explicitly used here but included in 
 import DB from "../../Utility/DB";
 import FileInput from "../atomic_components/FileInput.js";
 import utility from "../../Utility/utility.js";
+import formatFirestoreTimestamp from "../../Utility/formatFirestoreTimestamp.js";
 
 const PickupDetails = () => {
   const route = useRoute();
@@ -409,7 +410,9 @@ const PickupDetails = () => {
             </View>
             <View style={styles.detailContainer}>
               <Text style={styles.label}>Pickup DateTime:</Text>
-              <Text style={styles.text}>{details.pickupDatetime}</Text>
+              <Text style={styles.text}>
+                {formatFirestoreTimestamp(details.pickupDatetime)}
+              </Text>
             </View>
             <View style={styles.detailContainer}>
               <Text style={styles.label}>Pickup Inst:</Text>
