@@ -102,20 +102,23 @@ async function sendNotification(
   pickupDatetime
 ) {
   const token = await fetchNotificationToken(`${pickupPerson}@gmail.com`);
-  console.log(token);
+  console.log("token", token);
   axios
     .post("https://shiphit-backend.onrender.com/sendNotification", {
       to: token,
       title: "New Pickup Request",
-      body: `The pickup has been successfully completed.\n\n👷 Pickup Person: ${pickupPersonName}\n\nPlease review the details in the app. Thank you.`,
+      body: `The pickup has been successfully completed.\n\n👷 Pickup Person: ${pickupPerson}\n\nPlease review the details in the app. Thank you.`,
       image: "",
       link: "",
     })
     .then((result) => {
-      console.log(result.data);
+      console.log("result", result.data);
     })
     .catch((e) => {
       console.log("error", e.message);
+    })
+    .finally(() => {
+      console.log("finally!");
     });
 }
 

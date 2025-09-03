@@ -215,6 +215,65 @@ function VendorDetails() {
     } catch (error) {
       console.log("Error", error);
     }
+
+    try {
+      const data = {
+        messages: [
+          {
+            content: {
+              language: "en",
+              templateData: {
+                body: {
+                  placeholders: [
+                    String(user.consignorname),
+                    String(user.awbNumber),
+                    String(user.service),
+                    String(user.destination),
+                    user.service === "Economy"
+                      ? "5 - 7 Working Days"
+                      : user.service === "Express"
+                      ? "3 - 4 Working Days"
+                      : user.service === "Duty Free"
+                      ? "10 - 14 Working Days"
+                      : "",
+                  ],
+                },
+                buttons: [
+                  {
+                    type: "URL",
+                    parameter: getTruncatedURL(user.payment_Receipt_URL),
+                  },
+                  {
+                    type: "URL",
+                    parameter: String(user.awbNumber),
+                  },
+                ],
+              },
+              templateName: "shipment_connectedtest_3",
+            },
+            from: "+919600690881",
+            to: `${user.consigneephonenumber}`,
+          },
+        ],
+      };
+      axios
+        .post("https://public.doubletick.io/whatsapp/message/template", data, {
+          headers: {
+            Authorization: "key_z6hIuLo8GC",
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        })
+        .then((response) => {
+          console.log("Success:", response.data);
+        })
+        .catch((error) => {
+          console.error("Error:", error.response?.data || error.message);
+        });
+    } catch (error) {
+      console.log("Error", error);
+    }
+
     setVendorAwbnumber("");
     setFinalWeightImage(null); // Reset the image
     setIsSubmitting(false); // Stop loading

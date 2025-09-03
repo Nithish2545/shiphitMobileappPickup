@@ -152,7 +152,7 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
         rto_images: rtoImageUrls,
         status: "PAYMENT PENDING",
       };
-
+      console.log("updatedFields", updatedFields);
       // ✅ Find and update Firestore document
       const q = query(
         collection(db, DB.db_collection),
