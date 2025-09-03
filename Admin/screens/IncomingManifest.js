@@ -99,7 +99,7 @@ const Runsheet = ({ datetime, awbnumberSearch, FromNumber }) => {
   const navigation = useNavigation();
 
   const handleCardPress = (awbNumber, WHReached) => {
-    if (!WHReached) {
+    if (!WHReached == true) {
       Alert.alert(
         "Please swipe to confirm! before submitting",
         "Reached warehouse ?",
