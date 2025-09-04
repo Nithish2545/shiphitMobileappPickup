@@ -31,19 +31,19 @@ const VendorChangeModal = ({
   };
 
   const handleSubmit = async () => {
-    const UpperCaseAwbNum = vendorAwbnumber.toUpperCase();
+    // const UpperCaseAwbNum = vendorAwbnumber.toUpperCase();
     const finalVendor = needToChange ? selectedVendor : currentVendor;
-    if (!validateAwbNumber(UpperCaseAwbNum, finalVendor)) {
-      console.log(
-        "validateAwbNumber",
-        !validateAwbNumber(UpperCaseAwbNum, finalVendor)
-      );
-      Alert.alert(
-        "AWB Format Mismatch",
-        "This AWB number format matches a different vendor."
-      );
-      return;
-    }
+    // if (!validateAwbNumber(UpperCaseAwbNum, finalVendor)) {
+    //   console.log(
+    //     "validateAwbNumber",
+    //     !validateAwbNumber(UpperCaseAwbNum, finalVendor)
+    //   );
+    //   Alert.alert(
+    //     "AWB Format Mismatch",
+    //     "This AWB number format matches a different vendor."
+    //   );
+    //   return;
+    // }
     setIsSubmitting(true);
     await finalsubmit(finalVendor);
     setNeedToChange(false);

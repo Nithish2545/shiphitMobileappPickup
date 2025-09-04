@@ -157,7 +157,6 @@ function VendorDetails() {
     const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
 
     updateDoc(docRef, updatedFields);
-    console.log("testing................");
     try {
       const data = {
         messages: [

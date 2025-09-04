@@ -92,14 +92,14 @@ const Runsheet = ({ datetime, awbnumberSearch, FromNumber }) => {
   const navigation = useNavigation();
 
   const handleCardPress = (awbNumber, WHReached) => {
-    if (!WHReached == true) {
-      Alert.alert(
-        "Please swipe to confirm! before submitting",
-        "Reached warehouse ?",
-        [{ text: "OK", onPress: () => console.log("OK Pressed") }]
-      );
-      return;
-    }
+    // if (!WHReached == true) {
+    //   Alert.alert(
+    //     "Please swipe to confirm! before submitting",
+    //     "Reached warehouse ?",
+    //     [{ text: "OK", onPress: () => console.log("OK Pressed") }]
+    //   );
+    //   return;
+    // }
     navigation.navigate("IncomingManifestDetails", { awbnumber: awbNumber });
   };
 
