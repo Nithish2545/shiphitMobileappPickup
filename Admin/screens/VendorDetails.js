@@ -224,7 +224,7 @@ function VendorDetails() {
               templateData: {
                 body: {
                   placeholders: [
-                    String(user.consignorname),
+                    String(user.consigneename),
                     String(user.awbNumber),
                     String(user.service),
                     String(user.destination),

@@ -32,7 +32,7 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
   const [boxes, setBoxes] = useState([]);
   const [pressedBoxIndex, setPressedBoxIndex] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [KmDriven, setKmDriven] = useState("");
+  // const [KmDriven, setKmDriven] = useState("");
   const [rto, setrto] = useState("");
   const [images, setImages] = useState([]);
   const navigation = useNavigation();
@@ -99,10 +99,10 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
     }
   };
   const handleSubmit = async () => {
-    if (isNaN(KmDriven) || KmDriven <= 0) {
-      Alert.alert("Please enter a valid number for KM Driven.");
-      return;
-    }
+    // if (isNaN(KmDriven) || KmDriven <= 0) {
+    //   Alert.alert("Please enter a valid number for KM Driven.");
+    //   return;
+    // }
     if (isNaN(customerWeight) || customerWeight <= 0) {
       Alert.alert("Please enter a valid number for Customer shipment weight.");
       return;
@@ -143,7 +143,7 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
       const rtoImageUrls = await savertoimage(awbnumber, images);
 
       const updatedFields = {
-        KmDriven: parseInt(KmDriven),
+        // KmDriven: parseInt(KmDriven),
         actualWeight: customerWeight,
         internalWeight: internalWeight,
         actualNoOfPackages: numBoxes,
@@ -307,14 +307,14 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
       style={styles.formContainer}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.label}>Pickup Person Distance Traveled</Text>
+      {/* <Text style={styles.label}>Pickup Person Distance Traveled</Text>
       <TextInput
         value={KmDriven}
         onChangeText={setKmDriven}
         placeholder="Enter Distance Traveled (KM):"
         keyboardType="numeric"
         style={styles.input}
-      />
+      /> */}
       <Text style={styles.label}>Customer Weight:</Text>
       <TextInput
         style={styles.input}

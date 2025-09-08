@@ -168,7 +168,6 @@ export default function RealTimeNavigation() {
     };
   }, [navigationStarted]); // Dependency is correct
 
-  // Effect to listen for changes in Firebase docId (RideStarted, OtpSent)
   useEffect(() => {
     if (!docId) return;
 
@@ -184,7 +183,7 @@ export default function RealTimeNavigation() {
       }
     });
 
-    return () => unsubscribe(); // Cleanup Firebase listener
+    return () => unsubscribe();
   }, [docId]);
 
   const sendTemplateMessage = async () => {
@@ -314,6 +313,7 @@ export default function RealTimeNavigation() {
       await updateDoc(pickupDocRef, {
         OTP: otp,
         OtpSent: true,
+        KmDriven: distance,
       });
 
       await sendOTPMessage(otp);
@@ -361,7 +361,6 @@ export default function RealTimeNavigation() {
           >
             {/* Destination Marker */}
             <Marker coordinate={destinationPoint} title="Destination" />
-            {/* Origin Marker (optional, if you want to show the initial origin) */}
             {/* This could be userLocation if it's available, or the defaultInitialOrigin */}
             {userLocation && (
               <Marker
