@@ -160,15 +160,44 @@ const PickupDetails = () => {
     }
   };
 
+  // const pickImage = async () => {
+  //   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  //   if (status !== "granted") {
+  //     return;
+  //   }
+
+  //   const result = await ImagePicker.launchImageLibraryAsync({
+  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //     exif: true,
+  //   });
+
+  //   if (!result.canceled) {
+  //     console.log("result", result.assets[0].uri);
+
+  //     setImage(result.assets[0].uri);
+  //     if (result.assets[0].exif) {
+  //       setMetadata(result.assets[0].exif);
+  //       setTimestamp(
+  //         formatToIST(result.assets[0].exif.DateTime) || "Unknown date"
+  //       );
+  //     } else {
+  //       setTimestamp(new Date().toString());
+  //     }
+  //     setPickupersonImage([result.assets[0].uri]); // Store the URI for later upload
+  //   }
+  // };
+
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
+      alert("Camera permission is required to take a photo.");
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       exif: true,
+      quality: 1,
     });
 
     if (!result.canceled) {
@@ -485,7 +514,7 @@ const PickupDetails = () => {
                   handleRemoveFile(fileName, setFormImages)
                 }
               />
-              {/* UPLOAD IMAGE */}
+
               <View style={styles.container2}>
                 {image ? (
                   <View style={styles.imageContainer}>
@@ -498,8 +527,15 @@ const PickupDetails = () => {
                   </View>
                 ) : (
                   <View style={styles.buttonContainer2}>
-                    <Text style={styles.subtitle}>
-                      Your Selify With T-shirt & ID Card
+                    <Text
+                      style={{
+                        color: "white",
+                        fontSize: 16,
+                        textAlign: "center",
+                      }}
+                      onPress={pickImage}
+                    >
+                      Take a Live Picture
                     </Text>
                     <View style={styles.buttonContainer}>
                       <Text
