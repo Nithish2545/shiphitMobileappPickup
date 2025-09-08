@@ -136,7 +136,7 @@ export default function RealTimeNavigation() {
       locationSubscription = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.Highest,
-          distanceInterval: 10, // Update every 10 meters
+          distanceInterval: 10,
           timeInterval: 1000, // **MODIFIED: Update every 1 second for smoother tracking**
         },
         (position) => {
@@ -149,8 +149,8 @@ export default function RealTimeNavigation() {
             mapRef.current.animateCamera({
               center: { latitude, longitude },
               heading: heading || 0,
-              pitch: 60, // **MODIFIED: Increased pitch for better 3D view**
-              zoom: 17, // **MODIFIED: Adjusted zoom for a better driver's view**
+              pitch: 60,
+              zoom: 17,
               duration: 1000, // **MODIFIED: Smoother animation over 1 second**
             });
           }
@@ -313,7 +313,7 @@ export default function RealTimeNavigation() {
       await updateDoc(pickupDocRef, {
         OTP: otp,
         OtpSent: true,
-        KmDriven: distance,
+        KmDriven: parseFloat(distance),
       });
 
       await sendOTPMessage(otp);
