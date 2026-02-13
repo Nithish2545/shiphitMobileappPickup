@@ -18,6 +18,7 @@ import {
   doc,
   getDocs,
   query,
+  Timestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -42,7 +43,7 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
     const blob = await response.blob();
     const storageRef = ref(
       storage,
-      `${awbnumber}/FINAL IMAGE WEIGHT/${Date.now()}.jpg`
+      `${awbnumber}/FINAL IMAGE WEIGHT/${Date.now()}.jpg`,
     ); // Create a reference in the specified folder
     await uploadBytes(storageRef, blob); // Upload the image
     const downloadURL = await getDownloadURL(storageRef);
@@ -141,8 +142,24 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
       // ✅ Upload images and prepare updatedFields
       const volumaticImages = await saveImagesToFirestore(awbnumber, boxes);
       const rtoImageUrls = await savertoimage(awbnumber, images);
+      const now = Timestamp.now();
+      const updatedInternalTracking = user.internalTracking.map((step) => {
+        if (step.code === "PACKED_WEIGHED") {
+          return {
+            ...step,
+            status: "COMPLETED",
+            datetime: now,
+            updatedAt: now,
+            updatedBy: "system",
+            notes: "Final weight and number of boxes confirmed!",
+          };
+        }
+
+        return step;
+      });
 
       const updatedFields = {
+        internalTracking: updatedInternalTracking,
         // KmDriven: parseInt(KmDriven),
         actualWeight: customerWeight,
         internalWeight: internalWeight,
@@ -156,7 +173,7 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
       // ✅ Find and update Firestore document
       const q = query(
         collection(db, DB.db_collection),
-        where("awbNumber", "==", awbnumber)
+        where("awbNumber", "==", awbnumber),
       );
       const querySnapshot = await getDocs(q);
       let final_result = [];
@@ -207,7 +224,7 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
             Accept: "application/json",
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       // ✅ Navigate after everything is done
@@ -230,7 +247,7 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
     if (!customerWeight || !internalWeight) {
       Alert.alert(
         "Missing Weight Info",
-        "Please enter both customer and internal weights."
+        "Please enter both customer and internal weights.",
       );
       return;
     }
@@ -255,7 +272,7 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
     if (status !== "granted") {
       Alert.alert(
         "Permission denied",
-        "We need access to your gallery to upload images."
+        "We need access to your gallery to upload images.",
       );
       return;
     }

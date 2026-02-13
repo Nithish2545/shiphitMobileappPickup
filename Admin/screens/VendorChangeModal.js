@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Modal,
   View,
@@ -6,44 +6,22 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import validateAwbNumber from "../../Utility/validateAwbNumber";
 
 const VendorChangeModal = ({
   visible,
+  vendorName,
   onClose,
-  onSubmit,
-  currentVendor,
   finalsubmit,
   isSubmitting,
   setIsSubmitting,
   vendorAwbnumber,
 }) => {
   const [needToChange, setNeedToChange] = useState(false);
-  const [selectedVendor, setSelectedVendor] = useState(currentVendor || "");
-
-  const handleToggle = () => {
-    setNeedToChange(!needToChange);
-    setSelectedVendor(currentVendor); // Reset selection to current
-  };
 
   const handleSubmit = async () => {
-    // const UpperCaseAwbNum = vendorAwbnumber.toUpperCase();
-    const finalVendor = needToChange ? selectedVendor : currentVendor;
-    // if (!validateAwbNumber(UpperCaseAwbNum, finalVendor)) {
-    //   console.log(
-    //     "validateAwbNumber",
-    //     !validateAwbNumber(UpperCaseAwbNum, finalVendor)
-    //   );
-    //   Alert.alert(
-    //     "AWB Format Mismatch",
-    //     "This AWB number format matches a different vendor."
-    //   );
-    //   return;
-    // }
+    const finalVendor = needToChange ? selectedVendor : "";
     setIsSubmitting(true);
     await finalsubmit(finalVendor);
     setNeedToChange(false);
@@ -60,49 +38,22 @@ const VendorChangeModal = ({
           </TouchableOpacity>
 
           {/* Title */}
-          <Text style={styles.title}>Vendor Details</Text>
+          <Text style={styles.title}>Confirm Vendor</Text>
 
-          {/* Current Vendor */}
-          <Text style={styles.currentVendorText}>
-            Current Vendor:{" "}
-            <Text style={styles.bold}>{currentVendor || "None"}</Text>
-          </Text>
-
-          <Text style={styles.currentVendorText}>
-            Vendor AwbNumber:{" "}
-            <Text style={styles.bold}>{vendorAwbnumber || "None"}</Text>
-          </Text>
-          {/* Toggle Button */}
-          <TouchableOpacity style={styles.toggleButton} onPress={handleToggle}>
-            <Text style={styles.toggleText}>
-              {needToChange ? "Cancel Change" : "Need to Change Vendor?"}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Vendor Picker */}
-          {needToChange && (
-            <View style={styles.pickerContainer}>
-              <Text style={styles.label}>Select New Vendor:</Text>
-              <View style={styles.pickerWrapper}>
-                <Picker
-                  selectedValue={selectedVendor}
-                  style={styles.picker}
-                  dropdownIconColor="#7c3aed"
-                  onValueChange={(itemValue) => setSelectedVendor(itemValue)}
-                >
-                  <Picker.Item label="Select Vendor" value="" />
-                  <Picker.Item label="UPS" value="UPS" />
-                  <Picker.Item label="BOMBINO" value="BOMBINO" />
-                  <Picker.Item label="ATLANTIC" value="ATLANTIC" />
-                  <Picker.Item label="DESK SELF" value="DESK SELF" />
-                  <Picker.Item label="DHL" value="DHL" />
-                  <Picker.Item label="ARAMEX" value="ARAMEX" />
-                  <Picker.Item label="FedEx" value="FedEx" />
-                  <Picker.Item label="ExPlus" value="ExPlus" />
-                </Picker>
-              </View>
+          {/* Info Card */}
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Vendor Name</Text>
+              <Text style={styles.value}>{vendorName}</Text>
             </View>
-          )}
+
+            <View style={styles.divider} />
+
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>AWB Number</Text>
+              <Text style={styles.value}>{vendorAwbnumber}</Text>
+            </View>
+          </View>
 
           {/* Submit Button */}
           <TouchableOpacity
@@ -113,7 +64,7 @@ const VendorChangeModal = ({
             {isSubmitting ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.submitText}>Submit</Text>
+              <Text style={styles.submitText}>Confirm</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -123,7 +74,6 @@ const VendorChangeModal = ({
 };
 
 export default VendorChangeModal;
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -132,92 +82,78 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
   },
+
   modalContainer: {
     width: "100%",
+    maxWidth: 380,
     backgroundColor: "#fff",
     borderRadius: 16,
     padding: 20,
     elevation: 8,
     shadowColor: "#000",
     shadowOpacity: 0.15,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    alignItems: "center",
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
     position: "relative",
   },
+
   closeButton: {
     position: "absolute",
     right: 12,
     top: 12,
     padding: 6,
+    borderRadius: 20,
+    backgroundColor: "#F3F4F6",
     zIndex: 10,
   },
-  awbText: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#6b7280",
-    marginBottom: 8,
-  },
+
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
     color: "#111827",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+
+  infoCard: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    padding: 14,
     marginBottom: 12,
   },
-  currentVendorText: {
-    fontSize: 16,
-    marginBottom: 14,
-    color: "#4b5563",
+
+  infoRow: {
+    marginBottom: 12,
   },
-  bold: {
-    fontWeight: "700",
+
+  label: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginBottom: 4,
+  },
+
+  value: {
+    fontSize: 15,
+    fontWeight: "600",
     color: "#111827",
   },
-  toggleButton: {
-    backgroundColor: "#7c3aed",
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 10,
-    marginBottom: 18,
+
+  divider: {
+    height: 1,
+    backgroundColor: "#E5E7EB",
+    marginVertical: 8,
   },
-  toggleText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 14,
-    textAlign: "center",
-  },
-  pickerContainer: {
-    width: "100%",
-    marginBottom: 18,
-  },
-  label: {
-    fontSize: 14,
-    marginBottom: 8,
-    fontWeight: "500",
-    color: "#374151",
-  },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  picker: {
-    height: 42,
-    width: "100%",
-  },
+
   submitButton: {
-    backgroundColor: "#10b981",
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 10,
+    backgroundColor: "#6B21A8",
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: "center",
-    justifyContent: "center",
-    minWidth: 120,
   },
+
   submitText: {
-    color: "white",
-    fontWeight: "600",
+    color: "#fff",
     fontSize: 15,
+    fontWeight: "600",
   },
 });

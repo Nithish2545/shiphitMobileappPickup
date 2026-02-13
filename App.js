@@ -1,42 +1,77 @@
 import { NavigationContainer } from "@react-navigation/native";
-import SignIn from "./auth/Screens/SignIn";
 import { createStackNavigator } from "@react-navigation/stack";
+import { useEffect, useState } from "react";
+import { View, ActivityIndicator } from "react-native";
+import { StatusBar } from "expo-status-bar";
+
+import messaging from "@react-native-firebase/messaging";
+import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { FIREBASE_AUTH } from "./FirebaseConfig";
+import NotificationService from "./Utility/NotificationService";
+
+/* ---------- Screens ---------- */
+import SplashScreen from "./SplashScreen";
+import UpdateScreen from "./UpdateScreen";
+import SignIn from "./auth/Screens/SignIn";
+
+/* Admin */
 import Admin from "./Admin/screens/Admin";
 import Runsheet from "./Admin/screens/Runsheet";
 import IncomingManifest from "./Admin/screens/IncomingManifest";
 import IncomingManifestDetails from "./Admin/screens/IncomingManifestDetails";
 import PaymentDone from "./Admin/screens/PaymentDone";
 import PaymentPending from "./Admin/screens/PaymentPending";
-import { FIREBASE_AUTH } from "./FirebaseConfig";
-import { useEffect, useState } from "react";
-import Pickup from "./Pickup/screens/Pickup";
-import PickupDetails from "./Pickup/screens/PickupDetails";
 import VendorDetails from "./Admin/screens/VendorDetails";
 import CardDetails from "./Admin/screens/CardDetails";
 import ShipmentConnected from "./Admin/screens/ShipmentConnected";
-import messaging from "@react-native-firebase/messaging";
-import * as Notifications from "expo-notifications";
-import { StatusBar } from "expo-status-bar";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import NotificationService from "./Utility/NotificationService";
+import Profile from "./Admin/screens/Profile";
+
+/* Pickup */
+import Pickup from "./Pickup/screens/Pickup";
+import PickupDetails from "./Pickup/screens/PickupDetails";
 import RealTimeNavigation from "./Pickup/screens/RealTimeNavigation";
 import VerifyPassword from "./Pickup/screens/VerifyPassword";
-import Profile from "./Admin/screens/Profile";
 import PEProfile from "./Pickup/screens/PEProfile";
+
+const Stack = createStackNavigator();
+
+function SplashExitScreen() {
+  return null;
+}
+
 export default function App() {
+  /* ---------- AUTH STATE ---------- */
+  const [authReady, setAuthReady] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState(null);
+
+  /* ---------- FIREBASE AUTH ---------- */
   useEffect(() => {
-    const onNotificationOpenedAppListener = messaging().onNotificationOpenedApp(
-      (remoteMessage) => {
-        console.log(
-          "Notification opened from background:",
-          remoteMessage.notification
-        );
+    const unsubscribe = FIREBASE_AUTH.onAuthStateChanged((user) => {
+      if (user) {
+        if (user.email === "jaga.opshead@gmail.com") {
+          setCurrentUserRole("admin");
+        } else {
+          setCurrentUserRole("pickup");
+        }
+      } else {
+        setCurrentUserRole("guest");
       }
-    );
-    // Handle foreground notifications
-    const onMessageListener = messaging().onMessage(async (remoteMessage) => {
-      console.log("Foreground Notification:", remoteMessage);
-      // Display the notification in the foreground
+
+      setAuthReady(true); // ✅ critical
+    });
+
+    return unsubscribe;
+  }, []);
+
+  /* ---------- NOTIFICATIONS ---------- */
+  useEffect(() => {
+    const openedListener = messaging().onNotificationOpenedApp((msg) => {
+      console.log("Notification opened:", msg?.notification);
+    });
+
+    const messageListener = messaging().onMessage(async (msg) => {
       Notifications.setNotificationHandler({
         handleNotification: async () => ({
           shouldShowAlert: true,
@@ -47,78 +82,60 @@ export default function App() {
 
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: remoteMessage.notification.title,
-          body: remoteMessage.notification.body,
+          title: msg.notification?.title,
+          body: msg.notification?.body,
         },
         trigger: null,
       });
     });
 
-    // ✅ Token refresh listener added (no modification to your existing code)
-    const onTokenRefreshListener = messaging().onTokenRefresh(
-      async (newToken) => {
-        console.log("Token refreshed:", newToken);
-        try {
-          const userData = await AsyncStorage.getItem("userData");
-          const user = JSON.parse(userData);
-          if (user?.email) {
-            await NotificationService.fetchAndStoreToken(user.email);
-            console.log("Refreshed token stored successfully.");
-          }
-        } catch (e) {
-          console.log("Error storing refreshed token:", e.message);
+    const tokenRefreshListener = messaging().onTokenRefresh(async (token) => {
+      try {
+        const userData = await AsyncStorage.getItem("userData");
+        const user = JSON.parse(userData);
+        if (user?.email) {
+          await NotificationService.fetchAndStoreToken(user.email);
         }
-      }
-    );
-
-    // Cleanup listeners when the component unmounts
-    return () => {
-      console.log("Cleaning up listeners...");
-      onNotificationOpenedAppListener();
-      onMessageListener();
-      onTokenRefreshListener(); // cleanup token refresh listener
-      // setBackgroundMessageHandler does not require cleanup
-    };
-  }, []);
-
-  const Stack = createStackNavigator();
-  const auth = FIREBASE_AUTH;
-  const [currentUserRole, setCurrentUserRole] = useState(null); // Change to null initially
-
-  useEffect(() => {
-    // Setting up the auth state listener
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        const userEmail = user.email;
-        // Check if the email is 'deepak@gmail.com' and set role accordingly
-        if (userEmail === "jaga.opshead@gmail.com") {
-          setCurrentUserRole("admin");
-        } else {
-          setCurrentUserRole("pickup");
-        }
-      } else {
-        setCurrentUserRole(""); // Clear the user role if not authenticated
+      } catch (e) {
+        console.log("Token refresh error:", e.message);
       }
     });
 
-    // Cleanup the listener on unmount
-    return () => unsubscribe();
-  }, [auth]);
+    return () => {
+      openedListener();
+      messageListener();
+      tokenRefreshListener();
+    };
+  }, []);
 
-  // Show a loading state while checking auth
-  if (currentUserRole === null) {
-    return null; // Or a loading spinner, etc.
+  /* ---------- AUTH LOADING UI ---------- */
+  if (!authReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
+  /* ---------- NAVIGATION ---------- */
   return (
     <NavigationContainer>
       <StatusBar style="auto" />
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {currentUserRole === "" ? (
-          // If no user is logged in, show SignIn screen
+        {/* Always available */}
+        <Stack.Screen
+          name="Splash"
+          component={SplashScreen}
+          initialParams={{ currentUserRole }}
+        />
+        <Stack.Screen name="Update" component={UpdateScreen} />
+        {/* Guest */}
+        {currentUserRole === "guest" && (
           <Stack.Screen name="SignIn" component={SignIn} />
-        ) : currentUserRole === "admin" ? (
-          // If the logged-in user is admin, show Admin screens
+        )}
+
+        {/* Admin */}
+        {currentUserRole === "admin" && (
           <>
             <Stack.Screen name="Admin" component={Admin} />
             <Stack.Screen name="Profile" component={Profile} />
@@ -140,8 +157,10 @@ export default function App() {
               component={ShipmentConnected}
             />
           </>
-        ) : currentUserRole === "pickup" ? (
-          // If the logged-in user is a pickup person, show Pickup screens
+        )}
+
+        {/* Pickup */}
+        {currentUserRole === "pickup" && (
           <>
             <Stack.Screen name="Pickup" component={Pickup} />
             <Stack.Screen name="Profile" component={PEProfile} />
@@ -152,7 +171,7 @@ export default function App() {
             <Stack.Screen name="verifyotp" component={VerifyPassword} />
             <Stack.Screen name="PickupDetails" component={PickupDetails} />
           </>
-        ) : null}
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

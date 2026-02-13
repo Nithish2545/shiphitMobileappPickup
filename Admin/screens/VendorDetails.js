@@ -22,6 +22,7 @@ import {
   doc,
   getDocs,
   query,
+  Timestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -29,6 +30,7 @@ import axios from "axios";
 import DB from "../../Utility/DB";
 import VendorChangeModal from "./VendorChangeModal";
 import validateAwbNumber from "../../Utility/validateAwbNumber";
+import { Picker } from "@react-native-picker/picker";
 
 function VendorDetails() {
   const route = useRoute();
@@ -49,7 +51,7 @@ function VendorDetails() {
     try {
       const q = query(
         collection(db, DB.db_collection),
-        where("awbNumber", "==", awbnumber)
+        where("awbNumber", "==", awbnumber),
       );
 
       const querySnapshot = await getDocs(q);
@@ -68,6 +70,7 @@ function VendorDetails() {
 
   const [user, setUser] = useState(null);
   const [vendorAwbnumber, setVendorAwbnumber] = useState("");
+  const [vendorname, setvendorname] = useState("");
   const [actualNumPackages, setActualNumPackages] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false); // New state for submit loading
@@ -92,12 +95,12 @@ function VendorDetails() {
     return `${istDate} &${formattedTime}`;
   };
 
-  function getTruncatedURL(fullUrl) {
-    const baseUrl =
-      "https://firebasestorage.googleapis.com/v0/b/shiphitmobileapppickup-4d0a1.appspot.com/o/";
-    const truncatedResult = fullUrl.replace(baseUrl, "");
-    return truncatedResult;
-  }
+  // function getTruncatedURL(fullUrl) {
+  //   const baseUrl =
+  //     "https://firebasestorage.googleapis.com/v0/b/shiphitmobileapppickup-fb7e2.firebasestorage.app/o/";
+  //   const truncatedResult = fullUrl.replace(baseUrl, "");
+  //   return truncatedResult;
+  // }
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -120,23 +123,42 @@ function VendorDetails() {
     setModalVisible(true);
   };
 
-  async function finalsubmit(finalVendor) {
+  async function finalsubmit() {
     // Function to upload the image to Firebase
     const uploadImage = async (imageUri) => {
       if (!imageUri) return null; // Return null if no image selected
       const response = await fetch(imageUri);
       const blob = await response.blob();
+
       const storageRef = ref(
         storage,
-        `${awbnumber}/AWB NUMBER IMAGE/${Date.now()}.jpg`
+        `${awbnumber}/AWB NUMBER IMAGE/${Date.now()}.jpg`,
       ); // Create a reference in the specified folder
       await uploadBytes(storageRef, blob); // Upload the image
       const downloadURL = await getDownloadURL(storageRef); // Get the download URL
       return downloadURL; // Return the URL
     };
 
+    const now = Timestamp.now();
+
+    const updatedInternalTracking = user.internalTracking.map((step) => {
+      if (step.code === "SHIPMENT_CONNECTED") {
+        return {
+          ...step,
+          status: "COMPLETED",
+          datetime: now,
+          updatedAt: now,
+          updatedBy: "system",
+          notes: "Shipment Connected!",
+        };
+      }
+
+      return step;
+    });
+
     const updatedFields = {
-      vendorName: finalVendor,
+      internalTracking: updatedInternalTracking,
+      vendorName: vendorname,
       vendorAwbnumber: vendorAwbnumber.toUpperCase(),
       status: "SHIPMENT CONNECTED",
       packageConnectedDataTime: PickupCompletedDate(),
@@ -145,7 +167,7 @@ function VendorDetails() {
 
     const q = query(
       collection(db, DB.db_collection),
-      where("awbNumber", "==", awbnumber)
+      where("awbNumber", "==", awbnumber),
     );
     const querySnapshot = await getDocs(q);
 
@@ -157,130 +179,171 @@ function VendorDetails() {
     const docRef = doc(db, DB.db_collection, final_result[0].id); // db is your Firestore instance
 
     updateDoc(docRef, updatedFields);
-    try {
-      const data = {
-        messages: [
-          {
-            content: {
-              language: "en",
-              templateData: {
-                body: {
-                  placeholders: [
-                    String(user.consignorname),
-                    String(user.awbNumber),
-                    String(user.service),
-                    String(user.destination),
-                    user.service === "Economy"
-                      ? "5 - 7 Working Days"
-                      : user.service === "Express"
-                      ? "3 - 4 Working Days"
-                      : user.service === "Duty Free"
-                      ? "10 - 14 Working Days"
-                      : "",
-                  ],
-                },
-                buttons: [
-                  {
-                    type: "URL",
-                    parameter: getTruncatedURL(user.payment_Receipt_URL),
-                  },
-                  {
-                    type: "URL",
-                    parameter: String(user.awbNumber),
-                  },
-                ],
-              },
-              templateName: "shipment_connectedtest_3",
-            },
-            from: "+919600690881",
-            to: `+91${user.consignorphonenumber}`,
-          },
-        ],
-      };
-      axios
-        .post("https://public.doubletick.io/whatsapp/message/template", data, {
-          headers: {
-            Authorization: "key_z6hIuLo8GC",
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        })
-        .then((response) => {
-          console.log("Success:", response.data);
-        })
-        .catch((error) => {
-          console.error("Error:", error.response?.data || error.message);
-        });
-    } catch (error) {
-      console.log("Error", error);
-    }
 
-    try {
-      const data = {
-        messages: [
-          {
-            content: {
-              language: "en",
-              templateData: {
-                body: {
-                  placeholders: [
-                    String(user.consigneename),
-                    String(user.awbNumber),
-                    String(user.service),
-                    String(user.destination),
-                    user.service === "Economy"
-                      ? "5 - 7 Working Days"
-                      : user.service === "Express"
-                      ? "3 - 4 Working Days"
-                      : user.service === "Duty Free"
-                      ? "10 - 14 Working Days"
-                      : "",
+    if (
+      user.vendorName == "ExPlus" ||
+      user.vendorName == "UPS" ||
+      user.vendorName == "ICL SELF"
+    ) {
+      try {
+        const deliveryTime =
+          user.service === "Economy"
+            ? "5 - 7 Working Days"
+            : user.service === "Express"
+              ? "3 - 4 Working Days"
+              : user.service === "Duty Free"
+                ? "10 - 14 Working Days"
+                : "";
+
+        function getTruncatedURL(fullUrl) {
+          const baseUrl =
+            "https://firebasestorage.googleapis.com/v0/b/shiphitmobileapppickup-fb7e2.firebasestorage.app/o/";
+          const truncatedResult = fullUrl.replace(baseUrl, "");
+          return truncatedResult;
+        }
+        const data = {
+          messages: [
+            {
+              content: {
+                language: "en",
+                templateData: {
+                  body: {
+                    placeholders: [
+                      String(user.consignorname), // {{1}}
+                      String(user.awbNumber), // {{2}}
+                      String(user.service), // {{3}}
+                      String(user.destination), // {{4}}
+                      deliveryTime, // {{5}}
+                    ],
+                  },
+                  buttons: [
+                    {
+                      // Track Shipment → uses {{1}} in URL
+                      type: "URL",
+                      parameter: String(user.awbHashedValue),
+                    },
+                    {
+                      // View Receipt → uses {{receipt}}
+                      type: "URL",
+                      parameter: getTruncatedURL(user.payment_Receipt_URL),
+                    },
                   ],
                 },
-                buttons: [
-                  {
-                    type: "URL",
-                    parameter: getTruncatedURL(user.payment_Receipt_URL),
-                  },
-                  {
-                    type: "URL",
-                    parameter: String(user.awbNumber),
-                  },
-                ],
+                templateName: "shipment_connected_utility_v7",
               },
-              templateName: "shipment_connectedtest_3",
+              from: "+919600690881",
+              to: `+91${String(user.consignorphonenumber).trim()}`,
             },
-            from: "+919600690881",
-            to: `${user.consigneephonenumber}`,
-          },
-        ],
-      };
-      axios
-        .post("https://public.doubletick.io/whatsapp/message/template", data, {
-          headers: {
-            Authorization: "key_z6hIuLo8GC",
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        })
-        .then((response) => {
-          console.log("Success:", response.data);
-        })
-        .catch((error) => {
-          console.error("Error:", error.response?.data || error.message);
-        });
-    } catch (error) {
-      console.log("Error", error);
+          ],
+        };
+
+        axios
+          .post(
+            "https://public.doubletick.io/whatsapp/message/template",
+            data,
+            {
+              headers: {
+                Authorization: "key_z6hIuLo8GC",
+                Accept: "application/json",
+                "Content-Type": "application/json",
+              },
+            },
+          )
+          .then((response) => {
+            console.log("Success:", response.data);
+          })
+          .catch((error) => {
+            console.error("Error:", error.response?.data || error.message);
+          });
+      } catch (error) {
+        console.log("Error", error);
+      }
+
+      try {
+        const deliveryTime =
+          user.service === "Economy"
+            ? "5 - 7 Working Days"
+            : user.service === "Express"
+              ? "3 - 4 Working Days"
+              : user.service === "Duty Free"
+                ? "10 - 14 Working Days"
+                : "";
+
+        function getTruncatedURL(fullUrl) {
+          const baseUrl =
+            "https://firebasestorage.googleapis.com/v0/b/shiphitmobileapppickup-fb7e2.firebasestorage.app/o/";
+          const truncatedResult = fullUrl.replace(baseUrl, "");
+          return truncatedResult;
+        }
+
+        const data = {
+          messages: [
+            {
+              content: {
+                language: "en",
+                templateData: {
+                  body: {
+                    placeholders: [
+                      String(user.consigneename), // {{1}}
+                      String(user.awbNumber), // {{2}}
+                      String(user.service), // {{3}}
+                      String(user.destination), // {{4}}
+                      deliveryTime, // {{5}}
+                    ],
+                  },
+                  buttons: [
+                    {
+                      // Track Shipment → uses {{1}} in URL
+                      type: "URL",
+                      parameter: String(user.awbHashedValue),
+                    },
+                    {
+                      // View Receipt → uses {{receipt}}
+                      type: "URL",
+                      parameter: getTruncatedURL(user.payment_Receipt_URL),
+                    },
+                  ],
+                },
+                templateName: "shipment_connected_utility_v7",
+              },
+              from: "+919600690881",
+              to: `${String(user.consigneephonenumber).trim()}`,
+            },
+          ],
+        };
+
+        axios
+          .post(
+            "https://public.doubletick.io/whatsapp/message/template",
+            data,
+            {
+              headers: {
+                Authorization: "key_z6hIuLo8GC",
+                Accept: "application/json",
+                "Content-Type": "application/json",
+              },
+            },
+          )
+          .then((response) => {
+            console.log("Success:", response.data);
+          })
+          .catch((error) => {
+            console.error("Error:", error.response?.data || error.message);
+          });
+      } catch (error) {
+        console.log("Error", error);
+      }
+    } else {
+      console.log("nothing");
     }
 
     setVendorAwbnumber("");
-    setFinalWeightImage(null); // Reset the image
-    setIsSubmitting(false); // Stop loading
+    setFinalWeightImage(null);
+    setIsSubmitting(false);
     setModalVisible(false);
     navigation.navigate("Admin");
   }
 
-  // Function to handle image selection
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -426,6 +489,46 @@ function VendorDetails() {
             </Text>
           )}
         </View>
+        <Text style={styles.label}>Select Vendor:</Text>
+
+        <Controller
+          name="vendorName"
+          control={control}
+          rules={{ required: "Vendor is required" }}
+          render={({ field: { onChange, value } }) => (
+            <View
+              style={[
+                styles.pickerWrapper,
+                errors.vendorName && styles.inputError,
+              ]}
+            >
+              <Picker
+                style={[styles.input]}
+                selectedValue={value}
+                onValueChange={(itemValue) => {
+                  onChange(itemValue);
+                  setvendorname(itemValue);
+                }}
+              >
+                <Picker.Item label="Select a vendor" value="" />
+                <Picker.Item label="DHL" value="DHL" />
+                <Picker.Item label="ARAMEX" value="Aramex" />
+                <Picker.Item label="UPS" value="UPS" />
+                <Picker.Item label="ExPlus" value="ExPlus" />
+                <Picker.Item label="TurboFox" value="TurboFox" />
+                <Picker.Item label="DESK SELF" value="DESK SELF" />
+                <Picker.Item label="ICL SELF" value="ICL SELF" />
+                <Picker.Item label="ICL FedEx" value="ICL FedEx" />
+                <Picker.Item label="ATLANTIC" value="ATLANTIC" />
+              </Picker>
+            </View>
+          )}
+        />
+
+        {errors.vendorName && (
+          <Text style={styles.errorText}>{errors.vendorName.message}</Text>
+        )}
+
         {/* Final Weight Image Upload */}
         <View style={styles.imageUploadContainer}>
           {finalWeightImage && (
@@ -458,7 +561,6 @@ function VendorDetails() {
             )}
           </View>
         </View>
-
         <TouchableOpacity
           onPress={handleSubmit(onSubmit)}
           style={styles.button}
@@ -475,17 +577,33 @@ function VendorDetails() {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onSubmit={handleVendorSubmit}
-        currentVendor={user.vendorName}
+        user={user}
+        vendorName={vendorname}
+        vendorAwbnumber={vendorAwbnumber}
         finalsubmit={finalsubmit}
         isSubmitting={isSubmitting}
         setIsSubmitting={setIsSubmitting}
-        vendorAwbnumber={vendorAwbnumber}
       />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 6,
+    marginTop: 10,
+  },
+
+  picker: {
+    height: 50,
+    width: "100%",
+  },
+
+  inputError: {
+    borderColor: "#DC2626",
+  },
   container: {
     alignItems: "center",
     marginTop: 40,

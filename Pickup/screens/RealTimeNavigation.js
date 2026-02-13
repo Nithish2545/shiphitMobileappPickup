@@ -13,7 +13,13 @@ import MapView, { Marker, Polyline } from "react-native-maps";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import polyline from "@mapbox/polyline";
-import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  onSnapshot,
+  Timestamp,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 import { useRoute } from "@react-navigation/native";
 import VerifyPassword from "./VerifyPassword";
@@ -73,7 +79,7 @@ export default function RealTimeNavigation() {
 
       if (response.data.routes.length) {
         const points = polyline.decode(
-          response.data.routes[0].overview_polyline.points
+          response.data.routes[0].overview_polyline.points,
         );
         const routePath = points.map(([lat, lng]) => ({
           latitude: lat,
@@ -97,7 +103,7 @@ export default function RealTimeNavigation() {
         console.error("No routes found:", response.data);
         Alert.alert(
           "Error",
-          "No route found from your current location to destination."
+          "No route found from your current location to destination.",
         );
       }
     } catch (error) {
@@ -115,7 +121,7 @@ export default function RealTimeNavigation() {
       if (status !== "granted") {
         Alert.alert(
           "Permission Denied",
-          "Location access is required for real-time navigation. Please enable it in your device settings."
+          "Location access is required for real-time navigation. Please enable it in your device settings.",
         );
         return;
       }
@@ -154,7 +160,7 @@ export default function RealTimeNavigation() {
               duration: 1000, // **MODIFIED: Smoother animation over 1 second**
             });
           }
-        }
+        },
       );
     };
 
@@ -222,13 +228,13 @@ export default function RealTimeNavigation() {
             Accept: "application/json",
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       console.log("Message sent successfully:", response.data);
     } catch (error) {
       console.error(
         "Error sending message:",
-        error.response ? error.response.data : error.message
+        error.response ? error.response.data : error.message,
       );
     }
   };
@@ -238,13 +244,40 @@ export default function RealTimeNavigation() {
       if (!userLocation) {
         Alert.alert(
           "Location Error",
-          "Still getting your current location. Please wait a moment."
+          "Still getting your current location. Please wait a moment.",
         );
         return;
       }
+
       const pickupDocRef = doc(db, DB.db_collection, docId);
+      const snap = await getDoc(pickupDocRef);
+      const now = Timestamp.now();
+
+      if (!snap.exists()) {
+        throw new Error("Pickup document not found");
+      }
+
+      const data = snap.data();
+
+      const updatedInternalTracking = data.internalTracking.map((step) => {
+        if (step.code === "EXECUTIVE_ON_THE_WAY") {
+          return {
+            ...step,
+            status: "COMPLETED",
+            datetime: now,
+            updatedAt: now,
+            updatedBy: "system",
+            notes:
+              "Ride initiated by pickup executive from office or authorized connection location.",
+          };
+        }
+
+        return step;
+      });
+
       await updateDoc(pickupDocRef, {
         RideStarted: true,
+        internalTracking: updatedInternalTracking,
       });
       // Camera animation will be handled by the watchPositionAsync callback due to navigationStarted update
       await sendTemplateMessage();
@@ -291,13 +324,13 @@ export default function RealTimeNavigation() {
             accept: "application/json",
             "content-type": "application/json",
           },
-        }
+        },
       );
       console.log("Message sent successfully:", response.data);
     } catch (error) {
       console.error(
         "Error sending OTP message:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
     }
   };

@@ -12,9 +12,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.shiphit.pickup"
     },
     "android": {
+      "versionCode": 13,
       "notification": {
         "color": "#ffffff",
         "sounds": ["./assets/notifications/alert.wav"]
