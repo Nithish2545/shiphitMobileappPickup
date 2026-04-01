@@ -41,7 +41,6 @@ export default function RealTimeNavigation() {
     pickupDatetime,
   } = route.params;
 
-  console.log("docId test", docId);
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [userLocation, setUserLocation] = useState(null); // Current user's GPS location
   const [navigationStarted, setNavigationStarted] = useState(false);
@@ -214,8 +213,14 @@ export default function RealTimeNavigation() {
                       name,
                     ],
                   },
+                  buttons: [
+                    {
+                      type: "URL",
+                      parameter: "9003459723",
+                    },
+                  ],
                 },
-                templateName: "pestartedsathish",
+                templateName: "pestartingmessagetest8",
               },
               from: "+919600690881",
               to: `+91${consignorphonenumber}`,
@@ -263,6 +268,7 @@ export default function RealTimeNavigation() {
         if (step.code === "EXECUTIVE_ON_THE_WAY") {
           return {
             ...step,
+            location: "chennai",
             status: "COMPLETED",
             datetime: now,
             updatedAt: now,
@@ -300,18 +306,20 @@ export default function RealTimeNavigation() {
               content: {
                 language: "en",
                 templateData: {
-                  header: {
-                    type: "TEXT",
-                    placeholder: "OTP For Pickup Shipment",
-                  },
                   body: {
                     placeholders: [
                       pickUpPersonName.toUpperCase(),
                       `OTP ${otp}`,
                     ],
                   },
+                  buttons: [
+                    {
+                      type: "URL",
+                      parameter: "9003459723",
+                    },
+                  ],
                 },
-                templateName: "pereachedtemplate_sathish",
+                templateName: "pereachedtemplate_test_4",
               },
               from: "+919600690881",
               to: `+91${consignorphonenumber}`,

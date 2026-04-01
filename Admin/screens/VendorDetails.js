@@ -180,161 +180,145 @@ function VendorDetails() {
 
     updateDoc(docRef, updatedFields);
 
-    if (
-      user.vendorName == "ExPlus" ||
-      user.vendorName == "UPS" ||
-      user.vendorName == "ICL SELF"
-    ) {
-      try {
-        const deliveryTime =
-          user.service === "Economy"
-            ? "5 - 7 Working Days"
-            : user.service === "Express"
-              ? "3 - 4 Working Days"
-              : user.service === "Duty Free"
-                ? "10 - 14 Working Days"
-                : "";
+    try {
+      const deliveryTime =
+        user.service === "Economy"
+          ? "5 - 7 Working Days"
+          : user.service === "Express"
+            ? "3 - 4 Working Days"
+            : user.service === "Duty Free"
+              ? "10 - 14 Working Days"
+              : "";
 
-        function getTruncatedURL(fullUrl) {
-          const baseUrl =
-            "https://firebasestorage.googleapis.com/v0/b/shiphitmobileapppickup-fb7e2.firebasestorage.app/o/";
-          const truncatedResult = fullUrl.replace(baseUrl, "");
-          return truncatedResult;
-        }
-        const data = {
-          messages: [
-            {
-              content: {
-                language: "en",
-                templateData: {
-                  body: {
-                    placeholders: [
-                      String(user.consignorname), // {{1}}
-                      String(user.awbNumber), // {{2}}
-                      String(user.service), // {{3}}
-                      String(user.destination), // {{4}}
-                      deliveryTime, // {{5}}
-                    ],
-                  },
-                  buttons: [
-                    {
-                      // Track Shipment → uses {{1}} in URL
-                      type: "URL",
-                      parameter: String(user.awbHashedValue),
-                    },
-                    {
-                      // View Receipt → uses {{receipt}}
-                      type: "URL",
-                      parameter: getTruncatedURL(user.payment_Receipt_URL),
-                    },
+      function getTruncatedURL(fullUrl) {
+        const baseUrl =
+          "https://firebasestorage.googleapis.com/v0/b/shiphitmobileapppickup-fb7e2.firebasestorage.app/o/";
+        const truncatedResult = fullUrl.replace(baseUrl, "");
+        return truncatedResult;
+      }
+      const data = {
+        messages: [
+          {
+            content: {
+              language: "en",
+              templateData: {
+                body: {
+                  placeholders: [
+                    String(user.consignorname), // {{1}}
+                    String(user.awbNumber), // {{2}}
+                    String(user.service), // {{3}}
+                    String(user.destination), // {{4}}
+                    deliveryTime, // {{5}}
                   ],
                 },
-                templateName: "shipment_connected_utility_v7",
+                buttons: [
+                  {
+                    // Track Shipment → uses {{1}} in URL
+                    type: "URL",
+                    parameter: String(user.awbHashedValue),
+                  },
+                  {
+                    // View Receipt → uses {{receipt}}
+                    type: "URL",
+                    parameter: getTruncatedURL(user.payment_Receipt_URL),
+                  },
+                ],
               },
-              from: "+919600690881",
-              to: `+91${String(user.consignorphonenumber).trim()}`,
+              templateName: "shipment_connected_utility_v9",
             },
-          ],
-        };
+            from: "+919600690881",
+            to: `+91${String(user.consignorphonenumber).trim()}`,
+          },
+        ],
+      };
 
-        axios
-          .post(
-            "https://public.doubletick.io/whatsapp/message/template",
-            data,
-            {
-              headers: {
-                Authorization: "key_z6hIuLo8GC",
-                Accept: "application/json",
-                "Content-Type": "application/json",
-              },
-            },
-          )
-          .then((response) => {
-            console.log("Success:", response.data);
-          })
-          .catch((error) => {
-            console.error("Error:", error.response?.data || error.message);
-          });
-      } catch (error) {
-        console.log("Error", error);
+      axios
+        .post("https://public.doubletick.io/whatsapp/message/template", data, {
+          headers: {
+            Authorization: "key_z6hIuLo8GC",
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        })
+        .then((response) => {
+          console.log("Success:", response.data);
+        })
+        .catch((error) => {
+          console.error("Error:", error.response?.data || error.message);
+        });
+    } catch (error) {
+      console.log("Error", error);
+    }
+
+    try {
+      const deliveryTime =
+        user.service === "Economy"
+          ? "5 - 7 Working Days"
+          : user.service === "Express"
+            ? "3 - 4 Working Days"
+            : user.service === "Duty Free"
+              ? "10 - 14 Working Days"
+              : "";
+
+      function getTruncatedURL(fullUrl) {
+        const baseUrl =
+          "https://firebasestorage.googleapis.com/v0/b/shiphitmobileapppickup-fb7e2.firebasestorage.app/o/";
+        const truncatedResult = fullUrl.replace(baseUrl, "");
+        return truncatedResult;
       }
 
-      try {
-        const deliveryTime =
-          user.service === "Economy"
-            ? "5 - 7 Working Days"
-            : user.service === "Express"
-              ? "3 - 4 Working Days"
-              : user.service === "Duty Free"
-                ? "10 - 14 Working Days"
-                : "";
-
-        function getTruncatedURL(fullUrl) {
-          const baseUrl =
-            "https://firebasestorage.googleapis.com/v0/b/shiphitmobileapppickup-fb7e2.firebasestorage.app/o/";
-          const truncatedResult = fullUrl.replace(baseUrl, "");
-          return truncatedResult;
-        }
-
-        const data = {
-          messages: [
-            {
-              content: {
-                language: "en",
-                templateData: {
-                  body: {
-                    placeholders: [
-                      String(user.consigneename), // {{1}}
-                      String(user.awbNumber), // {{2}}
-                      String(user.service), // {{3}}
-                      String(user.destination), // {{4}}
-                      deliveryTime, // {{5}}
-                    ],
-                  },
-                  buttons: [
-                    {
-                      // Track Shipment → uses {{1}} in URL
-                      type: "URL",
-                      parameter: String(user.awbHashedValue),
-                    },
-                    {
-                      // View Receipt → uses {{receipt}}
-                      type: "URL",
-                      parameter: getTruncatedURL(user.payment_Receipt_URL),
-                    },
+      const data = {
+        messages: [
+          {
+            content: {
+              language: "en",
+              templateData: {
+                body: {
+                  placeholders: [
+                    String(user.consigneename), // {{1}}
+                    String(user.awbNumber), // {{2}}
+                    String(user.service), // {{3}}
+                    String(user.destination), // {{4}}
+                    deliveryTime, // {{5}}
                   ],
                 },
-                templateName: "shipment_connected_utility_v7",
+                buttons: [
+                  {
+                    // Track Shipment → uses {{1}} in URL
+                    type: "URL",
+                    parameter: String(user.awbHashedValue),
+                  },
+                  {
+                    // View Receipt → uses {{receipt}}
+                    type: "URL",
+                    parameter: getTruncatedURL(user.payment_Receipt_URL),
+                  },
+                ],
               },
-              from: "+919600690881",
-              to: `${String(user.consigneephonenumber).trim()}`,
+              templateName: "shipment_connected_utility_v7",
             },
-          ],
-        };
+            from: "+919600690881",
+            to: `${String(user.consigneephonenumber).trim()}`,
+          },
+        ],
+      };
 
-        axios
-          .post(
-            "https://public.doubletick.io/whatsapp/message/template",
-            data,
-            {
-              headers: {
-                Authorization: "key_z6hIuLo8GC",
-                Accept: "application/json",
-                "Content-Type": "application/json",
-              },
-            },
-          )
-          .then((response) => {
-            console.log("Success:", response.data);
-          })
-          .catch((error) => {
-            console.error("Error:", error.response?.data || error.message);
-          });
-      } catch (error) {
-        console.log("Error", error);
-      }
-    } else {
-      console.log("nothing");
+      axios
+        .post("https://public.doubletick.io/whatsapp/message/template", data, {
+          headers: {
+            Authorization: "key_z6hIuLo8GC",
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        })
+        .then((response) => {
+          console.log("Success:", response.data);
+        })
+        .catch((error) => {
+          console.error("Error:", error.response?.data || error.message);
+        });
+    } catch (error) {
+      console.log("Error", error);
     }
 
     setVendorAwbnumber("");
@@ -516,10 +500,13 @@ function VendorDetails() {
                 <Picker.Item label="UPS" value="UPS" />
                 <Picker.Item label="ExPlus" value="ExPlus" />
                 <Picker.Item label="TurboFox" value="TurboFox" />
-                <Picker.Item label="DESK SELF" value="DESK SELF" />
                 <Picker.Item label="ICL SELF" value="ICL SELF" />
                 <Picker.Item label="ICL FedEx" value="ICL FedEx" />
                 <Picker.Item label="ATLANTIC" value="ATLANTIC" />
+                <Picker.Item label="IMD Courier" value="IMD Courier" />
+                <Picker.Item label="Sky Express" value="Sky Express" />
+                <Picker.Item label="World First" value="World First" />
+                <Picker.Item label="legend xpress" value="legend xpress" />
               </Picker>
             </View>
           )}

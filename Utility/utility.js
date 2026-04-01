@@ -6,7 +6,7 @@ function convertToTimeOnly(timestamp) {
 
   if (typeof timestamp === "object" && "seconds" in timestamp) {
     date = new Date(
-      timestamp.seconds * 1000 + Math.floor(timestamp.nanoseconds / 1e6)
+      timestamp.seconds * 1000 + Math.floor(timestamp.nanoseconds / 1e6),
     );
   } else {
     date = new Date(timestamp);
@@ -37,7 +37,7 @@ const handleOpenMap = (
   pickupDatetime,
   pickUpPersonName,
   OtpVerified,
-  navigation
+  navigation,
 ) => {
   if (OtpVerified == true) {
     return;
@@ -61,7 +61,7 @@ async function sendWaMessage_PickupCompleted(
   consignorname,
   awbNumber,
   consignorphonenumber,
-  awbHashedValue
+  awbHashedValue,
 ) {
   const url = "https://public.doubletick.io/whatsapp/message/template";
 
@@ -77,7 +77,7 @@ async function sendWaMessage_PickupCompleted(
             buttons: [
               {
                 type: "URL",
-                parameter: awbNumber,
+                parameter: awbHashedValue,
               },
               {
                 type: "URL",
@@ -85,7 +85,7 @@ async function sendWaMessage_PickupCompleted(
               },
             ],
           },
-          templateName: "pickupcompleted_test",
+          templateName: "pickupcompletedtest4",
         },
         from: "+919600690881",
         to: `+91${consignorphonenumber}`,
@@ -107,7 +107,7 @@ async function sendWaMessage_PickupCompleted(
     .catch((error) => {
       console.error(
         "❌ Error sending message:",
-        error.response ? error.response.data : error.message
+        error.response ? error.response.data : error.message,
       );
     });
 }

@@ -25,7 +25,7 @@ function IncomingManifestDetails() {
     try {
       const q = query(
         collection(db, DB.db_collection),
-        where("awbNumber", "==", Number(awbnumber))
+        where("awbNumber", "==", Number(awbnumber)),
       );
       const querySnapshot = await getDocs(q);
       let final_result = [];
@@ -125,16 +125,7 @@ function IncomingManifestDetails() {
               style={styles.icon}
             />
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Vendor:</Text>
-            <Text style={styles.valueFromTo}>{user.vendorName}</Text>
-            <FontAwesome
-              name="check-circle"
-              size={20}
-              color="green"
-              style={styles.icon}
-            />
-          </View>
+
           <WeightTypeToggle awbnumber={awbnumber} user={user} />
         </View>
       </ScrollView>

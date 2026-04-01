@@ -198,16 +198,20 @@ const WeightTypeToggle = ({ awbnumber, user }) => {
               language: "en",
               templateData: {
                 body: {
-                  placeholders: [user.consignorname, customerWeight],
+                  placeholders: [user.consignorname, `₹${customerWeight} KG`],
                 },
                 buttons: [
                   {
                     type: "URL",
-                    parameter: String(user.awbNumber),
+                    parameter: String(user.awbHashedValue),
+                  },
+                  {
+                    type: "URL",
+                    parameter: String(user.awbHashedValue),
                   },
                 ],
               },
-              templateName: "weight_confirmation_ffinal",
+              templateName: "weightconfirmationtest",
             },
             from: "+919600690881",
             to: `+91${user.consignorphonenumber}`,

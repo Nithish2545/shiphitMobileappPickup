@@ -25,7 +25,7 @@ function CardDetails() {
         // Create a query to find the document with the matching awbNumber
         const q = query(
           collection(db, DB.db_collection),
-          where("awbNumber", "==", awbnumber)
+          where("awbNumber", "==", awbnumber),
         );
 
         // Fetch the query results from Firestore
@@ -121,7 +121,7 @@ function CardDetails() {
           </Text>
           <Text style={styles.item}>
             <Text style={styles.label}>Vendor: </Text>
-            {details.vendorName}
+            {details.vendorName ? details.vendorName : "---"}
           </Text>
           <Text style={styles.item}>
             <Text style={styles.label}>Pickup Date & Time: </Text>
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 16,
-    paddingTop: 40,
+    paddingTop: 50,
     backgroundColor: "#f5f5f5",
   },
   title: {

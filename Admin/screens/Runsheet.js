@@ -53,13 +53,13 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
         messages: [
           {
             content: {
-              language: "en_US",
+              language: "en",
               templateData: {
                 body: {
-                  placeholders: [PEname, pickupDatetime],
+                  placeholders: [PEname, pickupDatetime, "+91 9597788433"],
                 },
               },
-              templateName: "pickupassignedto_final",
+              templateName: "peassigningtest2",
             },
             to: `+91${consignorphonenumber}`,
             from: `+919600690881`,
@@ -105,14 +105,14 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
         collection(db, DB.db_collection),
         where("pickupDatetime", ">=", startTimestamp),
         where("pickupDatetime", "<=", endTimestamp),
-        orderBy("pickupDatetime", "desc")
+        orderBy("pickupDatetime", "desc"),
       );
     } else {
       q = query(
         collection(db, DB.db_collection),
         where("pickupDatetime", ">=", startTimestamp),
         where("pickupDatetime", "<=", endTimestamp), // ✅ added
-        orderBy("pickupDatetime", "desc")
+        orderBy("pickupDatetime", "desc"),
       );
     }
 
@@ -128,7 +128,7 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
           .filter((data) => {
             if (FromNumber === "") return true;
             return String(data.consignorphonenumber || "").startsWith(
-              FromNumber
+              FromNumber,
             );
           })
           .filter((data) => data.status === "RUN SHEET");
@@ -137,7 +137,7 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
       },
       (error) => {
         console.error(`Error fetching data: ${error.message}`);
-      }
+      },
     );
 
     return () => unsubscribe();
@@ -157,7 +157,7 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
     pickupDatetime,
     consignorphonenumber,
     consignorname,
-    pickuparea
+    pickuparea,
   ) => {
     if (pickupPerson == "Unassigned") {
       return;
@@ -165,7 +165,7 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
     try {
       const q = query(
         collection(db, DB.db_collection),
-        where("awbNumber", "==", awbNumber)
+        where("awbNumber", "==", awbNumber),
       );
 
       const querySnapshot = await getDocs(q);
@@ -188,14 +188,14 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
       await PEassigned(
         pickupPersonCaps,
         Hour_min,
-        String(consignorphonenumber)
+        String(consignorphonenumber),
       );
 
       await NotificationService.sendNotification(
         pickupPerson,
         consignorname,
         pickuparea,
-        pickupDatetime
+        pickupDatetime,
       );
     } catch (error) {
       console.error("Error updating document:", error);
@@ -224,8 +224,8 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
                     user.status === "PENDING"
                       ? styles.statusPending
                       : user.status === "COMPLETED"
-                      ? styles.statusCompleted
-                      : styles.statusDefault,
+                        ? styles.statusCompleted
+                        : styles.statusDefault,
                   ]}
                 >
                   <Text
@@ -234,8 +234,8 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
                       user.status === "PENDING"
                         ? styles.textPending
                         : user.status === "COMPLETED"
-                        ? styles.textCompleted
-                        : styles.textDefault,
+                          ? styles.textCompleted
+                          : styles.textDefault,
                     ]}
                   >
                     RUN SHEET
@@ -282,7 +282,7 @@ const Runsheet = ({ pickupPersons, datetime, awbnumberSearch, FromNumber }) => {
                       user.pickupDatetime,
                       user.consignorphonenumber,
                       user.consignorname,
-                      user.pickuparea
+                      user.pickuparea,
                     )
                   }
                 >
