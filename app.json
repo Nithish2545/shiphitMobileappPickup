@@ -19,7 +19,7 @@
       "versionCode": 15,
       "notification": {
         "color": "#ffffff",
-        "sounds": ["./assets/notifications/alert.wav"]
+        "sounds": ["./assets/notifications/alert.wav", "./assets/notifications/custom_sound.wav"]
       },
       "googleServicesFile": "./google-services.json",
       "config": {

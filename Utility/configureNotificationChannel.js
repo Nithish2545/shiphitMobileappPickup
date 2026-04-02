@@ -4,11 +4,11 @@ import { Platform } from "react-native";
 export async function configureNotificationChannel() {
   try {
     if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("default", {
-        name: "Default",
+      await Notifications.setNotificationChannelAsync("shiphit_alerts", {
+        name: "ShipHit Alerts",
         importance: Notifications.AndroidImportance.HIGH,
-        sound: "alert.wav", // Must match the file name in assets
-        vibrationPattern: [0, 250, 250, 250],
+        sound: "custom_sound.wav", // Must match the file name in assets
+        vibrationPattern: [0, 500, 200, 500, 200, 500],
         lightColor: "#FF231F7C",
       });
     }

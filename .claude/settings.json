@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs cat:*)",
+      "Bash(ffmpeg -i /Users/thinkvance/Desktop/Codebase/shiphitMobileappPickup/assets/custom_sound.mp3 -acodec pcm_s16le -ar 44100 /Users/thinkvance/Desktop/Codebase/shiphitMobileappPickup/assets/notifications/custom_sound.wav -y)"
+    ]
+  }
+}

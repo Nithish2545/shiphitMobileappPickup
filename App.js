@@ -67,23 +67,25 @@ export default function App() {
 
   /* ---------- NOTIFICATIONS ---------- */
   useEffect(() => {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+
     const openedListener = messaging().onNotificationOpenedApp((msg) => {
       console.log("Notification opened:", msg?.notification);
     });
 
     const messageListener = messaging().onMessage(async (msg) => {
-      Notifications.setNotificationHandler({
-        handleNotification: async () => ({
-          shouldShowAlert: true,
-          shouldPlaySound: true,
-          shouldSetBadge: false,
-        }),
-      });
-
       await Notifications.scheduleNotificationAsync({
         content: {
           title: msg.notification?.title,
           body: msg.notification?.body,
+          sound: "custom_sound.wav",
+          channelId: "shiphit_alerts",
         },
         trigger: null,
       });

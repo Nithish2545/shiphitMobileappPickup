@@ -110,6 +110,8 @@ async function sendNotification(
       body: `The pickup has been successfully completed.\n\n👷 Pickup Person: ${pickupPerson}\n\nPlease review the details in the app. Thank you.`,
       image: "",
       link: "",
+      sound: "custom_sound.wav",
+      channelId: "shiphit_alerts",
     })
     .then((result) => {
       console.log("result", result.data);
@@ -131,9 +133,9 @@ async function sendNotification_pickupCompleted(pickupPersonName) {
       title: "Pickup Completed",
       body: `The pickup has been successfully completed.\n\n👷 Pickup Person: ${pickupPersonName}\n\nPlease review the details in the app. Thank you.`,
       image: "",
-      sound: "default", // use "default" if the custom sound is named in channel
+      sound: "custom_sound.wav",
       link: "",
-      channelId: "default",
+      channelId: "shiphit_alerts",
     })
     .then((result) => {})
     .catch((e) => {
@@ -161,6 +163,8 @@ function setupNotificationListeners() {
       content: {
         title: remoteMessage.notification?.title || "New Message",
         body: remoteMessage.notification?.body || "",
+        sound: "custom_sound.wav",
+        channelId: "shiphit_alerts",
       },
       trigger: null,
     });
