@@ -6,10 +6,22 @@ import { StatusBar } from "expo-status-bar";
 
 import messaging from "@react-native-firebase/messaging";
 import * as Notifications from "expo-notifications";
+import { Audio } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { FIREBASE_AUTH } from "./FirebaseConfig";
 import NotificationService from "./Utility/NotificationService";
+import { configureNotificationChannel } from "./Utility/configureNotificationChannel";
+
+// Must be called at top level BEFORE component mounts (Expo docs requirement)
+configureNotificationChannel();
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 /* ---------- Screens ---------- */
 import SplashScreen from "./SplashScreen";
@@ -67,24 +79,28 @@ export default function App() {
 
   /* ---------- NOTIFICATIONS ---------- */
   useEffect(() => {
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: false,
-      }),
-    });
-
     const openedListener = messaging().onNotificationOpenedApp((msg) => {
       console.log("Notification opened:", msg?.notification);
     });
 
     const messageListener = messaging().onMessage(async (msg) => {
+      // Play custom sound manually — guaranteed to work in foreground
+      try {
+        const { sound } = await Audio.Sound.createAsync(
+          require("./assets/notifications/custom_sound.wav")
+        );
+        await sound.playAsync();
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.didJustFinish) sound.unloadAsync();
+        });
+      } catch (e) {
+        console.log("Sound play error:", e.message);
+      }
+
       await Notifications.scheduleNotificationAsync({
         content: {
           title: msg.notification?.title,
           body: msg.notification?.body,
-          sound: "custom_sound.wav",
           channelId: "shiphit_alerts",
         },
         trigger: null,
