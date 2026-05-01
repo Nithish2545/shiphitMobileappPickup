@@ -12,6 +12,7 @@ import { signOut } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
 import version from "../../Utility/version";
+import NotificationService from "../../Utility/NotificationService";
 
 const PEProfile = () => {
   const profile = version;
@@ -19,6 +20,9 @@ const PEProfile = () => {
 
   const handleSignOut = async () => {
     try {
+      const stored = await AsyncStorage.getItem("userData");
+      const email = stored ? JSON.parse(stored)?.email : null;
+      if (email) await NotificationService.removeTokenOnLogout(email);
       await signOut(FIREBASE_AUTH);
       await AsyncStorage.removeItem("userData");
       console.log("Signed out successfully.");

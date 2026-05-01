@@ -87,7 +87,7 @@ export default function App() {
       // Play custom sound manually — guaranteed to work in foreground
       try {
         const { sound } = await Audio.Sound.createAsync(
-          require("./assets/notifications/custom_sound.wav")
+          require("./assets/notifications/custom_sound.wav"),
         );
         await sound.playAsync();
         sound.setOnPlaybackStatusUpdate((status) => {

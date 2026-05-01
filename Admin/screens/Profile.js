@@ -13,6 +13,7 @@ import { useRoute } from "@react-navigation/native";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import version from "../../Utility/version";
+import NotificationService from "../../Utility/NotificationService";
 
 const Profile = () => {
   const [user, setuser] = useState({});
@@ -36,10 +37,16 @@ const Profile = () => {
     fetchUserRole();
   }, []);
 
-  const handleSignOut = () => {
-    signOut(FIREBASE_AUTH)
-      .then(() => console.log("Signed out successfully."))
-      .catch((error) => console.error("Sign-out error:", error));
+  const handleSignOut = async () => {
+    try {
+      const stored = await AsyncStorage.getItem("userData");
+      const email = stored ? JSON.parse(stored)?.email : null;
+      if (email) await NotificationService.removeTokenOnLogout(email);
+      await signOut(FIREBASE_AUTH);
+      console.log("Signed out successfully.");
+    } catch (error) {
+      console.error("Sign-out error:", error);
+    }
   };
 
   const statusCards = [

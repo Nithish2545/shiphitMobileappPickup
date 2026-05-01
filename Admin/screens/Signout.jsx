@@ -1,16 +1,20 @@
 import { signOut } from "firebase/auth";
 import { Text, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
+import NotificationService from "../../Utility/NotificationService";
 
 const Signout = () => {
-  const handleSignOut = () => {
-    signOut(FIREBASE_AUTH)
-      .then(() => {
-        console.log("Sign-out successful.");
-      })
-      .catch((error) => {
-        console.error("Error signing out:", error);
-      });
+  const handleSignOut = async () => {
+    try {
+      const stored = await AsyncStorage.getItem("userData");
+      const email = stored ? JSON.parse(stored)?.email : null;
+      if (email) await NotificationService.removeTokenOnLogout(email);
+      await signOut(FIREBASE_AUTH);
+      console.log("Sign-out successful.");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   return (

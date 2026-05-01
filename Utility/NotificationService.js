@@ -1,9 +1,26 @@
 import messaging from "@react-native-firebase/messaging";
 import { db } from "../FirebaseConfig";
-import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import {
+  arrayRemove,
+  arrayUnion,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+} from "firebase/firestore";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
+
+function isValidToken(token) {
+  return (
+    typeof token === "string" &&
+    token.length > 0 &&
+    !token.startsWith("Error") &&
+    !token.startsWith("Permission")
+  );
+}
 
 // Utility: Find admin users from LoginCredentials
 function findAdminRole(data) {
@@ -64,83 +81,109 @@ async function getTokenService() {
   }
 }
 
-// Save token to Firestore under NotificationToken collection
+// Save this device's token under NotificationToken/{username}.tokens (array)
 async function fetchAndStoreToken(username) {
   const token = await getTokenService();
+  if (!isValidToken(token)) {
+    console.warn("Skipping token store; invalid token:", token);
+    return;
+  }
   try {
-    await setDoc(doc(db, "NotificationToken", username), {
-      token: token,
-    });
-    console.log("FCM Token successfully stored in Firestore!");
+    await setDoc(
+      doc(db, "NotificationToken", username),
+      { tokens: arrayUnion(token) },
+      { merge: true },
+    );
+    console.log("FCM Token added to Firestore tokens array.");
   } catch (error) {
     console.error("Error storing token in Firestore:", error);
   }
 }
 
-// Retrieve token for a given user
-async function fetchNotificationToken(userEmail) {
+// Retrieve all device tokens for a given user (handles legacy single-token docs)
+async function fetchNotificationTokens(userEmail) {
   try {
-    const tokenDoc = doc(db, "NotificationToken", userEmail);
-    const tokenSnapshot = await getDoc(tokenDoc);
-    if (tokenSnapshot.exists()) {
-      const tokenData = tokenSnapshot.data();
-      return tokenData.token;
-    } else {
-      return null;
+    const snapshot = await getDoc(doc(db, "NotificationToken", userEmail));
+    if (!snapshot.exists()) return [];
+    const data = snapshot.data();
+    const tokens = Array.isArray(data.tokens) ? data.tokens : [];
+    if (tokens.length === 0 && isValidToken(data.token)) {
+      return [data.token];
     }
+    return tokens.filter(isValidToken);
   } catch (error) {
-    console.error("Error fetching notification token:", error);
-    return null;
+    console.error("Error fetching notification tokens:", error);
+    return [];
   }
 }
 
-// Send notification to pickup executive
+// Remove this device's token on logout so it stops receiving pushes
+async function removeTokenOnLogout(userEmail) {
+  if (!userEmail) return;
+  try {
+    const token = await messaging().getToken();
+    if (!isValidToken(token)) return;
+    await setDoc(
+      doc(db, "NotificationToken", userEmail),
+      { tokens: arrayRemove(token) },
+      { merge: true },
+    );
+    console.log("FCM Token removed from Firestore on logout.");
+  } catch (error) {
+    console.error("Error removing token on logout:", error);
+  }
+}
+
+// Send the same payload to every device token registered for a user
+async function sendToAllUserDevices(userEmail, payload) {
+  const tokens = await fetchNotificationTokens(userEmail);
+  console.log("tokens", tokens);
+  if (tokens.length === 0) {
+    console.log("No tokens registered for", userEmail);
+    return;
+  }
+  const body = { ...payload, to: tokens };
+  console.log(body);
+  axios
+    .post(
+      "https://notification-opt-service-f5f3ec066fe8.herokuapp.com/sendNotification",
+      body,
+    )
+    .then((result) => console.log("notify ok", result.data))
+    .catch((e) =>
+      console.log("notify error", e?.response?.status, e?.response?.data),
+    );
+}
+
+// Send notification to pickup executive (all of their devices)
 async function sendNotification(
   pickupPerson,
   consignorname,
   pickuparea,
-  pickupDatetime
+  pickupDatetime,
 ) {
-  const token = await fetchNotificationToken(`${pickupPerson}@gmail.com`);
-  console.log("token", token);
-  axios
-    .post("https://shiphit-backend.onrender.com/sendNotification", {
-      to: token,
-      title: "New Pickup Request",
-      body: `The pickup has been successfully completed.\n\n👷 Pickup Person: ${pickupPerson}\n\nPlease review the details in the app. Thank you.`,
-      image: "",
-      link: "",
-      sound: "custom_sound.wav",
-      channelId: "shiphit_alerts",
-    })
-    .then((result) => {
-      console.log("result", result.data);
-    })
-    .catch((e) => {
-      console.log("error", e.message);
-    })
-    .finally(() => {
-      console.log("finally!");
-    });
+  await sendToAllUserDevices(`${pickupPerson}@gmail.com`, {
+    title: "New Pickup Request",
+    body: `The pickup has been successfully completed.\n\n👷 Pickup Person: ${pickupPerson}\n\nPlease review the details in the app. Thank you.`,
+    image: "",
+    link: "",
+    sound: "custom_sound.wav",
+    channelId: "shiphit_alerts",
+  });
 }
 
-// Notify admin when pickup is completed
+// Notify admin (all of their devices) when pickup is completed
 async function sendNotification_pickupCompleted(pickupPersonName) {
   const userdata = await LoginCredentials();
-  axios
-    .post("https://shiphit-backend.onrender.com/sendNotification", {
-      to: await fetchNotificationToken(userdata[0].email),
-      title: "Pickup Completed",
-      body: `The pickup has been successfully completed.\n\n👷 Pickup Person: ${pickupPersonName}\n\nPlease review the details in the app. Thank you.`,
-      image: "",
-      sound: "custom_sound.wav",
-      link: "",
-      channelId: "shiphit_alerts",
-    })
-    .then((result) => {})
-    .catch((e) => {
-      console.log("error", e.message);
-    });
+  if (!userdata || !userdata[0]) return;
+  await sendToAllUserDevices(userdata[0].email, {
+    title: "Pickup Completed",
+    body: `The pickup has been successfully completed.\n\n👷 Pickup Person: ${pickupPersonName}\n\nPlease review the details in the app. Thank you.`,
+    image: "",
+    sound: "custom_sound.wav",
+    link: "",
+    channelId: "shiphit_alerts",
+  });
 }
 
 // Fetch current user email from AsyncStorage
@@ -187,17 +230,19 @@ function setupNotificationListeners() {
   });
 }
 
-// ✅ Listen and auto-store refreshed FCM tokens
+// ✅ Listen and auto-append refreshed FCM tokens
 function handleTokenRefreshListener() {
   messaging().onTokenRefresh(async (newToken) => {
     try {
       const userData = await AsyncStorage.getItem("userData");
       const email = JSON.parse(userData)?.email;
 
-      if (email && newToken) {
-        await setDoc(doc(db, "NotificationToken", email), {
-          token: newToken,
-        });
+      if (email && isValidToken(newToken)) {
+        await setDoc(
+          doc(db, "NotificationToken", email),
+          { tokens: arrayUnion(newToken) },
+          { merge: true },
+        );
         console.log("🔁 Token refreshed and stored:", newToken);
       }
     } catch (error) {
@@ -209,10 +254,12 @@ function handleTokenRefreshListener() {
 export default {
   getTokenService,
   fetchAndStoreToken,
+  removeTokenOnLogout,
+  fetchNotificationTokens,
   sendNotification,
   sendNotification_pickupCompleted,
   LoginCredentials,
   fetchLoginedUserEmail,
   setupNotificationListeners,
-  handleTokenRefreshListener, // ✅ ADDED HERE
+  handleTokenRefreshListener,
 };
