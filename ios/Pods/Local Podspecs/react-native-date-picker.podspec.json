@@ -1,0 +1,21 @@
+{
+  "name": "react-native-date-picker",
+  "version": "5.0.11",
+  "summary": "React Native Date Picker component for Android and iOS",
+  "authors": {
+    "henninghall": "henning.hall@hotmail.com"
+  },
+  "homepage": "https://github.com/henninghall/react-native-date-picker",
+  "license": "MIT",
+  "platforms": {
+    "ios": "8.0"
+  },
+  "source": {
+    "git": "https://github.com/henninghall/react-native-date-picker.git",
+    "tag": "v5.0.11"
+  },
+  "source_files": "ios/**/*.{h,m,mm,swift}",
+  "dependencies": {
+    "React-Core": []
+  }
+}
