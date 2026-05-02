@@ -10,6 +10,18 @@ web-build/
 ios/build*/
 ios/Pods/
 
+# Android build cache
+android/.gradle/
+android/build/
+android/app/build/
+android/.idea/
+android/.cxx/
+android/local.properties
+
+# Duplicate folders (Finder copy artifacts with " 2" suffix)
+**/* 2/
+**/* 2.*
+
 # Native artifacts
 *.orig.*
 *.jks

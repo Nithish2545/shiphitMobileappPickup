@@ -16,7 +16,7 @@
       "bundleIdentifier": "com.shiphit.pickup"
     },
     "android": {
-      "versionCode": 15,
+      "versionCode": 16,
       "notification": {
         "color": "#ffffff",
         "sounds": ["./assets/notifications/alert.wav", "./assets/notifications/custom_sound.wav"]
